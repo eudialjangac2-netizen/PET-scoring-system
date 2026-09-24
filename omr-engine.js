@@ -15,15 +15,46 @@
     fullCov: 0.50,     // tô chuẩn: độ phủ tổng
     fullSector: 0.30,  // tô chuẩn: 7/8 cung tròn đều phải có mực
     codeMarked: 0.40,  // ô mã học sinh
-    writeInk: 0.004    // ô viết: tỉ lệ mực tối thiểu để coi là có chữ
+    writeInk: 0.004,   // ô viết: tỉ lệ mực tối thiểu để coi là có chữ
+    minSharp: 120,     // độ nét tối thiểu (phương sai Laplacian ở 3 px/mm)
+    minBright: 80,     // độ sáng trung bình tối thiểu của phiếu
+    maxGlare: 0.04,    // tỉ lệ vùng bị lóa tối đa
+    minDir: 0.58       // cân bằng độ nét ngang/dọc (thấp = mờ do rung tay)
   };
 
-  function findFiducials(cv, gray) {
-    const scale = 1600 / Math.max(gray.rows, gray.cols);
+  function qualityIssue(q) {
+    if (!q) return null;
+    if (q.bright < TH.minBright) return 'Ảnh quá tối — bật thêm đèn hoặc ra chỗ sáng hơn.';
+    if (q.glare > TH.maxGlare) return 'Phiếu bị lóa đèn — nghiêng máy một chút để tránh chỗ phản chiếu.';
+    if (q.sharp < TH.minSharp || q.dir < TH.minDir) return 'Ảnh bị mờ — giữ yên máy và chờ camera lấy nét.';
+    return null;
+  }
+
+  // Dò nhanh 4 góc trên khung hình camera (ảnh nhỏ) — dùng cho chế độ quét tự động
+  function detect(cv, rgba) {
+    const src = new cv.Mat(rgba.height, rgba.width, cv.CV_8UC4); src.data.set(rgba.data);
+    const gray = new cv.Mat(); cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY); src.delete();
+    const work = Math.max(gray.rows, gray.cols);
+    let fid = findFiducials(cv, gray, work), rotated = false;
+    if (!fid) {   // phiếu nằm ngang trong khung hình
+      const r = new cv.Mat(); cv.rotate(gray, r, cv.ROTATE_90_CLOCKWISE);
+      const f2 = findFiducials(cv, r, work); r.delete();
+      if (f2) { rotated = true; const H = gray.rows; fid = f2.map(([x, y]) => [y, H - 1 - x]); }
+    }
+    gray.delete();
+    if (!fid) return null;
+    const [tl, tr, bl, br] = fid;
+    const area = Math.abs((tr[0] - tl[0]) * (bl[1] - tl[1]) - (bl[0] - tl[0]) * (tr[1] - tl[1]));
+    return { corners: fid, areaFrac: area / (rgba.width * rgba.height), rotated };
+  }
+
+  function findFiducials(cv, gray, work = 1600) {
+    const scale = work / Math.max(gray.rows, gray.cols), k = work / 1600;
+    const blk = (Math.round(51 * k) | 1), amin = 150 * k * k, amax = 5000 * k * k;
     const g = new cv.Mat(), th = new cv.Mat();
     cv.resize(gray, g, new cv.Size(0, 0), scale, scale, cv.INTER_AREA);
     cv.GaussianBlur(g, g, new cv.Size(5, 5), 0);
-    cv.adaptiveThreshold(g, th, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY_INV, 51, 15);
+    cv.adaptiveThreshold(g, th, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY_INV, blk, 15);
     const contours = new cv.MatVector(), hier = new cv.Mat();
     cv.findContours(th, contours, hier, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
     const W = g.cols, H = g.rows, d = g.data;
@@ -40,16 +71,16 @@
     for (let i = 0; i < contours.size(); i++) {
       const c = contours.get(i);
       const a = cv.contourArea(c);
-      if (a < 150 || a > 5000) { c.delete(); continue; }
+      if (a < amin || a > amax) { c.delete(); continue; }
       const r = cv.boundingRect(c);
       const ar = r.width / r.height;
       const hull = new cv.Mat(); cv.convexHull(c, hull);
       const solid = a / Math.max(cv.contourArea(hull), 1); hull.delete();
-      if (ar < 0.7 || ar > 1.4 || solid < 0.9 || a / (r.width * r.height) < 0.75) { c.delete(); continue; }
+      if (ar < 0.6 || ar > 1.67 || solid < 0.9 || a / (r.width * r.height) < 0.65) { c.delete(); continue; }
       const inner = mean(r.x + r.width / 4 | 0, r.y + r.height / 4 | 0, r.x + 3 * r.width / 4 | 0, r.y + 3 * r.height / 4 | 0);
       const pad = Math.max(r.width, r.height) / 2 | 0;
       const ring = mean(r.x - pad, r.y - pad, r.x + r.width + pad, r.y + r.height + pad, [r.x, r.y, r.x + r.width, r.y + r.height]);
-      if (inner <= 110 && ring >= 150) {
+      if (inner <= 110 && ring >= 130) {
         const m = cv.moments(c);
         cands.push([m.m10 / m.m00, m.m01 / m.m00, a]);
       }
@@ -63,7 +94,7 @@
     for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) for (let k = j + 1; k < n; k++) for (let l = k + 1; l < n; l++) {
       const quad = [cands[i], cands[j], cands[k], cands[l]];
       const areas = quad.map(q => q[2]);
-      if (Math.max(...areas) / Math.min(...areas) > 2.2) continue;
+      if (Math.max(...areas) / Math.min(...areas) > 4) continue;
       const s = quad.map(q => q[0] + q[1]), df = quad.map(q => q[1] - q[0]);
       const tl = quad[s.indexOf(Math.min(...s))], br = quad[s.indexOf(Math.max(...s))];
       const tr = quad[df.indexOf(Math.min(...df))], bl = quad[df.indexOf(Math.max(...df))];
@@ -83,6 +114,23 @@
     const w = new cv.Mat();
     cv.warpPerspective(gray, w, M, new cv.Size(PW, PH), cv.INTER_LINEAR, cv.BORDER_REPLICATE);
     src.delete(); dm.delete(); M.delete();
+    // chất lượng ảnh: độ nét (đo ở 3 px/mm để không phụ thuộc độ phân giải), độ sáng, lóa
+    const q = new cv.Mat(), lap = new cv.Mat(), mu = new cv.Mat(), sd = new cv.Mat();
+    cv.resize(w, q, new cv.Size(630, 891), 0, 0, cv.INTER_AREA);
+    cv.Laplacian(q, lap, cv.CV_32F, 1);
+    cv.meanStdDev(lap, mu, sd);
+    const sharp = sd.data64F[0] ** 2;
+    // mờ do rung tay: cạnh theo một hướng yếu hẳn so với hướng kia
+    // đo cạnh theo 4 hướng (ngang, dọc, 2 đường chéo); chênh lệch lớn = rung tay
+    const vars = [[0,0,0,-1,0,1,0,0,0],[0,-1,0,0,0,0,0,1,0],[-1,0,0,0,0,0,0,0,1],[0,0,-1,0,0,0,1,0,0]].map((kv, i) => {
+      const k = cv.matFromArray(3, 3, cv.CV_32F, kv), g = new cv.Mat();
+      cv.filter2D(q, g, cv.CV_32F, k); cv.meanStdDev(g, mu, sd);
+      const v = sd.data64F[0] ** 2 / (i < 2 ? 1 : 2); k.delete(); g.delete(); return v; });
+    const dir = Math.min(...vars) / Math.max(...vars, 1);
+    let sum = 0, glare = 0; const qd = q.data;
+    for (let i = 0; i < qd.length; i++) { sum += qd[i]; if (qd[i] >= 250) glare++; }
+    const quality = { sharp: Math.round(sharp), dir: +dir.toFixed(2), bright: Math.round(sum / qd.length), glare: +(glare / qd.length).toFixed(3) };
+    q.delete(); lap.delete(); mu.delete(); sd.delete();
     // chuẩn hoá ánh sáng: nền = max-filter + blur (làm ở 1/4 kích thước cho nhanh)
     const sm = new cv.Mat(), bg = new cv.Mat();
     cv.resize(w, sm, new cv.Size(PW / 4 | 0, PH / 4 | 0), 0, 0, cv.INTER_AREA);
@@ -93,7 +141,7 @@
     const a = w.data, b = bg.data, out = new Uint8Array(PW * PH);
     for (let i = 0; i < out.length; i++) out[i] = Math.min(255, a[i] / Math.max(b[i], 1) * 240);
     sm.delete(); bg.delete(); w.delete();
-    return out;
+    return { px: out, quality };
   }
 
   function makeRing(cv) {
@@ -165,14 +213,14 @@
     const gray0 = new cv.Mat(); cv.cvtColor(src, gray0, cv.COLOR_RGBA2GRAY); src.delete();
     // thử lần lượt 4 hướng xoay (ảnh chụp ngang / ngược đầu)
     const rots = [null, cv.ROTATE_90_CLOCKWISE, cv.ROTATE_180, cv.ROTATE_90_COUNTERCLOCKWISE];
-    let px = null, page = null, sawCorners = false;
+    let px = null, page = null, sawCorners = false, quality = null;
     for (const rot of rots) {
       let g = gray0;
       if (rot !== null) { g = new cv.Mat(); cv.rotate(gray0, g, rot); }
       const fid = findFiducials(cv, g);
       if (fid) {
         sawCorners = true;
-        const p = warpAndNormalize(cv, g, fid, tpl);
+        const wn = warpAndNormalize(cv, g, fid, tpl), p = wn.px; quality = wn.quality;
         const ids = tpl.reading.page_id.slots.map(([x, y]) => regionMean(p, x, y, 2));
         if (Math.abs(ids[0] - ids[1]) >= 40) { px = p; page = ids[0] < ids[1] ? 'reading' : 'listening'; }
       }
@@ -182,7 +230,9 @@
     gray0.delete();
     if (!px) return { ok: false, error: sawCorners
       ? 'Không nhận ra mặt phiếu (Reading/Listening). Kiểm tra phiếu có đúng mẫu không.'
-      : 'Không thấy đủ 4 ô vuông đen ở góc phiếu. Chụp lại, để lộ cả 4 góc.' };
+      : 'Không thấy đủ 4 ô vuông đen ở góc phiếu. Chụp lại: để lộ cả 4 góc, đủ sáng, giữ yên máy.' };
+    const qIssue = qualityIssue(quality);
+    if (qIssue) return { ok: false, quality, qualityFail: true, error: qIssue };
     const img = new cv.Mat(PH, PW, cv.CV_8U); img.data.set(px);
     const ring = makeRing(cv);
     const T = tpl[page];
@@ -219,9 +269,9 @@
         opts: opts.map(o => ({ label: o.label, cov: +o.cov.toFixed(2), sec2: +o.sec2.toFixed(2) })) };
     }
     img.delete(); ring.delete();
-    return { ok: true, page, code, codeOk, codeCols, mcq, write, px, width: PW, height: PH, S };
+    return { ok: true, page, code, codeOk, codeCols, mcq, write, px, width: PW, height: PH, S, quality };
   }
 
-  const OMR = { process, TH, S };
+  const OMR = { process, detect, qualityIssue, TH, S };
   if (typeof module !== 'undefined' && module.exports) module.exports = OMR; else root.OMR = OMR;
 })(typeof self !== 'undefined' ? self : this);
