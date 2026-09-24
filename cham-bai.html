@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chấm phiếu PET — Ruby School</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="cham-bai.css">
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <h1>Chấm phiếu PET</h1>
+  <span class="ctx" id="ctx">B1 Preliminary for Schools · Reading &amp; Listening</span>
+</div></header>
+
+<nav class="steps" aria-label="Các bước chấm"><div class="wrap">
+  <button data-go="setup"><b>1</b>Đề &amp; lớp</button>
+  <button data-go="scan"><b>2</b>Chụp phiếu</button>
+  <button data-go="review"><b>3</b>Duyệt<span class="badge" id="bReview" hidden></span></button>
+  <button data-go="write"><b>4</b>Câu viết<span class="badge" id="bWrite" hidden></span></button>
+  <button data-go="export"><b>5</b>Kết quả</button>
+</div></nav>
+
+<main class="wrap">
+  <!-- 1. Chọn đề & lớp -->
+  <section class="view" id="v-setup">
+    <h2>Chọn đề và lớp</h2>
+    <p class="hint">Kết quả được lưu trên máy này theo từng cặp đề + lớp. Có thể chụp làm nhiều đợt.</p>
+    <div class="field"><label for="selTest">Đề thi</label><select id="selTest"></select></div>
+    <div class="field"><label for="selClass">Lớp</label><select id="selClass"></select></div>
+    <div class="field">
+      <label>Danh sách lớp</label>
+      <p class="hint">Tải file Excel hoặc CSV có 2 cột <b>Mã</b> và <b>Họ tên</b>. App tự chia học sinh theo 2 số đầu của mã (72001ND → lớp 72). Tải lại file để cập nhật danh sách.</p>
+      <div class="row">
+        <label class="btn" for="fileRoster">Tải danh sách lớp</label>
+        <input type="file" id="fileRoster" accept=".xlsx,.csv" hidden>
+        <span id="rosterInfo" class="hint" style="margin:0"></span>
+      </div>
+    </div>
+    <button class="btn primary" id="btnStart">Bắt đầu chấm</button>
+  </section>
+
+  <!-- 2. Chụp phiếu -->
+  <section class="view" id="v-scan">
+    <h2>Chụp phiếu</h2>
+    <p class="hint">Đặt phiếu phẳng trên bàn, đủ sáng, chụp thấy cả 4 ô vuông đen. Chụp theo thứ tự nào cũng được; mặt Reading/Listening và mã học sinh được nhận tự động.</p>
+    <div class="queue" id="queue"></div>
+    <div id="unknownBox"></div>
+    <div class="legend">
+      <span><i style="background:var(--ok-soft);border:1px solid var(--ok)"></i>Đã có phiếu</span>
+      <span><i style="background:var(--flag-soft);border:1px solid var(--flag)"></i>Có câu cần duyệt</span>
+      <span><i style="background:var(--paper);border:1px solid var(--line)"></i>Chưa có phiếu</span>
+    </div>
+    <div class="roster" id="roster"></div>
+  </section>
+
+  <!-- 3. Duyệt -->
+  <section class="view" id="v-review">
+    <h2>Duyệt câu tô không chuẩn</h2>
+    <p class="hint">Tick, dấu X, tô không kín, tô mờ hoặc tô 2 ô được tính <b>SAI</b>. Xem ảnh và quyết định giữ sai hay chấp nhận.</p>
+    <div id="reviewList"></div>
+  </section>
+
+  <!-- 4. Câu viết -->
+  <section class="view" id="v-write">
+    <h2>Chấm câu viết theo cột</h2>
+    <p class="hint">Mỗi ô mặc định là <b>đúng</b>; ô bỏ trống mặc định là <b>sai</b>. Chạm vào ô để đổi đúng/sai, xong bấm "Xong câu này".</p>
+    <div class="qchips" id="wChips"></div>
+    <div id="wBody"></div>
+  </section>
+
+  <!-- 5. Kết quả -->
+  <section class="view" id="v-export">
+    <h2>Kết quả</h2>
+    <div id="exportWarn"></div>
+    <div class="row" style="margin-bottom:14px">
+      <button class="btn primary" id="btnXlsx">Tải file Excel</button>
+      <button class="btn" id="btnCsv">Tải file CSV</button>
+    </div>
+    <div class="tablewrap"><table id="resTable"></table></div>
+    <button class="btn ghost" id="btnClear">Xoá toàn bộ kết quả của đề + lớp này</button>
+  </section>
+</main>
+
+<div class="dock" id="dock" hidden><div class="wrap">
+  <label class="btn primary" for="fileCam">Chụp phiếu</label>
+  <input type="file" id="fileCam" accept="image/*" capture="environment" hidden>
+  <label class="btn" for="fileMany">Chọn nhiều ảnh</label>
+  <input type="file" id="fileMany" accept="image/*" multiple hidden>
+</div></div>
+
+<div class="loading" id="loading"><div><div class="spinner"></div><div id="loadingMsg">Đang tải bộ nhận dạng phiếu…</div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="omr-engine.js"></script>
+<script src="cham-bai.js"></script>
+<script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"></script>
+</body>
+</html>

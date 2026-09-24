@@ -1,0 +1,6 @@
+{
+  "_ghi_chu": "Mốc quy đổi điểm thô -> thang Cambridge English Scale (B1 Preliminary for Schools). Hãy đối chiếu với bảng chính thức của Cambridge trước khi dùng. Điểm giữa hai mốc được nội suy tuyến tính; dưới mốc thấp nhất ghi 'Dưới 120'.",
+  "reading":   [[32, 170], [29, 160], [23, 140], [13, 120]],
+  "listening": [[25, 170], [23, 160], [18, 140], [11, 120]],
+  "cefr": [[160, "B2"], [140, "B1"], [120, "A2"]]
+}
