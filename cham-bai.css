@@ -57,7 +57,8 @@ select, input[type=text] { width: 100%; padding: 11px 12px; border: 1px solid va
 .stu .nm { font-weight: 600; font-size: 14px; line-height: 1.3; min-height: 2.6em; }
 .stu .cd { font-size: 12px; color: var(--muted); }
 .stu .halves { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 6px; }
-.stu .halves span { font-size: 12px; font-weight: 700; text-align: center; border-radius: 6px; padding: 3px 0; background: var(--paper); color: #9aa3b1; }
+.stu .halves span, .stu .halves button { border: 0; }
+.stu .halves span, .stu .halves button { font-size: 12px; font-weight: 700; text-align: center; border-radius: 6px; padding: 3px 0; background: var(--paper); color: #9aa3b1; }
 .s-done { background: var(--ok-soft) !important; color: var(--ok) !important; }
 .s-flag { background: var(--flag-soft) !important; color: var(--flag) !important; }
 
@@ -110,3 +111,12 @@ tr.missing td { color: #9aa3b1; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
 .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+
+.btn.danger { color: var(--bad); border-color: #efc3bf; }
+.stu .halves button { position: relative; }
+.stu .halves button i { font-style: normal; font-weight: 400; margin-left: 4px; opacity: .7; }
+.queue div { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.queue .q-del { border-left-color: var(--line); color: var(--muted); text-decoration: line-through; }
+.rlist { display: grid; gap: 6px; margin-top: 10px; max-width: 420px; }
+.rlist div { display: flex; justify-content: space-between; align-items: center; background: #fff;
+  border: 1px solid var(--line); border-radius: var(--r); padding: 6px 6px 6px 12px; font-size: 14px; }
