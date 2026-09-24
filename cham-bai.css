@@ -11,7 +11,7 @@ html, body { margin: 0; background: var(--paper); color: var(--ink);
 button, select, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 3px solid var(--write); outline-offset: 2px; }
-.wrap { max-width: 960px; margin: 0 auto; padding: 0 16px 110px; }
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 16px 150px; }
 
 header.top { background: var(--ruby); color: #fff; }
 header.top .wrap { display: flex; align-items: baseline; gap: 12px; padding: 14px 16px 12px; flex-wrap: wrap; }
@@ -64,8 +64,11 @@ select, input[type=text] { width: 100%; padding: 11px 12px; border: 1px solid va
 
 .dock { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); z-index: 6;
   padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
-.dock .wrap { padding: 0; display: flex; gap: 10px; align-items: center; }
-.dock .btn { flex: 1; padding: 14px; font-size: 16px; }
+.dock .wrap { padding: 0; display: grid; gap: 8px; }
+.dock .btn { text-align: center; }
+.dock .btn.big { padding: 14px; font-size: 17px; }
+.dock-alt { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dock-alt .btn { padding: 9px; font-size: 14px; }
 .dock .status { font-size: 13px; color: var(--muted); }
 
 .queue { margin: 0 0 12px; display: grid; gap: 6px; }
@@ -120,3 +123,16 @@ tr.missing td { color: #9aa3b1; }
 .rlist { display: grid; gap: 6px; margin-top: 10px; max-width: 420px; }
 .rlist div { display: flex; justify-content: space-between; align-items: center; background: #fff;
   border: 1px solid var(--line); border-radius: var(--r); padding: 6px 6px 6px 12px; font-size: 14px; }
+
+/* Quét tự động */
+.scanner { position: fixed; inset: 0; background: #000; z-index: 30; color: #fff; }
+.scanner[hidden] { display: none; }
+.scanner video, .scanner canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.scan-top { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center;
+  padding: calc(10px + env(safe-area-inset-top)) 14px 10px; background: linear-gradient(rgba(0,0,0,.6), transparent); font-weight: 600; }
+.scan-top .btn { background: #fff; color: var(--ink); border: 0; }
+.scan-bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 14px calc(16px + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, rgba(0,0,0,.7)); display: grid; gap: 8px; justify-items: center; text-align: center; }
+.scan-status { font-size: 18px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(0,0,0,.55); max-width: 100%; }
+.scan-status.good { background: var(--ok); } .scan-status.warn { background: #8a5a00; } .scan-status.bad { background: var(--bad); }
+.scan-last { font-size: 14px; opacity: .9; min-height: 1.4em; }
