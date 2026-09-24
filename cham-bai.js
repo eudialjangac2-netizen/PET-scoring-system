@@ -68,7 +68,14 @@
     $('#selClass').innerHTML = ids.length ? ids.map(c => `<option value="${c}">Lớp ${c} (${r[c].length} học sinh)</option>`).join('')
       : '<option value="">Chưa có danh sách — tải file bên dưới</option>';
     if (sel && r[sel]) $('#selClass').value = sel;
-    $('#rosterInfo').textContent = ids.length ? `Đang có: ${ids.map(c => 'lớp ' + c).join(', ')}` : '';
+    $('#rosterList').innerHTML = ids.map(c => `<div><span><b>Lớp ${c}</b> · ${r[c].length} học sinh</span>
+      <button class="btn small danger" data-delcls="${c}">Xoá</button></div>`).join('');
+    $('#rosterList').querySelectorAll('[data-delcls]').forEach(b => b.onclick = () => deleteRoster(b.dataset.delcls));
+  }
+  function deleteRoster(c) {
+    const all = rosters();
+    if (!confirm(`Xoá danh sách lớp ${c} (${all[c].length} học sinh) khỏi máy này?\nKết quả chấm đã lưu của lớp này vẫn được giữ; nạp lại danh sách là xem tiếp được.`)) return;
+    delete all[c]; lsSet('pet-rosters', all); fillClasses($('#selClass').value);
   }
   async function loadRoster(file) {
     if (!file) return;
@@ -122,7 +129,15 @@
       const line = document.createElement('div'); line.className = 'q-run'; line.textContent = `Đang đọc ${f.name}…`;
       $('#queue').prepend(line);
       await new Promise(r => setTimeout(r, 30));
-      try { const msg = await processFile(f); line.className = msg.cls; line.innerHTML = msg.html; }
+      try {
+        const msg = await processFile(f); line.className = msg.cls;
+        line.innerHTML = `<span>${msg.html}</span>`;
+        if (msg.ref) {
+          const b = document.createElement('button'); b.className = 'btn small danger'; b.textContent = 'Xoá';
+          b.onclick = () => { if (removeRef(msg.ref)) { line.className = 'q-del'; line.innerHTML = `<span>Đã xoá: ${msg.html}</span>`; } };
+          line.appendChild(b);
+        }
+      }
       catch (e) { console.error(e); line.className = 'q-err'; line.textContent = `${f.name}: lỗi khi đọc ảnh (${e.message || e}).`; }
     }
     renderRoster(); renderUnknown(); updateBadges(); save();
@@ -138,9 +153,10 @@
     const sheet = buildSheet(res);
     const stu = res.codeOk ? stuByKey(res.code) : null;
     if (!stu) {
-      S.unknown.push({ id: Date.now() + Math.random(), page: res.page, code: res.code, sheet });
+      const id = Date.now() + Math.random();
+      S.unknown.push({ id, page: res.page, code: res.code, sheet });
       const why = res.codeOk ? `mã ${res.code} không có trong lớp ${S.cls}` : `mã tô chưa rõ (${res.code})`;
-      return { cls: 'q-err', html: `${PAGES[res.page].name}: ${esc(why)} — chọn học sinh ở mục bên dưới.` };
+      return { cls: 'q-err', html: `${PAGES[res.page].name}: ${esc(why)} — chọn học sinh ở mục bên dưới.`, ref: { unknown: id } };
     }
     return assign(stu.key, res.page, sheet);
   }
@@ -183,10 +199,23 @@
     S.sheets[key][page] = sheet;
     Object.keys(S.writeDone).filter(k => k.startsWith(page)).forEach(k => delete S.writeDone[k]);
     const nf = flagCount(sheet);
-    return { cls: nf ? 'q-flag' : 'q-ok',
+    return { cls: nf ? 'q-flag' : 'q-ok', ref: { key, page, at: sheet.at },
       html: `<b>${esc(stu.name)}</b> (${stu.code}) — ${PAGES[page].name}${nf ? ` · ${nf} câu cần duyệt` : ' · đọc tốt'}` };
   }
 
+  // xoá một phiếu vừa tải (chỉ xoá đúng phiếu đó, không xoá phiếu mới hơn đã thay thế nó)
+  function removeRef(ref) {
+    if (ref.unknown) {
+      const n = S.unknown.length; S.unknown = S.unknown.filter(u => u.id !== ref.unknown);
+      if (S.unknown.length === n) { alert('Phiếu này đã được gán cho học sinh hoặc đã xoá.'); return false; }
+    } else {
+      const st = S.sheets[ref.key], stu = stuByKey(ref.key);
+      if (!st?.[ref.page] || st[ref.page].at !== ref.at) { alert('Phiếu này đã được thay bằng phiếu khác hoặc đã xoá.'); return false; }
+      if (!confirm(`Xoá phiếu ${PAGES[ref.page].name} của ${stu ? stu.name : ref.key}?`)) return false;
+      delete st[ref.page]; if (!Object.keys(st).length) delete S.sheets[ref.key];
+    }
+    renderScan(); save(); return true;
+  }
   const flagCount = sh => Object.values(sh.mcq).filter(m => m.status === 'nonstd' || m.status === 'multi').length;
   const pendingFlags = sh => Object.entries(sh.mcq).filter(([q, m]) => (m.status === 'nonstd' || m.status === 'multi') && !sh.over[q]).length;
 
@@ -196,11 +225,17 @@
     const list = students();
     $('#roster').innerHTML = list.length ? list.map(s => {
       const sh = S.sheets[s.key] || {};
-      const half = p => { const x = sh[p]; const c = !x ? '' : pendingFlags(x) ? 's-flag' : 's-done';
-        return `<span class="${c}">${PAGES[p].short}${x ? (pendingFlags(x) ? ' · ' + pendingFlags(x) : ' ✓') : ''}</span>`; };
+      const half = p => { const x = sh[p]; if (!x) return `<span>${PAGES[p].short}</span>`;
+        const nf = pendingFlags(x);
+        return `<button class="${nf ? 's-flag' : 's-done'}" data-del="${s.key}|${p}" title="Xoá phiếu ${PAGES[p].name}">
+          ${PAGES[p].short}${nf ? ' · ' + nf : ' ✓'}<i aria-hidden="true">✕</i></button>`; };
       return `<div class="stu"><div class="nm">${esc(s.name)}</div><div class="cd">${s.code}</div>
         <div class="halves">${half('reading')}${half('listening')}</div></div>`;
     }).join('') : '<div class="empty">Lớp này chưa có học sinh.</div>';
+    $('#roster').querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+      const [key, page] = b.dataset.del.split('|');
+      removeRef({ key, page, at: S.sheets[key][page].at });
+    });
   }
   function renderUnknown() {
     const box = $('#unknownBox');
