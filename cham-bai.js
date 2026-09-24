@@ -42,6 +42,8 @@
     $('#fileMany').onchange = e => { handleFiles([...e.target.files]); e.target.value = ''; };
     $('#btnXlsx').onclick = exportXlsx; $('#btnCsv').onclick = exportCsv;
     $('#btnClear').onclick = clearSession;
+    $('#btnScan').onclick = startScanner; $('#scanStop').onclick = stopScanner;
+    document.addEventListener('visibilitychange', () => { if (document.hidden && cam.running) stopScanner(); });
     go('setup');
     waitCv();
   }
@@ -126,19 +128,13 @@
   async function handleFiles(files) {
     if (!cvReady) { alert('Bộ nhận dạng chưa tải xong, đợi vài giây rồi thử lại.'); return; }
     for (const f of files) {
-      const line = document.createElement('div'); line.className = 'q-run'; line.textContent = `Đang đọc ${f.name}…`;
-      $('#queue').prepend(line);
+      const run = document.createElement('div'); run.className = 'q-run'; run.textContent = `Đang đọc ${f.name}…`;
+      $('#queue').prepend(run);
       await new Promise(r => setTimeout(r, 30));
-      try {
-        const msg = await processFile(f); line.className = msg.cls;
-        line.innerHTML = `<span>${msg.html}</span>`;
-        if (msg.ref) {
-          const b = document.createElement('button'); b.className = 'btn small danger'; b.textContent = 'Xoá';
-          b.onclick = () => { if (removeRef(msg.ref)) { line.className = 'q-del'; line.innerHTML = `<span>Đã xoá: ${msg.html}</span>`; } };
-          line.appendChild(b);
-        }
-      }
-      catch (e) { console.error(e); line.className = 'q-err'; line.textContent = `${f.name}: lỗi khi đọc ảnh (${e.message || e}).`; }
+      let msg;
+      try { msg = await processFile(f); }
+      catch (e) { console.error(e); msg = { cls: 'q-err', html: `${esc(f.name)}: lỗi khi đọc ảnh (${esc(e.message || e)}).` }; }
+      run.remove(); addQueueLine(msg);
     }
     renderRoster(); renderUnknown(); updateBadges(); save();
   }
@@ -150,15 +146,31 @@
     c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); bmp.close?.();
     const res = OMR.process(window.cv, c.getContext('2d').getImageData(0, 0, c.width, c.height), TPL);
     if (!res.ok) return { cls: 'q-err', html: `${esc(f.name)}: ${esc(res.error)}` };
+    return record(res, false);
+  }
+
+  // ghi kết quả một phiếu đã đọc; auto = đang quét tự động (không hỏi, bỏ qua phiếu trùng)
+  function record(res, auto) {
     const sheet = buildSheet(res);
     const stu = res.codeOk ? stuByKey(res.code) : null;
     if (!stu) {
       const id = Date.now() + Math.random();
       S.unknown.push({ id, page: res.page, code: res.code, sheet });
       const why = res.codeOk ? `mã ${res.code} không có trong lớp ${S.cls}` : `mã tô chưa rõ (${res.code})`;
-      return { cls: 'q-err', html: `${PAGES[res.page].name}: ${esc(why)} — chọn học sinh ở mục bên dưới.`, ref: { unknown: id } };
+      return { cls: 'q-err', html: `${PAGES[res.page].name}: ${esc(why)} — chọn học sinh ở mục bên dưới.`, ref: { unknown: id }, short: `${PAGES[res.page].name}: ${why}` };
     }
-    return assign(stu.key, res.page, sheet);
+    return assign(stu.key, res.page, sheet, auto);
+  }
+
+  function addQueueLine(msg) {
+    const line = document.createElement('div'); line.className = msg.cls;
+    line.innerHTML = `<span>${msg.html}</span>`;
+    if (msg.ref) {
+      const b = document.createElement('button'); b.className = 'btn small danger'; b.textContent = 'Xoá';
+      b.onclick = () => { if (removeRef(msg.ref)) { line.className = 'q-del'; line.innerHTML = `<span>Đã xoá: ${msg.html}</span>`; } };
+      line.appendChild(b);
+    }
+    $('#queue').prepend(line);
   }
 
   function crop(res, x0, y0, x1, y1, k = 0.5) {   // toạ độ mm → ảnh JPEG
@@ -191,15 +203,19 @@
     return sh;
   }
 
-  function assign(key, page, sheet) {
+  function assign(key, page, sheet, auto) {
     const stu = stuByKey(key);
     S.sheets[key] = S.sheets[key] || {};
+    if (S.sheets[key][page] && auto)
+      return { cls: 'q-err', dup: true, html: `Đã có phiếu ${PAGES[page].name} của ${esc(stu.name)} — bỏ qua. Muốn quét lại thì xoá phiếu cũ trước.`,
+        short: `Đã có phiếu ${PAGES[page].name} của ${stu.name} — bỏ qua` };
     if (S.sheets[key][page] && !confirm(`Đã có phiếu ${PAGES[page].name} của ${stu.name}. Thay bằng phiếu mới?`))
       return { cls: 'q-err', html: `Giữ phiếu ${PAGES[page].name} cũ của ${esc(stu.name)}.` };
     S.sheets[key][page] = sheet;
     Object.keys(S.writeDone).filter(k => k.startsWith(page)).forEach(k => delete S.writeDone[k]);
     const nf = flagCount(sheet);
-    return { cls: nf ? 'q-flag' : 'q-ok', ref: { key, page, at: sheet.at },
+    return { cls: nf ? 'q-flag' : 'q-ok', ref: { key, page, at: sheet.at }, ok: true,
+      short: `✓ ${stu.name} — ${PAGES[page].name}${nf ? ` · ${nf} câu cần duyệt` : ''}`,
       html: `<b>${esc(stu.name)}</b> (${stu.code}) — ${PAGES[page].name}${nf ? ` · ${nf} câu cần duyệt` : ' · đọc tốt'}` };
   }
 
@@ -218,6 +234,133 @@
   }
   const flagCount = sh => Object.values(sh.mcq).filter(m => m.status === 'nonstd' || m.status === 'multi').length;
   const pendingFlags = sh => Object.entries(sh.mcq).filter(([q, m]) => (m.status === 'nonstd' || m.status === 'multi') && !sh.over[q]).length;
+
+
+  // ---------- quét tự động bằng camera ----------
+  const cam = { running: false, busy: false, stream: null, last: null, stable: 0, locked: null, clear: 0, lastSig: '', count: 0, audio: null };
+  const PREVIEW = 720, STABLE_FRAMES = 3, STILL = 0.012, MOVED = 0.10, MIN_AREA = 0.22;
+
+  async function startScanner() {
+    if (!cvReady) { alert('Bộ nhận dạng chưa tải xong, đợi vài giây rồi thử lại.'); return; }
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+      alert('Trình duyệt này không mở được camera trong app. Hãy mở link bằng Safari (iPhone) hoặc Chrome (Android), không mở trong Zalo/Messenger. Tạm thời có thể dùng nút "Chụp từng ảnh".');
+      return;
+    }
+    $('#scanner').hidden = false; setStatus('Đang mở camera…');
+    try {
+      cam.stream = await navigator.mediaDevices.getUserMedia({ audio: false,
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 3840 }, height: { ideal: 2160 } } });
+    } catch (e) {
+      $('#scanner').hidden = true;
+      alert(e.name === 'NotAllowedError'
+        ? 'App chưa được phép dùng camera. Vào cài đặt trình duyệt, cho phép camera cho trang này rồi thử lại.'
+        : 'Không mở được camera (' + e.name + '). Có thể dùng nút "Chụp từng ảnh" thay thế.');
+      return;
+    }
+    const track = cam.stream.getVideoTracks()[0];
+    try { await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch {}
+    const v = $('#camVideo'); v.srcObject = cam.stream;
+    try { await v.play(); } catch {}
+    try { cam.audio = cam.audio || new (window.AudioContext || window.webkitAudioContext)(); cam.audio.resume?.(); } catch {}
+    Object.assign(cam, { running: true, busy: false, last: null, stable: 0, locked: null, clear: 0, lastSig: '', count: 0 });
+    $('#scanCount').textContent = 'Chưa quét phiếu nào'; $('#scanLast').textContent = '';
+    setStatus('Đưa phiếu vào khung hình');
+    tick();
+  }
+
+  function stopScanner() {
+    cam.running = false;
+    cam.stream?.getTracks().forEach(t => t.stop()); cam.stream = null;
+    $('#camVideo').srcObject = null; $('#scanner').hidden = true;
+    renderScan(); save();
+  }
+
+  function setStatus(t, kind = '') { const el = $('#scanStatus'); el.textContent = t; el.className = 'scan-status ' + kind; }
+
+  function beep() {
+    try { navigator.vibrate?.(90); } catch {}
+    try { const a = cam.audio; if (!a) return; const o = a.createOscillator(), g = a.createGain();
+      o.frequency.value = 1046; g.gain.value = 0.15; o.connect(g); g.connect(a.destination);
+      o.start(); o.stop(a.currentTime + 0.12); } catch {}
+  }
+
+  function drawOverlay(corners, color, scale) {
+    const cv = $('#camOverlay'), v = $('#camVideo'), dpr = window.devicePixelRatio || 1;
+    const W = cv.clientWidth, H = cv.clientHeight;
+    if (cv.width !== W * dpr) { cv.width = W * dpr; cv.height = H * dpr; }
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    if (!corners) return;
+    const vw = v.videoWidth, vh = v.videoHeight, k = Math.min(W / vw, H / vh), ox = (W - vw * k) / 2, oy = (H - vh * k) / 2;
+    const P = corners.map(([x, y]) => [ox + x / scale * k, oy + y / scale * k]);
+    const [tl, tr, bl, br] = P;
+    ctx.lineWidth = 4; ctx.strokeStyle = color; ctx.fillStyle = color;
+    ctx.beginPath(); ctx.moveTo(...tl); ctx.lineTo(...tr); ctx.lineTo(...br); ctx.lineTo(...bl); ctx.closePath(); ctx.stroke();
+    P.forEach(p => { ctx.beginPath(); ctx.arc(p[0], p[1], 9, 0, Math.PI * 2); ctx.fill(); });
+  }
+
+  const moved = (a, b, diag) => a && b ? Math.max(...a.map((p, i) => Math.hypot(p[0] - b[i][0], p[1] - b[i][1]))) / diag : 1;
+
+  function tick() {
+    if (!cam.running) return;
+    const next = () => cam.running && setTimeout(tick, 120);
+    const v = $('#camVideo');
+    if (cam.busy || !v.videoWidth) { next(); return; }
+    const scale = PREVIEW / Math.max(v.videoWidth, v.videoHeight);
+    const c = tick.c || (tick.c = document.createElement('canvas'));
+    c.width = Math.round(v.videoWidth * scale); c.height = Math.round(v.videoHeight * scale);
+    const ctx = c.getContext('2d', { willReadFrequently: true }); ctx.drawImage(v, 0, 0, c.width, c.height);
+    let det = null;
+    try { det = OMR.detect(window.cv, ctx.getImageData(0, 0, c.width, c.height)); } catch (e) { console.error(e); }
+    const diag = Math.hypot(c.width, c.height);
+
+    if (!det) {
+      cam.stable = 0; cam.last = null; drawOverlay(null);
+      if (cam.locked && ++cam.clear >= 2) cam.locked = null;
+      if (!cam.locked) setStatus('Đưa phiếu vào khung — thấy đủ 4 ô vuông đen');
+      next(); return;
+    }
+    cam.clear = 0;
+    if (cam.locked) {
+      if (moved(det.corners, cam.locked, diag) > MOVED) cam.locked = null;   // đã đổi phiếu mà không rời khung
+      else { drawOverlay(det.corners, '#9aa3b1', scale); setStatus('Lật sang phiếu tiếp theo'); next(); return; }
+    }
+    if (det.areaFrac < MIN_AREA) {
+      cam.stable = 0; cam.last = det.corners; drawOverlay(det.corners, '#E0A100', scale);
+      setStatus('Đưa máy lại gần phiếu hơn', 'warn'); next(); return;
+    }
+    cam.stable = moved(det.corners, cam.last, diag) < STILL ? cam.stable + 1 : 0;
+    cam.last = det.corners;
+    drawOverlay(det.corners, '#E0A100', scale);
+    if (cam.stable < STABLE_FRAMES) { setStatus('Giữ yên máy…', 'warn'); next(); return; }
+
+    // chụp khung hình đầy đủ và chấm
+    cam.busy = true; setStatus('Đang chấm…');
+    setTimeout(() => {
+      try { capture(det, scale); } catch (e) { console.error(e); setStatus('Lỗi khi chấm — thử lại', 'bad'); }
+      cam.busy = false; cam.stable = 0; next();
+    }, 20);
+  }
+
+  function capture(det, scale) {
+    const v = $('#camVideo');
+    const k = Math.min(1, 2600 / Math.max(v.videoWidth, v.videoHeight));
+    const c = document.createElement('canvas'); c.width = Math.round(v.videoWidth * k); c.height = Math.round(v.videoHeight * k);
+    const ctx = c.getContext('2d'); ctx.drawImage(v, 0, 0, c.width, c.height);
+    const res = OMR.process(window.cv, ctx.getImageData(0, 0, c.width, c.height), TPL);
+    if (!res.ok) { setStatus(res.error, res.qualityFail ? 'warn' : 'bad'); return; }
+    const sig = res.page + ':' + res.code;
+    if (sig === cam.lastSig) { cam.locked = det.corners; setStatus('Phiếu này vừa quét — lật sang phiếu tiếp theo'); return; }
+    const msg = record(res, true);
+    cam.lastSig = sig; cam.locked = det.corners;
+    if (!msg.dup) addQueueLine(msg);
+    if (msg.ok) {
+      cam.count++; beep(); drawOverlay(det.corners, '#1E7F4F', scale);
+      setStatus(msg.short, 'good');
+      $('#scanCount').textContent = `Đã quét ${cam.count} phiếu`;
+    } else setStatus(msg.short || 'Không ghi được phiếu này', msg.dup ? 'warn' : 'bad');
+    if (msg.ok) $('#scanLast').textContent = 'Vừa quét: ' + msg.short.replace('✓ ', '');
+    renderRoster(); renderUnknown(); updateBadges(); save();
+  }
 
   // ---------- màn chụp ----------
   function renderScan() { renderRoster(); renderUnknown(); updateBadges(); }
