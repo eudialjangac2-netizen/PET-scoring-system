@@ -35,8 +35,8 @@
       <div class="row">
         <label class="btn" for="fileRoster">Tải danh sách lớp</label>
         <input type="file" id="fileRoster" accept=".xlsx,.csv" hidden>
-        <span id="rosterInfo" class="hint" style="margin:0"></span>
       </div>
+      <div class="rlist" id="rosterList"></div>
     </div>
     <button class="btn primary" id="btnStart">Bắt đầu chấm</button>
   </section>
@@ -51,6 +51,7 @@
       <span><i style="background:var(--ok-soft);border:1px solid var(--ok)"></i>Đã có phiếu</span>
       <span><i style="background:var(--flag-soft);border:1px solid var(--flag)"></i>Có câu cần duyệt</span>
       <span><i style="background:var(--paper);border:1px solid var(--line)"></i>Chưa có phiếu</span>
+      <span>Chạm vào R / L đã có phiếu để xoá phiếu đó</span>
     </div>
     <div class="roster" id="roster"></div>
   </section>
