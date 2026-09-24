@@ -85,11 +85,27 @@
 </main>
 
 <div class="dock" id="dock" hidden><div class="wrap">
-  <label class="btn primary" for="fileCam">Chụp phiếu</label>
-  <input type="file" id="fileCam" accept="image/*" capture="environment" hidden>
-  <label class="btn" for="fileMany">Chọn nhiều ảnh</label>
-  <input type="file" id="fileMany" accept="image/*" multiple hidden>
+  <button class="btn primary big" id="btnScan">Quét phiếu</button>
+  <div class="dock-alt">
+    <label class="btn" for="fileCam">Chụp từng ảnh</label>
+    <input type="file" id="fileCam" accept="image/*" capture="environment" hidden>
+    <label class="btn" for="fileMany">Chọn ảnh có sẵn</label>
+    <input type="file" id="fileMany" accept="image/*" multiple hidden>
+  </div>
 </div></div>
+
+<div class="scanner" id="scanner" hidden>
+  <video id="camVideo" playsinline muted autoplay></video>
+  <canvas id="camOverlay"></canvas>
+  <div class="scan-top">
+    <span id="scanCount">Chưa quét phiếu nào</span>
+    <button class="btn" id="scanStop">Dừng quét</button>
+  </div>
+  <div class="scan-bottom">
+    <div class="scan-status" id="scanStatus">Đang mở camera…</div>
+    <div class="scan-last" id="scanLast"></div>
+  </div>
+</div>
 
 <div class="loading" id="loading"><div><div class="spinner"></div><div id="loadingMsg">Đang tải bộ nhận dạng phiếu…</div></div></div>
 
