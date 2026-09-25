@@ -136,3 +136,52 @@ tr.missing td { color: #9aa3b1; }
 .scan-status { font-size: 18px; font-weight: 700; padding: 8px 16px; border-radius: 99px; background: rgba(0,0,0,.55); max-width: 100%; }
 .scan-status.good { background: var(--ok); } .scan-status.warn { background: #8a5a00; } .scan-status.bad { background: var(--bad); }
 .scan-last { font-size: 14px; opacity: .9; min-height: 1.4em; }
+
+details.fallback { margin: 0 0 18px; }
+details.fallback summary { cursor: pointer; color: var(--muted); font-weight: 600; padding: 6px 0; }
+details.fallback[open] { background: #fff; border: 1px solid var(--line); border-radius: var(--r); padding: 4px 12px 12px; }
+#syncStatus { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.version { color: #9aa3b1; font-size: 12px; margin-top: 22px; }
+td .btn.small { padding: 3px 9px; }
+
+/* Hộp xem phiếu */
+.modal { position: fixed; inset: 0; background: rgba(23,32,51,.6); z-index: 25; display: grid; place-items: center; padding: 12px; }
+.modal[hidden] { display: none; }
+.modal-box { background: #fff; border-radius: 14px; width: min(640px, 100%); max-height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+.modal-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.modal-body { overflow: auto; background: var(--paper); padding: 10px; }
+.modal-body img { width: 100%; display: block; box-shadow: 0 1px 6px rgba(0,0,0,.15); }
+.modal-acts { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
+.modal-acts .btn { flex: 1; min-width: 120px; }
+
+/* Phiếu kết quả A4 (vẽ ngoài màn hình rồi chuyển thành ảnh) */
+#reportStage { position: fixed; left: -10000px; top: 0; }
+.rp { width: 794px; min-height: 1123px; background: #fff; color: #172033; font: 14px/1.45 "Be Vietnam Pro", system-ui, sans-serif; display: flex; flex-direction: column; }
+.rp-band { background: #9E1B32; color: #fff; padding: 22px 36px 18px; }
+.rp-band small { display: block; letter-spacing: .12em; font-size: 11px; opacity: .85; font-weight: 600; }
+.rp-band h1 { margin: 2px 0 0; font-size: 24px; font-weight: 700; }
+.rp-main { padding: 18px 36px 16px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+.rp-info { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 6px 18px; font-size: 13px; }
+.rp-info div span { display: block; color: #5B6576; font-size: 11px; }
+.rp-info div b { font-size: 15px; }
+.rp-scores { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.rp-skill { border: 1px solid #DCE1E8; border-radius: 12px; padding: 12px 14px; }
+.rp-skill h2 { margin: 0 0 6px; font-size: 15px; display: flex; justify-content: space-between; align-items: baseline; }
+.rp-skill h2 em { font-style: normal; font-size: 12px; font-weight: 700; padding: 1px 9px; border-radius: 99px; background: #F7E6E9; color: #9E1B32; }
+.rp-big { display: flex; gap: 18px; align-items: baseline; margin-bottom: 8px; }
+.rp-big b { font-size: 30px; line-height: 1; } .rp-big span { color: #5B6576; font-size: 12px; }
+.rp-part { display: grid; grid-template-columns: 52px 1fr 40px; gap: 8px; align-items: center; font-size: 12px; margin-top: 4px; }
+.rp-bar { height: 9px; background: #EEF1F5; border-radius: 99px; overflow: hidden; }
+.rp-bar i { display: block; height: 100%; border-radius: 99px; }
+.rp-none { color: #9aa3b1; padding: 20px 0; text-align: center; }
+.rp h3 { margin: 0 0 6px; font-size: 14px; }
+.rp-wrong { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.rp-wrong ul { margin: 0; padding: 0; list-style: none; font-size: 12px; }
+.rp-wrong li { padding: 3px 0; border-bottom: 1px dotted #DCE1E8; }
+.rp-wrong li b { display: inline-block; min-width: 26px; }
+.rp-wrong .pt { font-weight: 700; color: #5B6576; margin-top: 6px; border: 0; font-size: 11px; letter-spacing: .04em; }
+.rp-habit { background: #FFF3CC; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #5b3f00; }
+.rp-note { border-top: 1px solid #DCE1E8; padding-top: 10px; font-size: 13px; color: #5B6576; }
+.rp-note div { border-bottom: 1px dotted #b8c0cc; height: 26px; }
+.rp-foot { padding: 10px 36px 16px; font-size: 11px; color: #9aa3b1; display: flex; justify-content: space-between; }
