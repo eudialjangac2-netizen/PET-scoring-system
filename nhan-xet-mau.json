@@ -1,0 +1,35 @@
+{
+  "_ghi_chu": "Câu mẫu cho nhận xét gợi ý trên phiếu kết quả. Có thể sửa lời văn tuỳ ý, giữ nguyên các chỗ trong ngoặc nhọn như {skills}, {list}. Ngưỡng: Part đạt từ 'manh' trở lên là điểm mạnh, dưới 'yeu' là cần cải thiện (tính theo tỉ lệ câu đúng).",
+  "nguong": { "manh": 0.8, "yeu": 0.5 },
+  "toiDaDiemManh": 3,
+  "moDau": {
+    "B2": "Em đạt trình độ B2 ở {skills}, rất đáng khen!",
+    "B1": "Em đạt trình độ B1 ở {skills}.",
+    "A2": "{skills} đang ở mức A2, em cần cố gắng thêm để đạt B1.",
+    "Dưới A2": "{skills} còn dưới mức A2, em cần ôn tập đều đặn hơn."
+  },
+  "noiKyNang": " và ",
+  "diemManh": "Em làm rất tốt {list}.",
+  "muc": "{skill} Part {part} ({score})",
+  "canCaiThien": "Cần cải thiện: {list}.",
+  "mucCaiThien": "{skill} Part {part} ({score}), {advice}",
+  "khongYeu": "Em làm khá đều các phần, hãy tiếp tục phát huy!",
+  "loiKhuyen": {
+    "reading": {
+      "1": "đọc kỹ thông báo ngắn và xác định mục đích của tin nhắn",
+      "2": "gạch chân yêu cầu của từng người và đối chiếu đủ mọi ý",
+      "3": "luyện đọc bài dài, nắm ý chính và thái độ người viết",
+      "4": "chú ý từ nối, đại từ để ghép câu vào đoạn văn",
+      "5": "ôn collocation, cụm động từ và giới từ",
+      "6": "ôn từ chức năng: giới từ, mạo từ, đại từ, trợ động từ"
+    },
+    "listening": {
+      "1": "nghe kỹ chi tiết, cẩn thận với thông tin gây nhiễu",
+      "2": "chú ý ý kiến và thái độ của người nói",
+      "3": "luyện nghe điền thông tin và kiểm tra chính tả",
+      "4": "luyện nghe bài phỏng vấn dài, nắm ý chính"
+    }
+  },
+  "toBai": "Em nhớ tô kín một ô tròn cho mỗi câu để không bị mất điểm oan.",
+  "boTrong": "Em không nên bỏ trống câu nào, vì trả lời sai cũng không bị trừ điểm."
+}
