@@ -3,9 +3,10 @@
   'use strict';
   const $ = s => document.querySelector(s);
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const APP_VERSION = '25/09/2026 — điểm theo Part, phiếu kết quả cá nhân';
   const PAGES = { reading: { n: 32, short: 'R', name: 'Reading' }, listening: { n: 25, short: 'L', name: 'Listening' } };
 
-  let TPL, SCALE, TESTS = [], KEY = null, cvReady = false;
+  let TPL, SCALE, CFG = {}, TESTS = [], KEY = null, cvReady = false;
   let S = null;            // phiên chấm hiện tại
   let curWrite = null;     // câu viết đang xem, ví dụ 'reading-27'
 
@@ -25,12 +26,27 @@
   const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   let saveTimer;
-  const save = () => { clearTimeout(saveTimer); saveTimer = setTimeout(() => idb.set(S.id, S).catch(() => alert('Không lưu được kết quả trên máy (bộ nhớ trình duyệt đầy?).')), 300); };
+  const save = (dirty = true) => {
+    if (!S) return;
+    if (dirty) S.dirty = true;
+    const snap = S;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => idb.set(snap.id, snap).catch(() => alert('Không lưu được kết quả trên máy (bộ nhớ trình duyệt đầy?).')), 300);
+    if (dirty) scheduleSync();
+  };
 
   // ---------- khởi động ----------
   async function boot() {
     [TPL, SCALE, TESTS] = await Promise.all(['omr-template.json', 'thang-diem.json', 'de-thi/manifest.json']
       .map(f => fetch(f).then(r => { if (!r.ok) throw new Error(f); return r.json(); })));
+    CFG = await fetch('cau-hinh.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
+    const hasSheet = /^https:\/\/script\.google\.com\//.test(CFG.sheetUrl || '');
+    CFG.on = hasSheet;
+    $('#sheetBox').hidden = !hasSheet; $('#fileBox').open = !hasSheet;
+    $('#tCode').value = lsGet('pet-tcode', '');
+    $('#btnSync').onclick = () => fetchRosters(true);
+    if (hasSheet && $('#tCode').value) fetchRosters(false);
+    else if (hasSheet) $('#syncInfo').textContent = 'Nhập mã giáo viên rồi bấm "Cập nhật danh sách lớp".';
     $('#selTest').innerHTML = TESTS.map(t => `<option value="${esc(t.id)}">${esc(t.title)}</option>`).join('');
     const last = lsGet('pet-last', {});
     if (last.test) $('#selTest').value = last.test;
@@ -41,6 +57,8 @@
     $('#fileCam').onchange = e => { handleFiles([...e.target.files]); e.target.value = ''; };
     $('#fileMany').onchange = e => { handleFiles([...e.target.files]); e.target.value = ''; };
     $('#btnXlsx').onclick = exportXlsx; $('#btnCsv').onclick = exportCsv;
+    $('#btnClassReport').onclick = classReport; $('#reportClose').onclick = () => $('#reportModal').hidden = true;
+    $('#appVersion').textContent = 'Phiên bản app: ' + APP_VERSION;
     $('#btnClear').onclick = clearSession;
     $('#btnScan').onclick = startScanner; $('#scanStop').onclick = stopScanner;
     document.addEventListener('visibilitychange', () => { if (document.hidden && cam.running) stopScanner(); });
@@ -107,6 +125,84 @@
     lsSet('pet-rosters', all);
     fillClasses(Object.keys(out)[0]);
     alert(`Đã cập nhật ${n} học sinh: ${Object.entries(out).map(([c, l]) => `lớp ${c} (${l.length})`).join(', ')}.`);
+  }
+
+  // ---------- Google Sheet: danh sách lớp + sao lưu kết quả ----------
+  async function fetchRosters(loud) {
+    const code = $('#tCode').value.trim();
+    if (!code) { $('#syncInfo').textContent = 'Nhập mã giáo viên trước.'; return; }
+    $('#syncInfo').textContent = 'Đang lấy danh sách lớp…'; $('#btnSync').disabled = true;
+    try {
+      const r = await fetch(`${CFG.sheetUrl}?action=classes&code=${encodeURIComponent(code)}`).then(x => x.json());
+      if (!r.ok) { $('#syncInfo').textContent = r.error || 'Google Sheet từ chối yêu cầu.'; if (loud) alert(r.error); return; }
+      lsSet('pet-tcode', code);
+      const all = rosters();
+      for (const [c, list] of Object.entries(r.classes))
+        all[c] = list.map(s => ({ code: s.code, key: s.code.slice(0, 5), name: s.name })).sort((a, b) => a.key.localeCompare(b.key));
+      lsSet('pet-rosters', all); lsSet('pet-roster-at', new Date().toISOString());
+      fillClasses($('#selClass').value || lsGet('pet-last', {}).cls);
+      const ids = Object.keys(r.classes);
+      $('#syncInfo').textContent = ids.length ? `✓ Đã cập nhật lúc ${hhmm()}: ${ids.map(c => `lớp ${c} (${r.classes[c].length})`).join(', ')}.`
+        : 'Google Sheet chưa có tab danh sách nào (tên tab dạng "DS 72").';
+    } catch (e) {
+      const at = lsGet('pet-roster-at', null);
+      $('#syncInfo').textContent = 'Không kết nối được Google Sheet.' + (at ? ' Đang dùng danh sách đã lưu trên máy.' : '');
+      if (loud) alert('Không kết nối được Google Sheet. Kiểm tra mạng, hoặc dùng mục "Dự phòng" để tải danh sách từ file.');
+    } finally { $('#btnSync').disabled = false; }
+  }
+  const hhmm = (d = new Date()) => d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+  let syncTimer, syncing = false;
+  function scheduleSync() {
+    if (!CFG.on || !lsGet('pet-tcode', '')) return;
+    clearTimeout(syncTimer); syncTimer = setTimeout(() => pushResults(false), 6000);
+  }
+  function sheetRows() {
+    const P = partsOf;
+    const header = ['Đề', 'Lớp', 'Mã HS', 'Họ tên',
+      'Reading /32', 'Reading thang', 'Reading CEFR', ...P('reading').map(([p, n]) => `R Part ${p} (/${n})`),
+      'Listening /25', 'Listening thang', 'Listening CEFR', ...P('listening').map(([p, n]) => `L Part ${p} (/${n})`),
+      'Số câu tô không chuẩn', 'Ghi chú', 'Chi tiết Reading', 'Chi tiết Listening'];
+    const rows = results().filter(r => r.reading || r.listening).map(r => {
+      const o = { 'Khoá': `${S.test}|${S.cls}|${r.s.code}`, 'Đề': S.testTitle, 'Lớp': S.cls, 'Mã HS': r.s.code, 'Họ tên': r.s.name };
+      for (const p of ['reading', 'listening']) {
+        const g = r[p], N = PAGES[p].name, sh = PAGES[p].short;
+        o[`${N} /${PAGES[p].n}`] = g ? g.raw : ''; o[`${N} thang`] = g ? scaleText(g.scale) : ''; o[`${N} CEFR`] = g ? g.cefr : '';
+        P(p).forEach(([pt, n]) => o[`${sh} Part ${pt} (/${n})`] = g ? g.parts[pt] : '');
+        o[`Chi tiết ${N}`] = g ? g.items.map(i => `${i.q}${i.type === 'write' ? '' : (i.chosen || '-')}${i.ok ? '✓' : '✗'}`).join(' ') : '';
+      }
+      o['Số câu tô không chuẩn'] = (r.reading?.nonstd || 0) + (r.listening?.nonstd || 0);
+      o['Ghi chú'] = note(r);
+      return o;
+    });
+    return { header, rows };
+  }
+  async function pushResults(loud) {
+    if (!CFG.on || syncing || !S) return;
+    const code = lsGet('pet-tcode', '');
+    if (!code) { if (loud) alert('Chưa có mã giáo viên. Nhập ở bước 1 để sao lưu lên Google Sheet.'); return; }
+    const { header, rows } = sheetRows();
+    if (!rows.length) { if (loud) alert('Chưa có phiếu nào để sao lưu.'); return; }
+    syncing = true; renderSync('Đang sao lưu…');
+    try {
+      const r = await fetch(CFG.sheetUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'results', code, header, rows }) }).then(x => x.json());
+      if (!r.ok) throw new Error(r.error || 'Google Sheet từ chối');
+      S.dirty = false; S.syncedAt = new Date().toISOString(); save(false);
+    } catch (e) {
+      S.syncError = String(e.message || e);
+      if (loud) alert('Chưa sao lưu được: ' + S.syncError + '\nKết quả vẫn lưu trên máy; app sẽ thử lại khi có thay đổi.');
+    } finally { syncing = false; renderSync(); }
+  }
+  function renderSync(msg) {
+    const el = $('#syncStatus'); if (!el) return;
+    if (!CFG.on || !S) { el.hidden = true; return; }
+    el.hidden = false;
+    const txt = msg || (!lsGet('pet-tcode', '') ? 'Chưa nhập mã giáo viên — kết quả chỉ lưu trên máy này.'
+      : !S.dirty && S.syncedAt ? `☁️ Đã sao lưu lên Google Sheet lúc ${hhmm(new Date(S.syncedAt))}.`
+      : S.syncedAt ? `Có thay đổi chưa sao lưu (lần trước: ${hhmm(new Date(S.syncedAt))}).` : 'Chưa sao lưu lên Google Sheet.');
+    el.innerHTML = `<span>${esc(txt)}</span>${msg ? '' : '<button class="btn small" id="btnPush">Sao lưu ngay</button>'}`;
+    const b = $('#btnPush'); if (b) b.onclick = () => pushResults(true);
   }
 
   // ---------- phiên chấm ----------
@@ -468,26 +564,33 @@
   }
 
   // ---------- chấm điểm ----------
+  const partOfQ = {};
+  function partsOf(p) {
+    const cnt = {};
+    TPL[p].questions.forEach(q => { partOfQ[p + q.q] = q.part; cnt[q.part] = (cnt[q.part] || 0) + 1; });
+    return Object.entries(cnt).map(([k, n]) => [+k, n]).sort((a, b) => a[0] - b[0]);
+  }
   function gradePage(p, sh) {
     const K = KEY[p], items = [];
     let raw = 0, nonstd = 0;
+    const parts = Object.fromEntries(partsOf(p).map(([k]) => [k, 0]));
     for (let n = 1; n <= PAGES[p].n; n++) {
       const q = String(n), k = K[q];
       if (Array.isArray(k)) {
         const w = sh.write[q], ok = verdict(w);
         items.push({ q, type: 'write', shown: w.blank ? '' : (ok ? '✓' : '✗'), ok, flag: false });
-        raw += ok;
+        raw += ok; parts[partOfQ[p + q]] += ok;
       } else {
         const m = sh.mcq[q], o = sh.over[q], bad = m.status === 'nonstd' || m.status === 'multi';
         if (bad) nonstd++;
         const chosen = o ? (o.accept || '') : (m.status === 'ok' ? m.answer : '');
         const ok = chosen === k;
         items.push({ q, type: 'mcq', shown: bad && !o?.accept ? m.answer + '*' : chosen, chosen, ok, flag: bad && !o, bad });
-        raw += ok;
+        raw += ok; parts[partOfQ[p + q]] += ok;
       }
     }
     const scale = toScale(raw, SCALE[p]);
-    return { items, raw, scale, cefr: cefr(scale), nonstd };
+    return { items, raw, scale, cefr: cefr(scale), nonstd, parts };
   }
   function toScale(raw, anchors) {
     const a = [...anchors].sort((x, y) => y[0] - x[0]);
@@ -518,15 +621,18 @@
     return w;
   }
   function renderExport() {
+    renderSync();
     const w = warnings();
     $('#exportWarn').innerHTML = w.length ? `<div class="notice warn">${w.map(esc).join('<br>')}</div>` : '';
     const rs = results();
     $('#resTable').innerHTML = `<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Reading /32</th><th>Thang</th><th>CEFR</th>
-      <th>Listening /25</th><th>Thang</th><th>CEFR</th><th>Tô không chuẩn</th></tr></thead><tbody>` +
+      <th>Listening /25</th><th>Thang</th><th>CEFR</th><th>Tô không chuẩn</th><th></th></tr></thead><tbody>` +
       rs.map(r => { const R = r.reading, L = r.listening, miss = !R && !L;
         const c = (g, n) => g ? `<td class="num">${g.raw}</td><td class="num">${scaleText(g.scale)}</td><td>${g.cefr}</td>` : '<td>—</td><td>—</td><td>—</td>';
         return `<tr class="${miss ? 'missing' : ''}"><td class="num">${r.stt}</td><td>${r.s.code}</td><td>${esc(r.s.name)}</td>${c(R)}${c(L)}
-          <td class="num">${(R?.nonstd || 0) + (L?.nonstd || 0) || ''}</td></tr>`; }).join('') + '</tbody>';
+          <td class="num">${(R?.nonstd || 0) + (L?.nonstd || 0) || ''}</td>
+          <td>${miss ? '' : `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>`}</td></tr>`; }).join('') + '</tbody>';
+    $('#resTable').querySelectorAll('[data-rp]').forEach(b => b.onclick = () => studentReport(b.dataset.rp));
   }
 
   function note(r) {
@@ -549,8 +655,8 @@
     const fill = c => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: c } });
     const GREEN = 'FFE3F3EA', RED = 'FFFBE7E5', YEL = 'FFFFE9A8', HEAD = 'FF9E1B32';
     const qCols = p => Array.from({ length: PAGES[p].n }, (_, i) => PAGES[p].short + (i + 1));
-    const header = ['STT', 'Mã HS', 'Họ tên', ...qCols('reading'), 'Reading /32', 'Reading thang', 'Reading CEFR',
-      ...qCols('listening'), 'Listening /25', 'Listening thang', 'Listening CEFR', 'Số câu tô không chuẩn', 'Ghi chú'];
+    const header = ['STT', 'Mã HS', 'Họ tên', ...qCols('reading'), 'Reading /32', 'Reading thang', 'Reading CEFR', ...partsOf('reading').map(([p, n]) => `R Part ${p} (/${n})`),
+      ...qCols('listening'), 'Listening /25', 'Listening thang', 'Listening CEFR', ...partsOf('listening').map(([p, n]) => `L Part ${p} (/${n})`), 'Số câu tô không chuẩn', 'Ghi chú'];
     const styleHead = ws => { const r = ws.getRow(1); r.font = { bold: true, color: { argb: 'FFFFFFFF' } }; r.fill = fill(HEAD);
       ws.views = [{ state: 'frozen', xSplit: 3, ySplit: 1 }]; ws.getColumn(3).width = 26; ws.getColumn(2).width = 10; };
 
@@ -558,8 +664,8 @@
       const ws = wb.addWorksheet(name); ws.addRow(header); styleHead(ws);
       if (name === 'Đáp án đã chọn') {
         const kr = ws.addRow(['', 'Đáp án', '',
-          ...qCols('reading').map((_, i) => [].concat(KEY.reading[i + 1]).join('/')), '', '', '',
-          ...qCols('listening').map((_, i) => [].concat(KEY.listening[i + 1]).join('/')), '', '', '', '', '']);
+          ...qCols('reading').map((_, i) => [].concat(KEY.reading[i + 1]).join('/')), '', '', '', ...partsOf('reading').map(() => ''),
+          ...qCols('listening').map((_, i) => [].concat(KEY.listening[i + 1]).join('/')), '', '', '', ...partsOf('listening').map(() => ''), '', '']);
         kr.font = { bold: true }; kr.fill = fill('FFE6EDFC');
       }
       for (const r of rs) {
@@ -570,6 +676,7 @@
           for (let i = 0; i < PAGES[p].n; i++) { const it = g?.items[i]; vals.push(it ? cellOf(it) : ''); marks.push(it); }
           vals.push(g ? g.raw : '', g ? scaleText(g.scale) : '', g ? g.cefr : '');
           marks.push(null, null, null);
+          partsOf(p).forEach(([pt]) => { vals.push(g ? g.parts[pt] : ''); marks.push(null); });
         }
         vals.push((r.reading?.nonstd || 0) + (r.listening?.nonstd || 0), note(r) || '');
         const row = ws.addRow(vals);
@@ -609,17 +716,131 @@
     if (!confirmWarn()) return;
     const rs = results(), q = s => `"${String(s).replace(/"/g, '""')}"`;
     const cols = p => Array.from({ length: PAGES[p].n }, (_, i) => PAGES[p].short + (i + 1));
-    const lines = [['STT', 'Mã HS', 'Họ tên', ...cols('reading'), 'Reading /32', 'Reading thang', 'Reading CEFR',
-      ...cols('listening'), 'Listening /25', 'Listening thang', 'Listening CEFR', 'Số câu tô không chuẩn', 'Ghi chú']];
+    const lines = [['STT', 'Mã HS', 'Họ tên', ...cols('reading'), 'Reading /32', 'Reading thang', 'Reading CEFR', ...partsOf('reading').map(([p, n]) => `R Part ${p} (/${n})`),
+      ...cols('listening'), 'Listening /25', 'Listening thang', 'Listening CEFR', ...partsOf('listening').map(([p, n]) => `L Part ${p} (/${n})`), 'Số câu tô không chuẩn', 'Ghi chú']];
     for (const r of rs) {
       const v = [r.stt, r.s.code, r.s.name];
       for (const p of ['reading', 'listening']) { const g = r[p];
         for (let i = 0; i < PAGES[p].n; i++) v.push(g ? (g.items[i].ok ? 1 : 0) : '');
-        v.push(g ? g.raw : '', g ? scaleText(g.scale) : '', g ? g.cefr : ''); }
+        v.push(g ? g.raw : '', g ? scaleText(g.scale) : '', g ? g.cefr : '');
+        partsOf(p).forEach(([pt]) => v.push(g ? g.parts[pt] : '')); }
       v.push((r.reading?.nonstd || 0) + (r.listening?.nonstd || 0), note(r));
       lines.push(v);
     }
     download(new Blob(['\uFEFF' + lines.map(l => l.map(q).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }), fname('csv'));
+  }
+
+
+  // ---------- phiếu kết quả cá nhân ----------
+  const LIBS = ['https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
+                'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'];
+  const loadScript = src => new Promise((res, rej) => {
+    if (document.querySelector(`script[src="${src}"]`)) return res();
+    const s = document.createElement('script'); s.src = src; s.onload = res;
+    s.onerror = () => rej(new Error('Không tải được thư viện tạo phiếu — kiểm tra kết nối mạng.'));
+    document.head.appendChild(s);
+  });
+  const ensureLibs = () => Promise.all(LIBS.map(loadScript));
+  const slug = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const barColor = f => f >= 0.75 ? '#1E7F4F' : f >= 0.5 ? '#E0A100' : '#B42318';
+
+  function reportHTML(r) {
+    const dates = ['reading', 'listening'].map(p => S.sheets[r.s.key]?.[p]?.at).filter(Boolean);
+    const day = new Date(Math.max(...dates)).toLocaleDateString('vi-VN');
+    const skill = p => {
+      const g = r[p], P = PAGES[p];
+      if (!g) return `<div class="rp-skill"><h2>${P.name}</h2><div class="rp-none">Chưa có bài</div></div>`;
+      const parts = partsOf(p).map(([pt, n]) => { const v = g.parts[pt], f = v / n;
+        return `<div class="rp-part"><span>Part ${pt}</span><div class="rp-bar"><i style="width:${Math.max(f * 100, 2)}%;background:${barColor(f)}"></i></div><b>${v}/${n}</b></div>`; }).join('');
+      return `<div class="rp-skill"><h2>${P.name}<em>${g.cefr}</em></h2>
+        <div class="rp-big"><div><b>${g.raw}</b><span> / ${P.n} câu đúng</span></div><div><b>${scaleText(g.scale)}</b><span> thang Cambridge</span></div></div>${parts}</div>`;
+    };
+    const wrong = p => {
+      const g = r[p]; if (!g) return '';
+      const K = KEY[p]; let last = null, out = '';
+      const bad = g.items.filter(i => !i.ok);
+      if (!bad.length) return `<div><h3>${PAGES[p].name}</h3><ul><li>Không sai câu nào 🎉</li></ul></div>`;
+      for (const i of bad) {
+        const pt = partOfQ[p + i.q];
+        if (pt !== last) { out += `<li class="pt">PART ${pt}</li>`; last = pt; }
+        const key = [].concat(K[i.q]).join(' / ');
+        const what = i.type === 'write' ? (i.shown === '' ? 'bỏ trống' : 'chưa đúng')
+          : i.bad && !i.chosen ? `tô ô ${esc(i.shown.replace('*', ''))} chưa đúng cách` : i.chosen ? `em chọn ${i.chosen}` : 'bỏ trống';
+        out += `<li><b>${i.q}.</b> ${what} → đáp án <b>${esc(key)}</b></li>`;
+      }
+      return `<div><h3>${PAGES[p].name} — câu cần xem lại</h3><ul>${out}</ul></div>`;
+    };
+    const habit = ['reading', 'listening'].flatMap(p => r[p] ? r[p].items.filter(i => i.bad).map(i => PAGES[p].short + i.q) : []);
+    const tR = S.testTitle;
+    return `<div class="rp">
+      <div class="rp-band"><small>RUBY SCHOOL · CAMBRIDGE B1 PRELIMINARY FOR SCHOOLS</small><h1>Phiếu kết quả Reading &amp; Listening</h1></div>
+      <div class="rp-main">
+        <div class="rp-info"><div><span>Họ và tên</span><b>${esc(r.s.name)}</b></div><div><span>Mã học sinh</span><b>${r.s.code}</b></div>
+          <div><span>Lớp</span><b>${esc(S.cls)}</b></div><div><span>Đề</span><b>${esc(tR)}</b></div><div><span>Ngày chấm</span><b>${day}</b></div></div>
+        <div class="rp-scores">${skill('reading')}${skill('listening')}</div>
+        ${habit.length ? `<div class="rp-habit"><b>Lưu ý cách tô bài:</b> ${habit.length} câu tô chưa đúng cách (tick, dấu X, tô không kín hoặc tô 2 ô): ${habit.join(', ')}. Những câu này bị tính sai. Lần sau em hãy <b>tô kín một ô tròn</b> cho mỗi câu nhé.</div>` : ''}
+        <div class="rp-wrong">${wrong('reading')}${wrong('listening')}</div>
+        <div class="rp-note"><b>Nhận xét của giáo viên</b><div></div><div></div></div>
+      </div>
+      <div class="rp-foot"><span>Thang điểm quy đổi theo mốc Cambridge English Scale; điểm Reading và Listening là điểm từng kỹ năng.</span><span>Ruby School</span></div>
+    </div>`;
+  }
+
+  async function renderReportCanvas(r) {
+    const stage = $('#reportStage'); stage.innerHTML = reportHTML(r);
+    try { await document.fonts?.ready; } catch {}
+    return window.html2canvas(stage.firstElementChild, { scale: 2, backgroundColor: '#ffffff', logging: false });
+  }
+  function addPage(pdf, canvas, first) {
+    if (!first) pdf.addPage();
+    const W = 210, H = 297, ratio = canvas.height / canvas.width;
+    let w = W, h = W * ratio; if (h > H) { h = H; w = H / ratio; }
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.9), 'JPEG', (W - w) / 2, 0, w, h);
+  }
+  function busy(msg) { $('#loading').hidden = !msg; if (msg) $('#loadingMsg').textContent = msg; }
+
+  async function studentReport(key) {
+    if (!confirmWarn()) return;
+    const r = results().find(x => x.s.key === key); if (!r) return;
+    busy('Đang tạo phiếu kết quả…');
+    try {
+      await ensureLibs();
+      const canvas = await renderReportCanvas(r);
+      const base = `phieu-ket-qua_${r.s.code}_${slug(r.s.name)}`;
+      const jpg = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+      const file = new File([jpg], base + '.jpg', { type: 'image/jpeg' });
+      $('#reportTitle').textContent = `${r.s.name} (${r.s.code})`;
+      $('#reportImg').src = URL.createObjectURL(jpg);
+      $('#reportJpg').onclick = () => download(jpg, base + '.jpg');
+      $('#reportPdf').onclick = () => { const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' }); addPage(pdf, canvas, true); download(pdf.output('blob'), base + '.pdf'); };
+      const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+      $('#reportShare').hidden = !canShare;
+      $('#reportShare').onclick = () => navigator.share({ files: [file], title: `Phiếu kết quả — ${r.s.name}` }).catch(() => {});
+      $('#reportModal').hidden = false;
+    } catch (e) { alert(e.message || e); }
+    finally { busy(''); }
+  }
+
+  async function classReport() {
+    const rs = results().filter(r => r.reading || r.listening);
+    if (!rs.length) { alert('Chưa có phiếu nào để tạo phiếu kết quả.'); return; }
+    if (!confirmWarn()) return;
+    busy('Đang chuẩn bị…');
+    try {
+      await ensureLibs();
+      const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+      for (let i = 0; i < rs.length; i++) {
+        busy(`Đang tạo phiếu ${i + 1}/${rs.length}…`);
+        addPage(pdf, await renderReportCanvas(rs[i]), i === 0);
+      }
+      const name = `phieu-ket-qua_${slug(S.testTitle)}_lop${S.cls}.pdf`, blob = pdf.output('blob');
+      const file = new File([blob], name, { type: 'application/pdf' });
+      busy('');
+      if (navigator.canShare && navigator.canShare({ files: [file] }) && confirm(`Đã tạo ${rs.length} phiếu. Bấm OK để gửi qua Zalo / ứng dụng khác, hoặc Huỷ để tải file về máy.`))
+        navigator.share({ files: [file], title: name }).catch(() => download(blob, name));
+      else download(blob, name);
+    } catch (e) { alert(e.message || e); }
+    finally { busy(''); $('#reportStage').innerHTML = ''; }
   }
 
   async function clearSession() {
