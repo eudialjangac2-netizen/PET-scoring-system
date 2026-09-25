@@ -3,10 +3,10 @@
   'use strict';
   const $ = s => document.querySelector(s);
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const APP_VERSION = '25/09/2026 — điểm theo Part, phiếu kết quả cá nhân';
+  const APP_VERSION = '25/09/2026 (b) — phiếu kết quả có nhận xét gợi ý';
   const PAGES = { reading: { n: 32, short: 'R', name: 'Reading' }, listening: { n: 25, short: 'L', name: 'Listening' } };
 
-  let TPL, SCALE, CFG = {}, TESTS = [], KEY = null, cvReady = false;
+  let TPL, SCALE, CFG = {}, TESTS = [], KEY = null, NX = null, cvReady = false;
   let S = null;            // phiên chấm hiện tại
   let curWrite = null;     // câu viết đang xem, ví dụ 'reading-27'
 
@@ -25,7 +25,7 @@
   })();
   const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
-  let saveTimer;
+  let saveTimer, S_comment;
   const save = (dirty = true) => {
     if (!S) return;
     if (dirty) S.dirty = true;
@@ -39,6 +39,7 @@
   async function boot() {
     [TPL, SCALE, TESTS] = await Promise.all(['omr-template.json', 'thang-diem.json', 'de-thi/manifest.json']
       .map(f => fetch(f).then(r => { if (!r.ok) throw new Error(f); return r.json(); })));
+    NX = await fetch('nhan-xet-mau.json').then(r => r.ok ? r.json() : null).catch(() => null);
     CFG = await fetch('cau-hinh.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
     const hasSheet = /^https:\/\/script\.google\.com\//.test(CFG.sheetUrl || '');
     CFG.on = hasSheet;
@@ -162,7 +163,7 @@
     const header = ['Đề', 'Lớp', 'Mã HS', 'Họ tên',
       'Reading /32', 'Reading thang', 'Reading CEFR', ...P('reading').map(([p, n]) => `R Part ${p} (/${n})`),
       'Listening /25', 'Listening thang', 'Listening CEFR', ...P('listening').map(([p, n]) => `L Part ${p} (/${n})`),
-      'Số câu tô không chuẩn', 'Ghi chú', 'Chi tiết Reading', 'Chi tiết Listening'];
+      'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét', 'Chi tiết Reading', 'Chi tiết Listening'];
     const rows = results().filter(r => r.reading || r.listening).map(r => {
       const o = { 'Khoá': `${S.test}|${S.cls}|${r.s.code}`, 'Đề': S.testTitle, 'Lớp': S.cls, 'Mã HS': r.s.code, 'Họ tên': r.s.name };
       for (const p of ['reading', 'listening']) {
@@ -173,6 +174,7 @@
       }
       o['Số câu tô không chuẩn'] = (r.reading?.nonstd || 0) + (r.listening?.nonstd || 0);
       o['Ghi chú'] = note(r);
+      o['Nhận xét'] = S_comment(r);
       return o;
     });
     return { header, rows };
@@ -626,12 +628,12 @@
     $('#exportWarn').innerHTML = w.length ? `<div class="notice warn">${w.map(esc).join('<br>')}</div>` : '';
     const rs = results();
     $('#resTable').innerHTML = `<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Reading /32</th><th>Thang</th><th>CEFR</th>
-      <th>Listening /25</th><th>Thang</th><th>CEFR</th><th>Tô không chuẩn</th><th></th></tr></thead><tbody>` +
+      <th>Listening /25</th><th>Thang</th><th>CEFR</th><th>Tô không chuẩn</th></tr></thead><tbody>` +
       rs.map(r => { const R = r.reading, L = r.listening, miss = !R && !L;
         const c = (g, n) => g ? `<td class="num">${g.raw}</td><td class="num">${scaleText(g.scale)}</td><td>${g.cefr}</td>` : '<td>—</td><td>—</td><td>—</td>';
-        return `<tr class="${miss ? 'missing' : ''}"><td class="num">${r.stt}</td><td>${r.s.code}</td><td>${esc(r.s.name)}</td>${c(R)}${c(L)}
-          <td class="num">${(R?.nonstd || 0) + (L?.nonstd || 0) || ''}</td>
-          <td>${miss ? '' : `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>`}</td></tr>`; }).join('') + '</tbody>';
+        return `<tr class="${miss ? 'missing' : ''}"><td class="num">${r.stt}</td><td>${r.s.code}</td>
+          <td class="nm-cell"><div class="nm-in"><span>${esc(r.s.name)}</span>${miss ? '' : `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>`}</div></td>${c(R)}${c(L)}
+          <td class="num">${(R?.nonstd || 0) + (L?.nonstd || 0) || ''}</td></tr>`; }).join('') + '</tbody>';
     $('#resTable').querySelectorAll('[data-rp]').forEach(b => b.onclick = () => studentReport(b.dataset.rp));
   }
 
@@ -656,7 +658,7 @@
     const GREEN = 'FFE3F3EA', RED = 'FFFBE7E5', YEL = 'FFFFE9A8', HEAD = 'FF9E1B32';
     const qCols = p => Array.from({ length: PAGES[p].n }, (_, i) => PAGES[p].short + (i + 1));
     const header = ['STT', 'Mã HS', 'Họ tên', ...qCols('reading'), 'Reading /32', 'Reading thang', 'Reading CEFR', ...partsOf('reading').map(([p, n]) => `R Part ${p} (/${n})`),
-      ...qCols('listening'), 'Listening /25', 'Listening thang', 'Listening CEFR', ...partsOf('listening').map(([p, n]) => `L Part ${p} (/${n})`), 'Số câu tô không chuẩn', 'Ghi chú'];
+      ...qCols('listening'), 'Listening /25', 'Listening thang', 'Listening CEFR', ...partsOf('listening').map(([p, n]) => `L Part ${p} (/${n})`), 'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét'];
     const styleHead = ws => { const r = ws.getRow(1); r.font = { bold: true, color: { argb: 'FFFFFFFF' } }; r.fill = fill(HEAD);
       ws.views = [{ state: 'frozen', xSplit: 3, ySplit: 1 }]; ws.getColumn(3).width = 26; ws.getColumn(2).width = 10; };
 
@@ -665,7 +667,7 @@
       if (name === 'Đáp án đã chọn') {
         const kr = ws.addRow(['', 'Đáp án', '',
           ...qCols('reading').map((_, i) => [].concat(KEY.reading[i + 1]).join('/')), '', '', '', ...partsOf('reading').map(() => ''),
-          ...qCols('listening').map((_, i) => [].concat(KEY.listening[i + 1]).join('/')), '', '', '', ...partsOf('listening').map(() => ''), '', '']);
+          ...qCols('listening').map((_, i) => [].concat(KEY.listening[i + 1]).join('/')), '', '', '', ...partsOf('listening').map(() => ''), '', '', '']);
         kr.font = { bold: true }; kr.fill = fill('FFE6EDFC');
       }
       for (const r of rs) {
@@ -678,7 +680,7 @@
           marks.push(null, null, null);
           partsOf(p).forEach(([pt]) => { vals.push(g ? g.parts[pt] : ''); marks.push(null); });
         }
-        vals.push((r.reading?.nonstd || 0) + (r.listening?.nonstd || 0), note(r) || '');
+        vals.push((r.reading?.nonstd || 0) + (r.listening?.nonstd || 0), note(r) || '', (r.reading || r.listening) ? S_comment(r) : '');
         const row = ws.addRow(vals);
         marks.forEach((it, j) => { if (!it) return; const c = row.getCell(4 + j);
           c.fill = fill(it.flag ? YEL : it.ok ? GREEN : RED); c.alignment = { horizontal: 'center' }; });
@@ -717,19 +719,48 @@
     const rs = results(), q = s => `"${String(s).replace(/"/g, '""')}"`;
     const cols = p => Array.from({ length: PAGES[p].n }, (_, i) => PAGES[p].short + (i + 1));
     const lines = [['STT', 'Mã HS', 'Họ tên', ...cols('reading'), 'Reading /32', 'Reading thang', 'Reading CEFR', ...partsOf('reading').map(([p, n]) => `R Part ${p} (/${n})`),
-      ...cols('listening'), 'Listening /25', 'Listening thang', 'Listening CEFR', ...partsOf('listening').map(([p, n]) => `L Part ${p} (/${n})`), 'Số câu tô không chuẩn', 'Ghi chú']];
+      ...cols('listening'), 'Listening /25', 'Listening thang', 'Listening CEFR', ...partsOf('listening').map(([p, n]) => `L Part ${p} (/${n})`), 'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét']];
     for (const r of rs) {
       const v = [r.stt, r.s.code, r.s.name];
       for (const p of ['reading', 'listening']) { const g = r[p];
         for (let i = 0; i < PAGES[p].n; i++) v.push(g ? (g.items[i].ok ? 1 : 0) : '');
         v.push(g ? g.raw : '', g ? scaleText(g.scale) : '', g ? g.cefr : '');
         partsOf(p).forEach(([pt]) => v.push(g ? g.parts[pt] : '')); }
-      v.push((r.reading?.nonstd || 0) + (r.listening?.nonstd || 0), note(r));
+      v.push((r.reading?.nonstd || 0) + (r.listening?.nonstd || 0), note(r), (r.reading || r.listening) ? S_comment(r) : '');
       lines.push(v);
     }
     download(new Blob(['\uFEFF' + lines.map(l => l.map(q).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }), fname('csv'));
   }
 
+
+
+  // ---------- nhận xét gợi ý ----------
+  const fill = (t, o) => String(t || '').replace(/\{(\w+)\}/g, (_, k) => o[k] ?? '');
+  const joinList = a => a.length <= 1 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' và ' + a[a.length - 1];
+  function suggestComment(r) {
+    if (!NX) return '';
+    const out = [], strong = [], weak = [];
+    const lv = {};
+    for (const p of ['reading', 'listening']) {
+      const g = r[p]; if (!g) continue;
+      (lv[g.cefr] = lv[g.cefr] || []).push(PAGES[p].name);
+      for (const [pt, n] of partsOf(p)) {
+        const v = g.parts[pt], f = v / n, o = { skill: PAGES[p].name, part: pt, score: `${v}/${n}` };
+        if (f >= NX.nguong.manh) strong.push({ f, t: fill(NX.muc, o) });
+        else if (f < NX.nguong.yeu) weak.push(fill(NX.mucCaiThien, { ...o, advice: NX.loiKhuyen?.[p]?.[pt] || '' }).replace(/, $/, ''));
+      }
+    }
+    for (const l of ['B2', 'B1', 'A2', 'Dưới A2']) if (lv[l]) out.push(fill(NX.moDau[l], { skills: lv[l].join(NX.noiKyNang || ' và ') }));
+    // chỉ nêu tối đa 3 phần làm tốt nhất cho gọn
+    const best = strong.sort((a, b) => b.f - a.f).slice(0, NX.toiDaDiemManh || 3).map(x => x.t);
+    if (best.length) out.push(fill(NX.diemManh, { list: joinList(best) }));
+    out.push(weak.length ? fill(NX.canCaiThien, { list: weak.join('; ') }) : NX.khongYeu);
+    const items = ['reading', 'listening'].flatMap(p => r[p]?.items || []);
+    if (items.some(i => i.bad)) out.push(NX.toBai);
+    if (items.some(i => !i.ok && !i.bad && (i.type === 'write' ? i.shown === '' : !i.chosen))) out.push(NX.boTrong);
+    return out.filter(Boolean).join(' ').replace(/^./, c => c.toUpperCase());
+  }
+  S_comment = r => { const c = S.comments?.[r.s.key]; return c === undefined ? suggestComment(r) : c; };
 
   // ---------- phiếu kết quả cá nhân ----------
   const LIBS = ['https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
@@ -780,7 +811,8 @@
         <div class="rp-scores">${skill('reading')}${skill('listening')}</div>
         ${habit.length ? `<div class="rp-habit"><b>Lưu ý cách tô bài:</b> ${habit.length} câu tô chưa đúng cách (tick, dấu X, tô không kín hoặc tô 2 ô): ${habit.join(', ')}. Những câu này bị tính sai. Lần sau em hãy <b>tô kín một ô tròn</b> cho mỗi câu nhé.</div>` : ''}
         <div class="rp-wrong">${wrong('reading')}${wrong('listening')}</div>
-        <div class="rp-note"><b>Nhận xét của giáo viên</b><div></div><div></div></div>
+        ${(() => { const cm = S_comment(r); return cm ? `<div class="rp-note"><b>Nhận xét của giáo viên</b><p>${esc(cm)}</p></div>`
+          : '<div class="rp-note"><b>Nhận xét của giáo viên</b><div></div><div></div></div>'; })()}
       </div>
       <div class="rp-foot"><span>Thang điểm quy đổi theo mốc Cambridge English Scale; điểm Reading và Listening là điểm từng kỹ năng.</span><span>Ruby School</span></div>
     </div>`;
@@ -799,9 +831,18 @@
   }
   function busy(msg) { $('#loading').hidden = !msg; if (msg) $('#loadingMsg').textContent = msg; }
 
-  async function studentReport(key) {
-    if (!confirmWarn()) return;
+  async function studentReport(key, again) {
+    if (!again && !confirmWarn()) return;
     const r = results().find(x => x.s.key === key); if (!r) return;
+    $('#reportComment').value = S_comment(r);
+    $('#reportSuggest').onclick = () => { $('#reportComment').value = suggestComment(r); };
+    $('#reportUpdate').onclick = () => {
+      S.comments = S.comments || {}; S.comments[key] = $('#reportComment').value.trim(); save();
+      studentReport(key, true);
+    };
+    await showReport(r);
+  }
+  async function showReport(r) {
     busy('Đang tạo phiếu kết quả…');
     try {
       await ensureLibs();
