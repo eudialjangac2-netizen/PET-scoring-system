@@ -6,7 +6,7 @@
 <title>Chấm phiếu PET — Ruby School</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="cham-bai.css?v=20260925">
+<link rel="stylesheet" href="cham-bai.css?v=20260925b">
 </head>
 <body>
 <header class="top"><div class="wrap">
@@ -124,6 +124,11 @@
   <div class="modal-box">
     <div class="modal-head"><b id="reportTitle">Phiếu kết quả</b><button class="btn small" id="reportClose">Đóng</button></div>
     <div class="modal-body"><img id="reportImg" alt="Phiếu kết quả"></div>
+    <div class="modal-comment">
+      <label for="reportComment"><b>Nhận xét của giáo viên</b> <span class="hint">— gợi ý tự động, sửa tuỳ ý; để trống thì phiếu in dòng kẻ để viết tay</span></label>
+      <textarea id="reportComment" rows="4"></textarea>
+      <div class="row"><button class="btn small" id="reportSuggest">Gợi ý lại</button><button class="btn small primary" id="reportUpdate">Lưu &amp; cập nhật phiếu</button></div>
+    </div>
     <div class="modal-acts">
       <button class="btn primary" id="reportShare" hidden>Gửi qua Zalo / ứng dụng khác</button>
       <button class="btn" id="reportJpg">Tải ảnh</button>
@@ -136,8 +141,8 @@
 <div class="loading" id="loading"><div><div class="spinner"></div><div id="loadingMsg">Đang tải bộ nhận dạng phiếu…</div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-<script src="omr-engine.js?v=20260925"></script>
-<script src="cham-bai.js?v=20260925"></script>
+<script src="omr-engine.js?v=20260925b"></script>
+<script src="cham-bai.js?v=20260925b"></script>
 <script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"></script>
 </body>
 </html>
