@@ -3,7 +3,7 @@
   'use strict';
   const $ = s => document.querySelector(s);
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const APP_VERSION = '25/09/2026 (b) — phiếu kết quả có nhận xét gợi ý';
+  const APP_VERSION = '25/09/2026 (c) — danh sách theo lớp Cambridge, lớp văn hoá dạng 7/2';
   const PAGES = { reading: { n: 32, short: 'R', name: 'Reading' }, listening: { n: 25, short: 'L', name: 'Listening' } };
 
   let TPL, SCALE, CFG = {}, TESTS = [], KEY = null, NX = null, cvReady = false;
@@ -82,21 +82,31 @@
     window.scrollTo(0, 0);
   }
 
-  // ---------- danh sách lớp ----------
+  // ---------- danh sách lớp (theo lớp luyện thi Cambridge) ----------
+  // mỗi danh sách = một lớp Cambridge; học sinh có thể đến từ nhiều lớp văn hoá (72001ND → 7/2, 62026TK → 6/2)
   const rosters = () => lsGet('pet-rosters', {});
+  const rosterSrc = () => lsGet('pet-roster-src', {});
+  const vhClass = s => s.vh || (/^\d{2}/.test(s.code) ? `${s.code[0]}/${s.code[1]}` : '');
+  const mkStu = (code, name, vh) => ({ code, key: code.slice(0, 5), name: name || '', vh: (vh || '').trim() });
   function fillClasses(sel) {
-    const r = rosters(), ids = Object.keys(r).sort();
-    $('#selClass').innerHTML = ids.length ? ids.map(c => `<option value="${c}">Lớp ${c} (${r[c].length} học sinh)</option>`).join('')
-      : '<option value="">Chưa có danh sách — tải file bên dưới</option>';
+    const r = rosters(), ids = Object.keys(r).sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+    $('#selClass').innerHTML = ids.length ? ids.map(c => `<option value="${esc(c)}">${esc(c)} (${r[c].length} học sinh)</option>`).join('')
+      : '<option value="">Chưa có danh sách lớp</option>';
     if (sel && r[sel]) $('#selClass').value = sel;
-    $('#rosterList').innerHTML = ids.map(c => `<div><span><b>Lớp ${c}</b> · ${r[c].length} học sinh</span>
-      <button class="btn small danger" data-delcls="${c}">Xoá</button></div>`).join('');
-    $('#rosterList').querySelectorAll('[data-delcls]').forEach(b => b.onclick = () => deleteRoster(b.dataset.delcls));
+    $('#rosterList').innerHTML = ids.map((c, i) => `<div><span><b>${esc(c)}</b> · ${r[c].length} học sinh</span>
+      <button class="btn small danger" data-delcls="${i}">Xoá</button></div>`).join('');
+    $('#rosterList').querySelectorAll('[data-delcls]').forEach(b => b.onclick = () => deleteRoster(ids[+b.dataset.delcls]));
   }
   function deleteRoster(c) {
     const all = rosters();
-    if (!confirm(`Xoá danh sách lớp ${c} (${all[c].length} học sinh) khỏi máy này?\nKết quả chấm đã lưu của lớp này vẫn được giữ; nạp lại danh sách là xem tiếp được.`)) return;
-    delete all[c]; lsSet('pet-rosters', all); fillClasses($('#selClass').value);
+    if (!confirm(`Xoá danh sách "${c}" (${all[c].length} học sinh) khỏi máy này?\nKết quả chấm đã lưu của lớp này vẫn được giữ; nạp lại danh sách là xem tiếp được.`)) return;
+    delete all[c]; lsSet('pet-rosters', all);
+    const src = rosterSrc(); delete src[c]; lsSet('pet-roster-src', src);
+    fillClasses($('#selClass').value);
+  }
+  function checkDup(c, list) {
+    const dup = list.map(s => s.key).filter((k, i, a) => a.indexOf(k) !== i);
+    if (dup.length) alert(`Lớp ${c}: trùng mã ${[...new Set(dup)].join(', ')} (5 số đầu) — kiểm tra lại danh sách.`);
   }
   async function loadRoster(file) {
     if (!file) return;
@@ -108,24 +118,19 @@
       const wb = new ExcelJS.Workbook(); await wb.xlsx.load(await file.arrayBuffer());
       wb.worksheets[0].eachRow(r => rows.push(r.values.slice(1).map(v => String(v?.text ?? v?.result ?? v ?? '').trim())));
     }
-    const out = {}; let n = 0;
+    const list = [];
     for (const r of rows) {
       const code = (r[0] || '').toUpperCase().replace(/\s/g, '');
-      if (!/^\d{5}/.test(code)) continue;                 // bỏ dòng tiêu đề / dòng trống
-      const cls = code.slice(0, 2);
-      (out[cls] = out[cls] || []).push({ code, key: code.slice(0, 5), name: r[1] || '' });
-      n++;
+      if (/^\d{5}/.test(code)) list.push(mkStu(code, r[1], r[2]));     // bỏ dòng tiêu đề / dòng trống
     }
-    if (!n) { alert('Không đọc được mã học sinh nào. File cần cột đầu là Mã (vd 72001ND), cột thứ hai là Họ tên.'); return; }
-    const all = rosters();
-    for (const [c, list] of Object.entries(out)) {
-      const dup = list.map(s => s.key).filter((k, i, a) => a.indexOf(k) !== i);
-      if (dup.length) alert(`Lớp ${c}: trùng mã ${[...new Set(dup)].join(', ')} — kiểm tra lại file.`);
-      all[c] = list.sort((a, b) => a.key.localeCompare(b.key));
-    }
-    lsSet('pet-rosters', all);
-    fillClasses(Object.keys(out)[0]);
-    alert(`Đã cập nhật ${n} học sinh: ${Object.entries(out).map(([c, l]) => `lớp ${c} (${l.length})`).join(', ')}.`);
+    if (!list.length) { alert('Không đọc được mã học sinh nào. File cần cột A là Mã (vd 72001ND), cột B là Họ tên, cột C (không bắt buộc) là lớp văn hoá.'); return; }
+    const c = (prompt('Tên lớp Cambridge của danh sách này (vd: PET 7/2):', file.name.replace(/\.[^.]+$/, '')) || '').trim();
+    if (!c) return;
+    checkDup(c, list);
+    const all = rosters(); all[c] = list; lsSet('pet-rosters', all);
+    const src = rosterSrc(); src[c] = 'file'; lsSet('pet-roster-src', src);
+    fillClasses(c);
+    alert(`Đã nạp ${list.length} học sinh vào lớp "${c}".`);
   }
 
   // ---------- Google Sheet: danh sách lớp + sao lưu kết quả ----------
@@ -137,14 +142,14 @@
       const r = await fetch(`${CFG.sheetUrl}?action=classes&code=${encodeURIComponent(code)}`).then(x => x.json());
       if (!r.ok) { $('#syncInfo').textContent = r.error || 'Google Sheet từ chối yêu cầu.'; if (loud) alert(r.error); return; }
       lsSet('pet-tcode', code);
-      const all = rosters();
-      for (const [c, list] of Object.entries(r.classes))
-        all[c] = list.map(s => ({ code: s.code, key: s.code.slice(0, 5), name: s.name })).sort((a, b) => a.key.localeCompare(b.key));
-      lsSet('pet-rosters', all); lsSet('pet-roster-at', new Date().toISOString());
+      const all = rosters(), src = rosterSrc();
+      for (const c of Object.keys(all)) if (src[c] !== 'file') delete all[c];     // bỏ danh sách cũ từ Sheet (kể cả kiểu chia lớp cũ)
+      for (const [c, list] of Object.entries(r.classes)) { all[c] = list.map(s => mkStu(s.code, s.name, s.vh)); src[c] = 'sheet'; checkDup(c, all[c]); }
+      lsSet('pet-rosters', all); lsSet('pet-roster-src', src); lsSet('pet-roster-at', new Date().toISOString());
       fillClasses($('#selClass').value || lsGet('pet-last', {}).cls);
       const ids = Object.keys(r.classes);
-      $('#syncInfo').textContent = ids.length ? `✓ Đã cập nhật lúc ${hhmm()}: ${ids.map(c => `lớp ${c} (${r.classes[c].length})`).join(', ')}.`
-        : 'Google Sheet chưa có tab danh sách nào (tên tab dạng "DS 72").';
+      $('#syncInfo').textContent = ids.length ? `✓ Đã cập nhật lúc ${hhmm()}: ${ids.map(c => `${c} (${r.classes[c].length})`).join(', ')}.`
+        : 'Google Sheet chưa có tab danh sách nào (tên tab dạng "DS PET 7/2").';
     } catch (e) {
       const at = lsGet('pet-roster-at', null);
       $('#syncInfo').textContent = 'Không kết nối được Google Sheet.' + (at ? ' Đang dùng danh sách đã lưu trên máy.' : '');
@@ -160,12 +165,12 @@
   }
   function sheetRows() {
     const P = partsOf;
-    const header = ['Đề', 'Lớp', 'Mã HS', 'Họ tên',
+    const header = ['Đề', 'Lớp Cambridge', 'Mã HS', 'Họ tên', 'Lớp',
       'Reading /32', 'Reading thang', 'Reading CEFR', ...P('reading').map(([p, n]) => `R Part ${p} (/${n})`),
       'Listening /25', 'Listening thang', 'Listening CEFR', ...P('listening').map(([p, n]) => `L Part ${p} (/${n})`),
       'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét', 'Chi tiết Reading', 'Chi tiết Listening'];
     const rows = results().filter(r => r.reading || r.listening).map(r => {
-      const o = { 'Khoá': `${S.test}|${S.cls}|${r.s.code}`, 'Đề': S.testTitle, 'Lớp': S.cls, 'Mã HS': r.s.code, 'Họ tên': r.s.name };
+      const o = { 'Khoá': `${S.test}|${S.cls}|${r.s.code}`, 'Đề': S.testTitle, 'Lớp Cambridge': S.cls, 'Mã HS': r.s.code, 'Họ tên': r.s.name, 'Lớp': vhClass(r.s) };
       for (const p of ['reading', 'listening']) {
         const g = r[p], N = PAGES[p].name, sh = PAGES[p].short;
         o[`${N} /${PAGES[p].n}`] = g ? g.raw : ''; o[`${N} thang`] = g ? scaleText(g.scale) : ''; o[`${N} CEFR`] = g ? g.cefr : '';
@@ -216,7 +221,7 @@
     lsSet('pet-last', { test: tid, cls });
     const id = `session:${tid}:${cls}`;
     S = (await idb.get(id)) || { id, test: tid, testTitle: t.title, cls, sheets: {}, unknown: [], writeDone: {} };
-    $('#ctx').textContent = `${t.title} · Lớp ${cls}`;
+    $('#ctx').textContent = `${t.title} · ${cls}`;
     go('scan');
   }
   const students = () => rosters()[S.cls] || [];
@@ -470,7 +475,7 @@
         const nf = pendingFlags(x);
         return `<button class="${nf ? 's-flag' : 's-done'}" data-del="${s.key}|${p}" title="Xoá phiếu ${PAGES[p].name}">
           ${PAGES[p].short}${nf ? ' · ' + nf : ' ✓'}<i aria-hidden="true">✕</i></button>`; };
-      return `<div class="stu"><div class="nm">${esc(s.name)}</div><div class="cd">${s.code}</div>
+      return `<div class="stu"><div class="nm">${esc(s.name)}</div><div class="cd">${s.code} · ${esc(vhClass(s))}</div>
         <div class="halves">${half('reading')}${half('listening')}</div></div>`;
     }).join('') : '<div class="empty">Lớp này chưa có học sinh.</div>';
     $('#roster').querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
@@ -627,12 +632,12 @@
     const w = warnings();
     $('#exportWarn').innerHTML = w.length ? `<div class="notice warn">${w.map(esc).join('<br>')}</div>` : '';
     const rs = results();
-    $('#resTable').innerHTML = `<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Reading /32</th><th>Thang</th><th>CEFR</th>
+    $('#resTable').innerHTML = `<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Lớp</th><th>Reading /32</th><th>Thang</th><th>CEFR</th>
       <th>Listening /25</th><th>Thang</th><th>CEFR</th><th>Tô không chuẩn</th></tr></thead><tbody>` +
       rs.map(r => { const R = r.reading, L = r.listening, miss = !R && !L;
         const c = (g, n) => g ? `<td class="num">${g.raw}</td><td class="num">${scaleText(g.scale)}</td><td>${g.cefr}</td>` : '<td>—</td><td>—</td><td>—</td>';
         return `<tr class="${miss ? 'missing' : ''}"><td class="num">${r.stt}</td><td>${r.s.code}</td>
-          <td class="nm-cell"><div class="nm-in"><span>${esc(r.s.name)}</span>${miss ? '' : `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>`}</div></td>${c(R)}${c(L)}
+          <td class="nm-cell"><div class="nm-in"><span>${esc(r.s.name)}</span>${miss ? '' : `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>`}</div></td><td>${esc(vhClass(r.s))}</td>${c(R)}${c(L)}
           <td class="num">${(R?.nonstd || 0) + (L?.nonstd || 0) || ''}</td></tr>`; }).join('') + '</tbody>';
     $('#resTable').querySelectorAll('[data-rp]').forEach(b => b.onclick = () => studentReport(b.dataset.rp));
   }
@@ -644,7 +649,7 @@
     if (fl.length) n.push('Chưa duyệt: ' + fl.join(', '));
     return n.join('; ');
   }
-  const fname = ext => `ket-qua_${S.testTitle.replace(/\s+/g, '')}_lop${S.cls}_${new Date().toISOString().slice(0, 10)}.${ext}`;
+  const fname = ext => `ket-qua_${slug(S.testTitle)}_${slug(S.cls)}_${new Date().toISOString().slice(0, 10)}.${ext}`;
   function download(blob, name) {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
@@ -657,21 +662,21 @@
     const fill = c => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: c } });
     const GREEN = 'FFE3F3EA', RED = 'FFFBE7E5', YEL = 'FFFFE9A8', HEAD = 'FF9E1B32';
     const qCols = p => Array.from({ length: PAGES[p].n }, (_, i) => PAGES[p].short + (i + 1));
-    const header = ['STT', 'Mã HS', 'Họ tên', ...qCols('reading'), 'Reading /32', 'Reading thang', 'Reading CEFR', ...partsOf('reading').map(([p, n]) => `R Part ${p} (/${n})`),
+    const header = ['STT', 'Mã HS', 'Họ tên', 'Lớp', ...qCols('reading'), 'Reading /32', 'Reading thang', 'Reading CEFR', ...partsOf('reading').map(([p, n]) => `R Part ${p} (/${n})`),
       ...qCols('listening'), 'Listening /25', 'Listening thang', 'Listening CEFR', ...partsOf('listening').map(([p, n]) => `L Part ${p} (/${n})`), 'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét'];
     const styleHead = ws => { const r = ws.getRow(1); r.font = { bold: true, color: { argb: 'FFFFFFFF' } }; r.fill = fill(HEAD);
-      ws.views = [{ state: 'frozen', xSplit: 3, ySplit: 1 }]; ws.getColumn(3).width = 26; ws.getColumn(2).width = 10; };
+      ws.views = [{ state: 'frozen', xSplit: 4, ySplit: 1 }]; ws.getColumn(3).width = 26; ws.getColumn(2).width = 10; };
 
     const build = (name, cellOf) => {
       const ws = wb.addWorksheet(name); ws.addRow(header); styleHead(ws);
       if (name === 'Đáp án đã chọn') {
-        const kr = ws.addRow(['', 'Đáp án', '',
+        const kr = ws.addRow(['', 'Đáp án', '', '',
           ...qCols('reading').map((_, i) => [].concat(KEY.reading[i + 1]).join('/')), '', '', '', ...partsOf('reading').map(() => ''),
           ...qCols('listening').map((_, i) => [].concat(KEY.listening[i + 1]).join('/')), '', '', '', ...partsOf('listening').map(() => ''), '', '', '']);
         kr.font = { bold: true }; kr.fill = fill('FFE6EDFC');
       }
       for (const r of rs) {
-        const vals = [r.stt, r.s.code, r.s.name];
+        const vals = [r.stt, r.s.code, r.s.name, vhClass(r.s)];
         const marks = [];
         for (const p of ['reading', 'listening']) {
           const g = r[p];
@@ -682,7 +687,7 @@
         }
         vals.push((r.reading?.nonstd || 0) + (r.listening?.nonstd || 0), note(r) || '', (r.reading || r.listening) ? S_comment(r) : '');
         const row = ws.addRow(vals);
-        marks.forEach((it, j) => { if (!it) return; const c = row.getCell(4 + j);
+        marks.forEach((it, j) => { if (!it) return; const c = row.getCell(5 + j);
           c.fill = fill(it.flag ? YEL : it.ok ? GREEN : RED); c.alignment = { horizontal: 'center' }; });
         if (!r.reading && !r.listening) row.font = { color: { argb: 'FF9AA3B1' } };
       }
@@ -718,10 +723,10 @@
     if (!confirmWarn()) return;
     const rs = results(), q = s => `"${String(s).replace(/"/g, '""')}"`;
     const cols = p => Array.from({ length: PAGES[p].n }, (_, i) => PAGES[p].short + (i + 1));
-    const lines = [['STT', 'Mã HS', 'Họ tên', ...cols('reading'), 'Reading /32', 'Reading thang', 'Reading CEFR', ...partsOf('reading').map(([p, n]) => `R Part ${p} (/${n})`),
+    const lines = [['STT', 'Mã HS', 'Họ tên', 'Lớp', ...cols('reading'), 'Reading /32', 'Reading thang', 'Reading CEFR', ...partsOf('reading').map(([p, n]) => `R Part ${p} (/${n})`),
       ...cols('listening'), 'Listening /25', 'Listening thang', 'Listening CEFR', ...partsOf('listening').map(([p, n]) => `L Part ${p} (/${n})`), 'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét']];
     for (const r of rs) {
-      const v = [r.stt, r.s.code, r.s.name];
+      const v = [r.stt, r.s.code, r.s.name, vhClass(r.s)];
       for (const p of ['reading', 'listening']) { const g = r[p];
         for (let i = 0; i < PAGES[p].n; i++) v.push(g ? (g.items[i].ok ? 1 : 0) : '');
         v.push(g ? g.raw : '', g ? scaleText(g.scale) : '', g ? g.cefr : '');
@@ -807,7 +812,7 @@
       <div class="rp-band"><small>RUBY SCHOOL · CAMBRIDGE B1 PRELIMINARY FOR SCHOOLS</small><h1>Phiếu kết quả Reading &amp; Listening</h1></div>
       <div class="rp-main">
         <div class="rp-info"><div><span>Họ và tên</span><b>${esc(r.s.name)}</b></div><div><span>Mã học sinh</span><b>${r.s.code}</b></div>
-          <div><span>Lớp</span><b>${esc(S.cls)}</b></div><div><span>Đề</span><b>${esc(tR)}</b></div><div><span>Ngày chấm</span><b>${day}</b></div></div>
+          <div><span>Lớp</span><b>${esc(vhClass(r.s))}</b></div><div><span>Lớp Cambridge</span><b>${esc(S.cls)}</b></div><div><span>Đề</span><b>${esc(tR)}</b></div><div><span>Ngày chấm</span><b>${day}</b></div></div>
         <div class="rp-scores">${skill('reading')}${skill('listening')}</div>
         ${habit.length ? `<div class="rp-habit"><b>Lưu ý cách tô bài:</b> ${habit.length} câu tô chưa đúng cách (tick, dấu X, tô không kín hoặc tô 2 ô): ${habit.join(', ')}. Những câu này bị tính sai. Lần sau em hãy <b>tô kín một ô tròn</b> cho mỗi câu nhé.</div>` : ''}
         <div class="rp-wrong">${wrong('reading')}${wrong('listening')}</div>
@@ -874,7 +879,7 @@
         busy(`Đang tạo phiếu ${i + 1}/${rs.length}…`);
         addPage(pdf, await renderReportCanvas(rs[i]), i === 0);
       }
-      const name = `phieu-ket-qua_${slug(S.testTitle)}_lop${S.cls}.pdf`, blob = pdf.output('blob');
+      const name = `phieu-ket-qua_${slug(S.testTitle)}_${slug(S.cls)}.pdf`, blob = pdf.output('blob');
       const file = new File([blob], name, { type: 'application/pdf' });
       busy('');
       if (navigator.canShare && navigator.canShare({ files: [file] }) && confirm(`Đã tạo ${rs.length} phiếu. Bấm OK để gửi qua Zalo / ứng dụng khác, hoặc Huỷ để tải file về máy.`))
