@@ -6,7 +6,7 @@
 <title>Chấm phiếu PET — Ruby School</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="cham-bai.css?v=20260925b">
+<link rel="stylesheet" href="cham-bai.css?v=20260925c">
 </head>
 <body>
 <header class="top"><div class="wrap">
@@ -40,7 +40,7 @@
     </div>
     <details class="fallback" id="fileBox">
       <summary>Dự phòng: tải danh sách lớp từ file</summary>
-      <p class="hint">Chỉ dùng khi không lấy được danh sách từ Google Sheet. File Excel hoặc CSV có 2 cột <b>Mã</b> và <b>Họ tên</b>; app tự chia học sinh theo 2 số đầu của mã.</p>
+      <p class="hint">Chỉ dùng khi không lấy được danh sách từ Google Sheet. Mỗi file là <b>một lớp Cambridge</b>: cột A <b>Mã</b>, cột B <b>Họ tên</b>. App sẽ hỏi tên lớp Cambridge khi tải lên.</p>
       <div class="row">
         <label class="btn" for="fileRoster">Tải danh sách từ file</label>
         <input type="file" id="fileRoster" accept=".xlsx,.csv" hidden>
@@ -141,8 +141,8 @@
 <div class="loading" id="loading"><div><div class="spinner"></div><div id="loadingMsg">Đang tải bộ nhận dạng phiếu…</div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-<script src="omr-engine.js?v=20260925b"></script>
-<script src="cham-bai.js?v=20260925b"></script>
+<script src="omr-engine.js?v=20260925c"></script>
+<script src="cham-bai.js?v=20260925c"></script>
 <script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"></script>
 </body>
 </html>
