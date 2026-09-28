@@ -1,4 +1,20 @@
 [
-  { "id": "test1", "title": "Test 1", "file": "test1.json" },
-  { "id": "test2", "title": "Test 2", "file": "test2.json" }
+ {
+  "id": "pet-test1",
+  "level": "PET",
+  "title": "PET Test 1",
+  "file": "pet-test1.json"
+ },
+ {
+  "id": "ket-test1",
+  "level": "KET",
+  "title": "KET Test 1",
+  "file": "ket-test1.json"
+ },
+ {
+  "id": "fce-test1",
+  "level": "FCE",
+  "title": "FCE Test 1",
+  "file": "fce-test1.json"
+ }
 ]
