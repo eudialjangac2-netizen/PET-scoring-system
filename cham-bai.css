@@ -194,3 +194,5 @@ td .btn.small { padding: 3px 9px; }
 .rp-note p { margin: 6px 0 0; color: #172033; font-size: 13.5px; line-height: 1.55; white-space: pre-wrap; }
 td.nm-cell .nm-in { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
 #syncStatus[hidden] { display: none; }
+
+.wcell.mid { border-color: #C98A00; background: #FFF3CC; }
