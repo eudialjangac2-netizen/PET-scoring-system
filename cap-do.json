@@ -1,0 +1,394 @@
+{
+ "_ghi_chu": "Cấu hình từng cấp độ: tên, màu, các trang phiếu, các phần điểm (section) và bảng quy đổi Cambridge English Scale. 'bang' = điểm thang tương ứng với số câu/điểm thô 0,1,2...; 'moc' = các mốc, điểm giữa được nội suy. 'trongSo' = số điểm mỗi câu của Part (mặc định 1). 'diemTung Phan' = Part chấm 0/1/2 điểm.",
+ "PET": {
+  "ten": "B1 Preliminary for Schools",
+  "mau": "#9E1B32",
+  "giay": {
+   "reading": [
+    "PET-reading"
+   ],
+   "listening": [
+    "PET-listening"
+   ]
+  },
+  "phan": [
+   {
+    "id": "reading",
+    "ten": "Reading",
+    "viet": "R",
+    "giay": "reading",
+    "parts": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "moc": [
+     [
+      32,
+      170
+     ],
+     [
+      29,
+      160
+     ],
+     [
+      23,
+      140
+     ],
+     [
+      13,
+      120
+     ]
+    ]
+   },
+   {
+    "id": "listening",
+    "ten": "Listening",
+    "viet": "L",
+    "giay": "listening",
+    "parts": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "moc": [
+     [
+      25,
+      170
+     ],
+     [
+      23,
+      160
+     ],
+     [
+      18,
+      140
+     ],
+     [
+      11,
+      120
+     ]
+    ]
+   }
+  ],
+  "cefr": [
+   [
+    160,
+    "B2"
+   ],
+   [
+    140,
+    "B1"
+   ],
+   [
+    120,
+    "A2"
+   ]
+  ],
+  "duoiThang": "Dưới A2"
+ },
+ "KET": {
+  "ten": "A2 Key for Schools",
+  "mau": "#019EA5",
+  "giay": {
+   "reading": [
+    "KET-reading"
+   ],
+   "listening": [
+    "KET-listening"
+   ]
+  },
+  "phan": [
+   {
+    "id": "reading",
+    "ten": "Reading",
+    "viet": "R",
+    "giay": "reading",
+    "parts": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "bang": [
+     0,
+     12,
+     23,
+     35,
+     47,
+     59,
+     70,
+     82,
+     85,
+     88,
+     91,
+     94,
+     97,
+     100,
+     103,
+     106,
+     109,
+     111,
+     114,
+     117,
+     120,
+     123,
+     125,
+     128,
+     130,
+     133,
+     135,
+     138,
+     140,
+     145,
+     150
+    ]
+   },
+   {
+    "id": "listening",
+    "ten": "Listening",
+    "viet": "L",
+    "giay": "listening",
+    "parts": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "bang": [
+     0,
+     14,
+     27,
+     41,
+     55,
+     68,
+     82,
+     86,
+     89,
+     93,
+     96,
+     100,
+     103,
+     107,
+     110,
+     113,
+     117,
+     120,
+     123,
+     127,
+     130,
+     133,
+     137,
+     140,
+     145,
+     150
+    ]
+   }
+  ],
+  "cefr": [
+   [
+    140,
+    "B1"
+   ],
+   [
+    120,
+    "A2"
+   ],
+   [
+    100,
+    "A1"
+   ]
+  ],
+  "duoiThang": "Dưới A1"
+ },
+ "FCE": {
+  "ten": "B2 First for Schools",
+  "mau": "#23753B",
+  "giay": {
+   "reading": [
+    "FCE-reading-1",
+    "FCE-reading-2"
+   ],
+   "listening": [
+    "FCE-listening"
+   ]
+  },
+  "phan": [
+   {
+    "id": "reading",
+    "ten": "Reading",
+    "viet": "R",
+    "giay": "reading",
+    "parts": [
+     1,
+     5,
+     6,
+     7
+    ],
+    "trongSo": {
+     "5": 2,
+     "6": 2
+    },
+    "bang": [
+     0,
+     12,
+     24,
+     37,
+     49,
+     61,
+     73,
+     85,
+     98,
+     110,
+     122,
+     125,
+     128,
+     131,
+     134,
+     137,
+     140,
+     143,
+     145,
+     148,
+     150,
+     153,
+     155,
+     158,
+     160,
+     162,
+     163,
+     165,
+     166,
+     168,
+     169,
+     171,
+     172,
+     174,
+     175,
+     177,
+     178,
+     180,
+     182,
+     184,
+     186,
+     188,
+     190
+    ]
+   },
+   {
+    "id": "uoe",
+    "ten": "Use of English",
+    "viet": "UoE",
+    "giay": "reading",
+    "parts": [
+     2,
+     3,
+     4
+    ],
+    "trongSo": {
+     "4": 2
+    },
+    "diemTungPhan": [
+     4
+    ],
+    "bang": [
+     0,
+     17,
+     35,
+     52,
+     70,
+     87,
+     105,
+     122,
+     127,
+     131,
+     136,
+     140,
+     143,
+     146,
+     149,
+     151,
+     154,
+     157,
+     160,
+     163,
+     167,
+     170,
+     173,
+     177,
+     180,
+     183,
+     185,
+     188,
+     190
+    ]
+   },
+   {
+    "id": "listening",
+    "ten": "Listening",
+    "viet": "L",
+    "giay": "listening",
+    "parts": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "bang": [
+     0,
+     15,
+     31,
+     46,
+     61,
+     76,
+     92,
+     107,
+     122,
+     127,
+     131,
+     136,
+     140,
+     143,
+     147,
+     150,
+     153,
+     157,
+     160,
+     162,
+     164,
+     167,
+     169,
+     171,
+     173,
+     176,
+     178,
+     180,
+     183,
+     187,
+     190
+    ]
+   }
+  ],
+  "cefr": [
+   [
+    180,
+    "C1"
+   ],
+   [
+    160,
+    "B2"
+   ],
+   [
+    140,
+    "B1"
+   ]
+  ],
+  "duoiThang": "Dưới B1"
+ }
+}
