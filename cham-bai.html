@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chấm phiếu PET — Ruby School</title>
+<title>Chấm phiếu Cambridge — Ruby School</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="cham-bai.css?v=20260925c">
+<link rel="stylesheet" href="cham-bai.css?v=20260928">
 </head>
 <body>
 <header class="top"><div class="wrap">
-  <h1>Chấm phiếu PET</h1>
-  <span class="ctx" id="ctx">B1 Preliminary for Schools · Reading &amp; Listening</span>
+  <h1>Chấm phiếu Cambridge</h1>
+  <span class="ctx" id="ctx">KET · PET · FCE</span>
 </div></header>
 
 <nav class="steps" aria-label="Các bước chấm"><div class="wrap">
@@ -25,22 +25,22 @@
 <main class="wrap">
   <!-- 1. Chọn đề & lớp -->
   <section class="view" id="v-setup">
-    <h2>Chọn đề và lớp</h2>
-    <p class="hint">Kết quả được lưu trên máy này theo từng cặp đề + lớp. Có thể chụp làm nhiều đợt.</p>
-    <div class="field"><label for="selTest">Đề thi</label><select id="selTest"></select></div>
-    <div class="field"><label for="selClass">Lớp</label><select id="selClass"></select></div>
+    <h2>Chọn lớp và đề</h2>
+    <p class="hint">Kết quả được lưu trên máy này theo từng cặp lớp + đề. Có thể chấm làm nhiều đợt.</p>
     <div class="field" id="sheetBox" hidden>
       <label for="tCode">Mã giáo viên</label>
-      <p class="hint">Nhập một lần trên mỗi máy. Danh sách lớp được lấy từ Google Sheet của trường và kết quả chấm được sao lưu về đó.</p>
+      <p class="hint">Mỗi giáo viên một mã, nhập một lần trên mỗi máy. App chỉ hiện các lớp của giáo viên đó (tài khoản quản lý thấy tất cả).</p>
       <div class="row">
         <input type="password" id="tCode" autocomplete="off" style="flex:1;min-width:160px">
         <button class="btn" id="btnSync">Cập nhật danh sách lớp</button>
       </div>
       <p class="hint" id="syncInfo" style="margin:8px 0 0"></p>
     </div>
+    <div class="field"><label for="selClass">Lớp Cambridge</label><select id="selClass"></select></div>
+    <div class="field"><label for="selTest">Đề thi <span class="hint" style="font-weight:400">(chỉ hiện đề đúng cấp độ của lớp)</span></label><select id="selTest"></select></div>
     <details class="fallback" id="fileBox">
       <summary>Dự phòng: tải danh sách lớp từ file</summary>
-      <p class="hint">Chỉ dùng khi không lấy được danh sách từ Google Sheet. Mỗi file là <b>một lớp Cambridge</b>: cột A <b>Mã</b>, cột B <b>Họ tên</b>. App sẽ hỏi tên lớp Cambridge khi tải lên.</p>
+      <p class="hint">Chỉ dùng khi không lấy được danh sách từ Google Sheet. Dùng file xuất từ tab DANH SÁCH (có các cột STUDENT ID, FULL NAME, CLASS, LEVEL, BATCH, TEACHER), app tự chia lớp như Google Sheet.</p>
       <div class="row">
         <label class="btn" for="fileRoster">Tải danh sách từ file</label>
         <input type="file" id="fileRoster" accept=".xlsx,.csv" hidden>
@@ -54,14 +54,14 @@
   <!-- 2. Chụp phiếu -->
   <section class="view" id="v-scan">
     <h2>Chụp phiếu</h2>
-    <p class="hint">Đặt phiếu phẳng trên bàn, đủ sáng, chụp thấy cả 4 ô vuông đen. Chụp theo thứ tự nào cũng được; mặt Reading/Listening và mã học sinh được nhận tự động.</p>
+    <p class="hint">Đặt phiếu <b>phẳng trên mặt bàn sáng màu</b> (không gác lên bàn phím, sách), đủ sáng, thấy cả 4 ô vuông đen. Chụp theo thứ tự nào cũng được; loại phiếu và mã học sinh được nhận tự động.</p>
     <div class="queue" id="queue"></div>
     <div id="unknownBox"></div>
     <div class="legend">
       <span><i style="background:var(--ok-soft);border:1px solid var(--ok)"></i>Đã có phiếu</span>
       <span><i style="background:var(--flag-soft);border:1px solid var(--flag)"></i>Có câu cần duyệt</span>
       <span><i style="background:var(--paper);border:1px solid var(--line)"></i>Chưa có phiếu</span>
-      <span>Chạm vào R / L đã có phiếu để xoá phiếu đó</span>
+      <span>Chạm vào ô trang đã có phiếu (R, R1, R2, L) để xoá phiếu đó</span>
     </div>
     <div class="roster" id="roster"></div>
   </section>
@@ -76,7 +76,7 @@
   <!-- 4. Câu viết -->
   <section class="view" id="v-write">
     <h2>Chấm câu viết theo cột</h2>
-    <p class="hint">Mỗi ô mặc định là <b>đúng</b>; ô bỏ trống mặc định là <b>sai</b>. Chạm vào ô để đổi đúng/sai, xong bấm "Xong câu này".</p>
+    <p class="hint">Mỗi ô mặc định là <b>đúng</b> (câu chấm theo điểm: <b>đủ điểm</b>); ô bỏ trống mặc định là <b>sai</b>. Chạm vào ô để đổi, xong bấm "Xong câu này".</p>
     <div class="qchips" id="wChips"></div>
     <div id="wBody"></div>
   </section>
@@ -141,8 +141,8 @@
 <div class="loading" id="loading"><div><div class="spinner"></div><div id="loadingMsg">Đang tải bộ nhận dạng phiếu…</div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-<script src="omr-engine.js?v=20260925c"></script>
-<script src="cham-bai.js?v=20260925c"></script>
+<script src="omr-engine.js?v=20260928"></script>
+<script src="cham-bai.js?v=20260928"></script>
 <script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"></script>
 </body>
 </html>
