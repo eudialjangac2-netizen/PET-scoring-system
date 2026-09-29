@@ -7,6 +7,7 @@
   'use strict';
   const S = 10;                 // px / mm trong ảnh đã nắn
   const PW = 210 * S, PH = 297 * S;
+  let RB = 2.3;                 // bán kính ô tròn (mm) — lấy từ omr-template.json
 
   // Ngưỡng (chỉnh tại đây khi hiệu chỉnh bằng bài thật)
   const TH = {
@@ -145,7 +146,7 @@
   }
 
   function makeRing(cv) {
-    const r = Math.round(2.3 * S), pad = 6, sz = 2 * (r + pad) + 1;
+    const r = Math.round(RB * S), pad = 6, sz = 2 * (r + pad) + 1;
     const t = new cv.Mat(sz, sz, cv.CV_8U, new cv.Scalar(255));
     cv.circle(t, new cv.Point(sz >> 1, sz >> 1), r, new cv.Scalar(0), 3);
     return t;
@@ -184,7 +185,7 @@
     const t = new cv.Mat(h, w, cv.CV_8U, new cv.Scalar(255));
     const P = (x, y) => new cv.Point(Math.round(x * S) - x0, Math.round(y * S) - y0);
     for (const it of items) {
-      if (it.ring) cv.circle(t, P(it.ring[0], it.ring[1]), Math.round(2.3 * S), new cv.Scalar(80), 3);
+      if (it.ring) cv.circle(t, P(it.ring[0], it.ring[1]), Math.round(RB * S), new cv.Scalar(80), 3);
       if (it.bar) { cv.rectangle(t, P(it.bar.x, it.bar.y), P(it.bar.x + it.bar.w, it.bar.y + it.bar.h), new cv.Scalar(215), -1);
                     cv.rectangle(t, P(it.bar.x, it.bar.y), P(it.bar.x + 1.2, it.bar.y + it.bar.h), new cv.Scalar(70), -1); }
       if (it.box) {
@@ -208,7 +209,7 @@
     const b = { x0: 1e9, y0: 1e9, x1: -1e9, y1: -1e9 };
     const add = (x0, y0, x1, y1) => { b.x0 = Math.min(b.x0, x0); b.y0 = Math.min(b.y0, y0); b.x1 = Math.max(b.x1, x1); b.y1 = Math.max(b.y1, y1); };
     for (const it of items) {
-      if (it.ring) add(it.ring[0] - 2.5, it.ring[1] - 2.5, it.ring[0] + 2.5, it.ring[1] + 2.5);
+      if (it.ring) add(it.ring[0] - RB - 0.2, it.ring[1] - RB - 0.2, it.ring[0] + RB + 0.2, it.ring[1] + RB + 0.2);
       if (it.bar) add(it.bar.x, it.bar.y, it.bar.x + it.bar.w, it.bar.y + it.bar.h);
       if (it.box) add(it.box.x, it.box.y, it.box.x + it.box.w, it.box.y + it.box.h);
     }
@@ -265,7 +266,7 @@
 
   // Đặc trưng của 1 ô: độ phủ mực + độ phủ 8 cung (để biết tô kín hay tick/X)
   function bubbleFeat(px, x, y) {
-    const cx = x * S, cy = y * S, r1 = 1.7 * S, r2 = 1.9 * S, rin = 0.5 * S;
+    const cx = x * S, cy = y * S, r1 = 0.74 * RB * S, r2 = 0.83 * RB * S, rin = 0.22 * RB * S;
     let ink = 0, n = 0; const sI = new Array(8).fill(0), sN = new Array(8).fill(0);
     for (let yy = Math.floor(cy - r2); yy <= cy + r2; yy++)
       for (let xx = Math.floor(cx - r2); xx <= cx + r2; xx++) {
@@ -294,13 +295,16 @@
     // và bên trong phải hoặc đen hẳn hoặc trắng hẳn.
     const slots = tpl.page_id.slots;
     const dk = (x, y) => 255 - px[Math.round(y * S) * PW + Math.round(x * S)];
-    const edge = (cx, cy) => { let v = 0;                      // độ đậm trên đường viền ô vuông 5 mm
-      for (let t = -2.5; t <= 2.5; t += 0.5) v += dk(cx + t, cy - 2.5) + dk(cx + t, cy + 2.5) + dk(cx - 2.5, cy + t) + dk(cx + 2.5, cy + t);
-      return v / 44; };
+    const ring = (cx, cy, h) => { let v = 0;                   // độ đậm trung bình trên một đường vuông nửa cạnh h
+      for (let t = -h; t <= h + 1e-9; t += 0.5) v += dk(cx + t, cy - h) + dk(cx + t, cy + h) + dk(cx - h, cy + t) + dk(cx + h, cy + t);
+      return v / (4 * (2 * h / 0.5 + 1)); };
+    // khung ô vuông phải đậm, còn vòng ngay bên ngoài (khe giấy trắng giữa các ô) phải sáng
+    const edge = (cx, cy) => ring(cx, cy, 2.5) - ring(cx, cy, 3.8);
     let best = null;
     for (let dy = -5; dy <= 5.001; dy += 0.25)
       for (let dx = -5; dx <= 5.001; dx += 0.25) {
         let e = 0; for (const [x, y] of slots) e += edge(x + dx, y + dy);
+        e -= 2 * Math.hypot(dx, dy);                             // ưu tiên độ lệch nhỏ khi ngang nhau
         if (!best || e > best[0]) best = [e, dx, dy];
       }
     const [, dx, dy] = best;
@@ -324,6 +328,7 @@
   }
 
   function process(cv, rgba, tpl) {
+    RB = tpl.bubble_radius_mm || 2.3;
     const src = cv.matFromImageData ? cv.matFromImageData(rgba)
       : (() => { const m = new cv.Mat(rgba.height, rgba.width, cv.CV_8UC4); m.data.set(rgba.data); return m; })();
     const gray0 = new cv.Mat(); cv.cvtColor(src, gray0, cv.COLOR_RGBA2GRAY); src.delete();
