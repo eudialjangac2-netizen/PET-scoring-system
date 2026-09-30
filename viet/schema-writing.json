@@ -319,6 +319,30 @@
         "original_note": {
           "type": "string",
           "description": "Ghi chú nếu bài là ảnh chụp chữ viết tay (ví dụ: đã bỏ qua các từ bị gạch bỏ)"
+        },
+        "strengths": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "type": "string"
+          },
+          "description": "Điểm mạnh của bài (trang chi tiết Part, mục Strength). Tối đa 4 ý, mỗi ý khoảng 120 ký tự. Nếu bỏ trống, app lấy từ nhận xét của các tiêu chí đạt band cao."
+        },
+        "issues": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "type": "string"
+          },
+          "description": "Vấn đề chính cần khắc phục (mục Issue). Tối đa 4 ý, mỗi ý khoảng 120 ký tự. Nếu bỏ trống, app lấy từ to_move_up."
+        },
+        "checklist": {
+          "type": "array",
+          "maxItems": 6,
+          "items": {
+            "type": "string"
+          },
+          "description": "Checklist tự kiểm tra trước khi nộp bài lần sau, mỗi ý một việc cụ thể, khoảng 90 ký tự. Nếu bỏ trống, app lấy từ next_steps."
         }
       }
     }

@@ -1,0 +1,238 @@
+{
+  "schema_version": "1.0",
+  "level": "FCE",
+  "student": {
+    "id": "C260125MC",
+    "name": "Nguyen Van A (mẫu)",
+    "class": "6/1"
+  },
+  "test": {
+    "id": "fce-test5",
+    "label": "FCE Test 5"
+  },
+  "graded_at": "2026-09-30",
+  "parts": [
+    {
+      "part": 1,
+      "genre": "essay",
+      "task": "Some people think that teenagers spend too much time on social media. Write an essay using ALL the notes and give reasons for your point of view. Notes: 1. time for hobbies 2. real friendships 3. (your own idea). Write 140-190 words.",
+      "text": "Nowadays, many teenagers use social media for several hours every day. In my opinion, this habit brings some serious problems, although it has advantages too.\n\nFirstly, teenagers who spend too much time online have less time for their hobbies. For example, a boy who could play football with his friends stay at home and watch videos instead. This is bad for his health and his skills. Moreover, the real friendships are often weaker because people talk through screens and they don't listen to each other properly.\n\nOn the other hand, social media help young people to find information and to keep in touch with relatives who live far away. Another idea is that schools should teach students how to use it safe, so they can enjoy it without wasting time.\n\nTo sum up, I believe that teenagers can use social media, but they must control the time. Parents and teachers should help them to make good choices.",
+      "word_count": 157,
+      "criteria": [
+        {
+          "id": "content",
+          "band": 4,
+          "max": 5,
+          "comment": "Đề cập đủ hai ý cho sẵn và một ý riêng (dạy cách dùng an toàn), nhưng ý riêng còn chung chung.",
+          "to_move_up": "Cụ thể hóa ý riêng: dạy học sinh đặt giới hạn thời gian dùng mạng xã hội.",
+          "key_takeaway": "Cụ thể hóa ý riêng: dạy học sinh đặt giới hạn thời gian dùng mạng xã hội."
+        },
+        {
+          "id": "communicative_achievement",
+          "band": 3,
+          "max": 5,
+          "comment": "Giọng văn khá trang trọng, nhưng \"This is bad for his health\" và \"Another idea is\" hơi khẩu ngữ so với bài luận.",
+          "to_move_up": "Thay từ khẩu ngữ bằng từ trang trọng (harmful, another possible solution).",
+          "key_takeaway": "Thay từ khẩu ngữ bằng từ trang trọng (harmful, another possible solution)."
+        },
+        {
+          "id": "organisation",
+          "band": 4,
+          "max": 5,
+          "comment": "Bài có 4 đoạn rõ ràng với Firstly, Moreover, On the other hand, To sum up; thiếu quy chiếu giữa các đoạn.",
+          "to_move_up": "Thêm cụm quy chiếu như \"This habit\", \"Such problems\" để nối các đoạn.",
+          "key_takeaway": "Thêm cụm quy chiếu như \"This habit\", \"Such problems\" để nối các đoạn."
+        },
+        {
+          "id": "language",
+          "band": 3,
+          "max": 5,
+          "comment": "Cấu trúc đa dạng nhưng lặp lại lỗi hòa hợp chủ vị (\"stay\", \"help\") và trạng từ (\"safe\").",
+          "to_move_up": "Rà soát chủ ngữ số ít ngôi thứ ba và trạng từ trước khi nộp.",
+          "key_takeaway": "Rà soát chủ ngữ số ít ngôi thứ ba và trạng từ trước khi nộp."
+        }
+      ],
+      "errors": [
+        {
+          "group": "grammar",
+          "original": "stay at home",
+          "corrected": "stays at home",
+          "explanation": "Chủ ngữ \"a boy\" là số ít nên động từ cần thêm -s.",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "social media help",
+          "corrected": "social media helps",
+          "explanation": "\"Social media\" dùng như danh từ số ít nên động từ thêm -s.",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "use it safe",
+          "corrected": "use it safely",
+          "explanation": "Bổ nghĩa cho động từ dùng trạng từ \"safely\".",
+          "impeding": false
+        },
+        {
+          "group": "style",
+          "original": "This is bad for his health",
+          "corrected": "This is harmful to his health",
+          "explanation": "\"Bad\" hơi khẩu ngữ, bài luận nên dùng \"harmful\".",
+          "impeding": false
+        },
+        {
+          "group": "style",
+          "original": "Another idea is that",
+          "corrected": "Another possible solution is that",
+          "explanation": "Cụm này cụ thể hơn và trang trọng hơn cho phần ý riêng.",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "the real friendships",
+          "corrected": "real friendships",
+          "explanation": "Nói chung chung về mối quan hệ nên bỏ \"the\".",
+          "impeding": false
+        }
+      ],
+      "short_comment": "Bài luận đủ ý, bố cục rõ. Em cần giữ giọng trang trọng và rà lỗi hòa hợp chủ vị.",
+      "strengths": [
+        "Đủ ý cho sẵn và có ý riêng",
+        "Bố cục 4 đoạn rõ ràng, có kết luận",
+        "Từ nối đa dạng (Firstly, Moreover, On the other hand)"
+      ],
+      "issues": [
+        "Ý riêng còn chung chung",
+        "Vài từ khẩu ngữ và lỗi hòa hợp chủ vị lặp lại"
+      ],
+      "checklist": [
+        "Đánh dấu 3 ý bắt buộc và kiểm tra bài đã có cả ba",
+        "Đọc lại từng câu: có từ khẩu ngữ (bad, kids, a lot of) thì đổi",
+        "Kiểm tra động từ ngôi thứ ba số ít và trạng từ",
+        "Thêm ví dụ hoặc hành động cụ thể cho ý riêng"
+      ],
+      "raw": 14,
+      "raw_max": 20,
+      "avg_band": 3.5,
+      "general_feedback": "Bài luận đủ ý, bố cục rõ. Em cần giữ giọng trang trọng và rà lỗi hòa hợp chủ vị.",
+      "next_steps": [
+        "Đánh dấu 3 ý bắt buộc và kiểm tra bài đã có cả ba",
+        "Đọc lại từng câu: có từ khẩu ngữ (bad, kids, a lot of) thì đổi"
+      ]
+    },
+    {
+      "part": 2,
+      "genre": "article",
+      "task": "You see this advert in an English-language magazine: \"Write an article about a place in your town that visitors should see. Explain what visitors can do there and why it is special.\" Write your article in 140-190 words.",
+      "text": "A Hidden Gem in My Town\n\nIf you ever visit Da Lat, you must go to the Crazy House. It is not just a hotel, it is a fantasy world made by an architect who love nature.\n\nWhen you arrive, you will see strange towers and tunnels that looks like trees and caves. Visitors can climb the narrow stairs, take photos from the small windows and even sleep in one of the rooms if they are lucky. Kids enjoys it the most because every corner is different.\n\nWhat makes this place special is the creativity. The architect wanted to show that buildings can be part of nature, not enemies of it. As a result, the garden is full of real plants and the walls have shapes of animals.\n\nI have been there three times and I never felt bored. Therefore, I recommend to go early in the morning, when there is fewer people and the light is perfect for photos.",
+      "word_count": 160,
+      "criteria": [
+        {
+          "id": "content",
+          "band": 3,
+          "max": 5,
+          "comment": "Có mô tả nơi chốn và hoạt động, nhưng phần \"why it is special\" còn ngắn và ít ví dụ cụ thể.",
+          "to_move_up": "Thêm 1-2 chi tiết cụ thể giải thích vì sao nơi này đặc biệt.",
+          "key_takeaway": "Thêm 1-2 chi tiết cụ thể giải thích vì sao nơi này đặc biệt."
+        },
+        {
+          "id": "communicative_achievement",
+          "band": 3,
+          "max": 5,
+          "comment": "Giọng văn phù hợp với tạp chí, có tiêu đề và lời khuyên cuối bài, nhưng thiếu câu mở đầu thu hút người đọc.",
+          "to_move_up": "Mở bài bằng một câu hỏi hoặc tình huống để thu hút người đọc.",
+          "key_takeaway": "Mở bài bằng một câu hỏi hoặc tình huống để thu hút người đọc."
+        },
+        {
+          "id": "organisation",
+          "band": 4,
+          "max": 5,
+          "comment": "Bài có tiêu đề và 4 đoạn có chủ đề rõ; các từ nối As a result, Therefore dùng đúng.",
+          "to_move_up": "Giữ nguyên bố cục; thử thêm quy chiếu giữa các đoạn.",
+          "key_takeaway": "Giữ nguyên bố cục; thử thêm quy chiếu giữa các đoạn."
+        },
+        {
+          "id": "language",
+          "band": 3,
+          "max": 5,
+          "comment": "Vốn từ tốt (fantasy world, narrow stairs) nhưng còn lỗi hòa hợp chủ vị và cấu trúc sau \"recommend\".",
+          "to_move_up": "Rà soát chủ ngữ số ít/số nhiều và \"recommend + V-ing\".",
+          "key_takeaway": "Rà soát chủ ngữ số ít/số nhiều và \"recommend + V-ing\"."
+        }
+      ],
+      "errors": [
+        {
+          "group": "grammar",
+          "original": "who love nature",
+          "corrected": "who loves nature",
+          "explanation": "\"An architect\" là số ít nên động từ thêm -s.",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "that looks like",
+          "corrected": "that look like",
+          "explanation": "\"Towers and tunnels\" là số nhiều nên động từ không thêm -s.",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "Kids enjoys",
+          "corrected": "Kids enjoy",
+          "explanation": "\"Kids\" là số nhiều nên dùng \"enjoy\".",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "there is fewer people",
+          "corrected": "there are fewer people",
+          "explanation": "\"Fewer people\" là số nhiều nên dùng \"there are\".",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "recommend to go",
+          "corrected": "recommend going",
+          "explanation": "Sau \"recommend\" dùng V-ing hoặc \"that + mệnh đề\".",
+          "impeding": false
+        }
+      ],
+      "short_comment": "Bài viết có bố cục và giọng phù hợp với tạp chí. Em cần thêm ví dụ và rà lỗi hòa hợp chủ vị.",
+      "strengths": [
+        "Có tiêu đề và bố cục 4 đoạn phù hợp với article",
+        "Từ vựng miêu tả đa dạng",
+        "Có lời khuyên cuối bài phù hợp mục đích"
+      ],
+      "issues": [
+        "Phần \"why special\" còn ngắn, thiếu ví dụ",
+        "Lỗi hòa hợp chủ vị lặp lại (loves, look, enjoy, are)"
+      ],
+      "checklist": [
+        "Kiểm tra bài trả lời đủ 2 câu hỏi của đề (làm gì, vì sao đặc biệt)",
+        "Gạch chân chủ ngữ và động từ của từng câu để kiểm tra hòa hợp",
+        "Thêm một câu hỏi hoặc tình huống ở mở bài",
+        "Đếm từ: nằm trong 140-190 từ"
+      ],
+      "raw": 13,
+      "raw_max": 20,
+      "avg_band": 3.25,
+      "general_feedback": "Bài viết có bố cục và giọng phù hợp với tạp chí. Em cần thêm ví dụ và rà lỗi hòa hợp chủ vị.",
+      "next_steps": [
+        "Kiểm tra bài trả lời đủ 2 câu hỏi của đề (làm gì, vì sao đặc biệt)",
+        "Gạch chân chủ ngữ và động từ của từng câu để kiểm tra hòa hợp"
+      ]
+    }
+  ],
+  "total": {
+    "raw": 27,
+    "raw_max": 40,
+    "cambridge_scale": 170,
+    "avg_band": 3.38,
+    "grade": null,
+    "is_estimate": false
+  },
+  "overall_next_steps": [],
+  "report_url": null,
+  "rubric_source": "fce-writing-grader"
+}

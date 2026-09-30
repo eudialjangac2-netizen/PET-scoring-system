@@ -1,0 +1,231 @@
+{
+  "schema_version": "1.0",
+  "level": "PET",
+  "student": {
+    "id": "C260125MC",
+    "name": "Nguyen Van A (mẫu)",
+    "class": "6/1"
+  },
+  "test": {
+    "id": "pet-test1",
+    "label": "PET Test 1"
+  },
+  "graded_at": "2026-09-30",
+  "parts": [
+    {
+      "part": 1,
+      "genre": "email",
+      "task": "Read this email from your English friend Sam. Write an email to Sam answering his questions: Did you enjoy the school trip? Where did you go? Would you like to go there again? Write your email in 100 words or more.",
+      "text": "Hi Sam,\nThank you for your email. I am agree that the school trip was very exciting. We went to a science museum in Ho Chi Minh City last Friday. I enjoyed the space room most because we could touch many real machines. My teacher explain everything clearly and my friends and me took a lot of photos. However, the bus was very slow so we arrived late in the morning. I would like to go there again with my family, because there are many interesting things which I didn't see yet. Do you want to come with us next month? Write me soon!\nBest wishes,\nAn",
+      "word_count": 107,
+      "criteria": [
+        {
+          "id": "content",
+          "band": 4,
+          "max": 5,
+          "comment": "Trả lời đủ 3 câu hỏi của Sam, có thêm chi tiết như \"space room\" và \"touch many real machines\".",
+          "to_move_up": "Thêm một chi tiết cảm xúc cho câu hỏi \"Would you like to go again?\".",
+          "key_takeaway": "Thêm một chi tiết cảm xúc cho câu hỏi \"Would you like to go again?\"."
+        },
+        {
+          "id": "communicative_achievement",
+          "band": 4,
+          "max": 5,
+          "comment": "Giọng thân mật phù hợp với bạn bè, có lời chào, lời mời và lời kết.",
+          "to_move_up": "Thêm một câu gợi mở để email tự nhiên hơn.",
+          "key_takeaway": "Thêm một câu gợi mở để email tự nhiên hơn."
+        },
+        {
+          "id": "organisation",
+          "band": 4,
+          "max": 5,
+          "comment": "Các đoạn ý nối bằng \"because\", \"However\", \"so\" đúng chỗ, nhưng chỉ có một đoạn dài.",
+          "to_move_up": "Tách bài thành 2-3 đoạn ngắn: chuyến đi, điều thích, lời mời.",
+          "key_takeaway": "Tách bài thành 2-3 đoạn ngắn: chuyến đi, điều thích, lời mời."
+        },
+        {
+          "id": "language",
+          "band": 3,
+          "max": 5,
+          "comment": "Từ vựng đa dạng nhưng còn lỗi chia động từ (\"I am agree\", \"My teacher explain\") và đại từ (\"my friends and me\").",
+          "to_move_up": "Rà lại chia động từ ngôi thứ ba và thì hiện tại hoàn thành.",
+          "key_takeaway": "Rà lại chia động từ ngôi thứ ba và thì hiện tại hoàn thành."
+        }
+      ],
+      "errors": [
+        {
+          "group": "grammar",
+          "original": "I am agree",
+          "corrected": "I agree",
+          "explanation": "\"Agree\" là động từ thường, không đi với \"am\".",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "My teacher explain",
+          "corrected": "My teacher explained",
+          "explanation": "Kể chuyện trong quá khứ nên dùng \"explained\".",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "my friends and me took",
+          "corrected": "my friends and I took",
+          "explanation": "Làm chủ ngữ phải dùng \"I\", không dùng \"me\".",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "which I didn't see yet",
+          "corrected": "which I haven't seen yet",
+          "explanation": "\"Yet\" đi với thì hiện tại hoàn thành.",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "Write me soon",
+          "corrected": "Write to me soon",
+          "explanation": "Sau \"write\" cần \"to\" khi có người nhận.",
+          "impeding": false
+        }
+      ],
+      "short_comment": "Bài trả lời đủ ý, giọng thân mật. Em cần chú ý chia động từ và cách dùng \"I/me\".",
+      "strengths": [
+        "Trả lời đủ cả 3 câu hỏi và có chi tiết riêng",
+        "Giọng thư thân mật, có lời mời và lời kết",
+        "Dùng được từ nối because, However, so"
+      ],
+      "issues": [
+        "Sai chia động từ ở ngôi thứ ba và \"am agree\"",
+        "Bài chưa chia đoạn rõ, ít câu cảm xúc"
+      ],
+      "checklist": [
+        "Gạch chân 3 câu hỏi và đánh dấu mình đã trả lời từng câu",
+        "Kiểm tra động từ: quá khứ hay hiện tại, ngôi thứ ba có thêm -s/-ed chưa",
+        "Chia bài thành 2-3 đoạn và mỗi đoạn có một ý chính",
+        "Đếm từ: ít nhất 100 từ trước khi nộp"
+      ],
+      "raw": 15,
+      "raw_max": 20,
+      "avg_band": 3.75,
+      "general_feedback": "Bài trả lời đủ ý, giọng thân mật. Em cần chú ý chia động từ và cách dùng \"I/me\".",
+      "next_steps": [
+        "Gạch chân 3 câu hỏi và đánh dấu mình đã trả lời từng câu",
+        "Kiểm tra động từ: quá khứ hay hiện tại, ngôi thứ ba có thêm -s/-ed chưa"
+      ]
+    },
+    {
+      "part": 2,
+      "genre": "story",
+      "task": "Your English teacher has asked you to write a story. Your story must begin with this sentence: \"Last Saturday, Anna found an old key in her garden.\" Write your story in 100 words or more.",
+      "text": "Last Saturday, Anna found an old key in her garden. She was very surprised because nobody live in the house before her family. She showed the key to her brother, Tom, and they decided to look for a door. First they looked in the kitchen but they found nothing. Then they go to the old shed at the end of the garden. The key open a small wooden box under the table. Inside there was a letter from a girl who lived there fifty years ago. Anna and Tom was so happy that they read it together the whole evening. In the end, they put the letter in a frame and hanged it on the wall.",
+      "word_count": 116,
+      "criteria": [
+        {
+          "id": "content",
+          "band": 4,
+          "max": 5,
+          "comment": "Câu chuyện bắt đầu đúng câu cho sẵn, có diễn biến rõ và kết thúc hợp lý với bức thư trong hộp.",
+          "to_move_up": "Thêm 1-2 câu miêu tả (ví dụ: cảm xúc của Anna khi thấy chiếc hộp).",
+          "key_takeaway": "Thêm 1-2 câu miêu tả (ví dụ: cảm xúc của Anna khi thấy chiếc hộp)."
+        },
+        {
+          "id": "communicative_achievement",
+          "band": 3,
+          "max": 5,
+          "comment": "Cách kể mạch lạc, nhưng chưa có nhiều chi tiết miêu tả cảm xúc và bối cảnh để hấp dẫn người đọc.",
+          "to_move_up": "Dùng thêm từ nối như \"Suddenly\", \"After that\", \"Meanwhile\".",
+          "key_takeaway": "Dùng thêm từ nối như \"Suddenly\", \"After that\", \"Meanwhile\"."
+        },
+        {
+          "id": "organisation",
+          "band": 3,
+          "max": 5,
+          "comment": "Dùng được First, Then, In the end để nối ý; các câu giữa còn ngắn và giống nhau.",
+          "to_move_up": "Kết hợp 2 câu ngắn thành một câu dài bằng \"because\" hoặc \"when\".",
+          "key_takeaway": "Kết hợp 2 câu ngắn thành một câu dài bằng \"because\" hoặc \"when\"."
+        },
+        {
+          "id": "language",
+          "band": 3,
+          "max": 5,
+          "comment": "Kiểm soát tốt thì quá khứ đơn nhưng còn nhiều lỗi hòa hợp chủ vị và dạng động từ bất quy tắc.",
+          "to_move_up": "Rà soát động từ sau chủ ngữ số ít/số nhiều và quá khứ bất quy tắc.",
+          "key_takeaway": "Rà soát động từ sau chủ ngữ số ít/số nhiều và quá khứ bất quy tắc."
+        }
+      ],
+      "errors": [
+        {
+          "group": "grammar",
+          "original": "nobody live",
+          "corrected": "nobody had lived",
+          "explanation": "Nói về việc xảy ra trước một mốc quá khứ nên dùng quá khứ hoàn thành.",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "Then they go",
+          "corrected": "Then they went",
+          "explanation": "Cả câu chuyện ở quá khứ nên \"go\" phải là \"went\".",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "The key open",
+          "corrected": "The key opened",
+          "explanation": "Chủ ngữ số ít kể ở quá khứ cần \"opened\".",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "Anna and Tom was",
+          "corrected": "Anna and Tom were",
+          "explanation": "Hai người là chủ ngữ số nhiều nên dùng \"were\".",
+          "impeding": false
+        },
+        {
+          "group": "vocabulary",
+          "original": "hanged it",
+          "corrected": "hung it",
+          "explanation": "\"Hang\" (treo tranh) có quá khứ là \"hung\"; \"hanged\" chỉ dùng cho hành hình.",
+          "impeding": false
+        }
+      ],
+      "short_comment": "Câu chuyện có mở đầu, diễn biến, kết thúc rõ. Em cần luyện thêm quá khứ đơn và động từ bất quy tắc.",
+      "strengths": [
+        "Câu chuyện đầy đủ mở đầu, diễn biến, kết thúc",
+        "Ý tưởng chiếc hộp và bức thư thú vị",
+        "Dùng đúng từ nối First, Then, In the end"
+      ],
+      "issues": [
+        "Nhiều lỗi thì quá khứ và hòa hợp chủ vị",
+        "Câu ngắn, thiếu miêu tả cảm xúc"
+      ],
+      "checklist": [
+        "Gạch chân mọi động từ và kiểm tra thì quá khứ",
+        "Ôn 15 động từ bất quy tắc thông dụng (go, find, hang, put...)",
+        "Thêm ít nhất 2 câu miêu tả cảm xúc hoặc cảnh vật",
+        "Đọc lại to bài viết để tìm lỗi chủ ngữ - động từ"
+      ],
+      "raw": 13,
+      "raw_max": 20,
+      "avg_band": 3.25,
+      "general_feedback": "Câu chuyện có mở đầu, diễn biến, kết thúc rõ. Em cần luyện thêm quá khứ đơn và động từ bất quy tắc.",
+      "next_steps": [
+        "Gạch chân mọi động từ và kiểm tra thì quá khứ",
+        "Ôn 15 động từ bất quy tắc thông dụng (go, find, hang, put...)"
+      ]
+    }
+  ],
+  "total": {
+    "raw": 28,
+    "raw_max": 40,
+    "cambridge_scale": 152,
+    "avg_band": 3.5,
+    "grade": null,
+    "is_estimate": false
+  },
+  "overall_next_steps": [],
+  "report_url": null,
+  "rubric_source": "pet-writing-grader"
+}
