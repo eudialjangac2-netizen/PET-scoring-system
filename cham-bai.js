@@ -100,7 +100,7 @@
     document.querySelectorAll('section.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
     document.querySelectorAll('[data-go]').forEach(b => b.setAttribute('aria-current', b.dataset.go === v));
     $('#dock').hidden = v !== 'scan';
-    ({ scan: renderScan, review: renderReview, write: renderWrite, export: renderExport })[v]?.();
+    ({ scan: renderScan, review: renderReview, write: renderWrite, writing: renderWriting, export: renderExport })[v]?.();
     window.scrollTo(0, 0);
   }
 
@@ -265,8 +265,8 @@
     if ((KEY.level || t.level) !== R.level) { alert(`Đề ${t.title} là đề ${KEY.level}, lớp này học ${R.level}.`); return; }
     lsSet('omr-last', { test: tid, cls });
     const id = `s2:${tid}:${cls}`;
-    S = (await idb.get(id)) || { id, test: tid, testTitle: t.title, level: R.level, cls, sheets: {}, unknown: [], writeDone: {}, comments: {} };
-    S.comments = S.comments || {};
+    S = (await idb.get(id)) || { id, test: tid, testTitle: t.title, level: R.level, cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, writing: {} };
+    S.comments = S.comments || {}; S.writing = S.writing || {};
     document.documentElement.style.setProperty('--ruby', LV[S.level].mau);
     $('#ctx').textContent = `${t.title} · ${cls}`;
     go('scan');
@@ -672,6 +672,92 @@
     });
   }
 
+  // ---------- Writing (JSON từ skill chấm Writing; kiểm tra bằng viet/kiem-tra-json.js) ----------
+  const WR_COLS = ['Writing điểm thô', 'Writing tối đa', 'Writing thang'];
+  const writingOf = s => (S.writing || {})[s.key]?.data || null;
+  const hasWriting = () => Object.keys(S.writing || {}).length > 0;
+  const wrScaleText = d => d.total.cambridge_scale == null ? '—' : d.total.cambridge_scale + (d.total.is_estimate ? ' (ước lượng)' : '');
+  function wrVals(r) { const d = writingOf(r.s); return d ? [d.total.raw, d.total.raw_max, d.total.cambridge_scale ?? ''] : ['', '', '']; }
+  function wrCells(r) { const d = writingOf(r.s); return d ? `<td class="num">${d.total.raw}/${d.total.raw_max}</td><td class="num">${esc(wrScaleText(d))}</td>` : '<td>—</td><td>—</td>'; }
+
+  let wrChecker = null, wrPending = null;
+  function wrLoadChecker() {
+    if (wrChecker) return wrChecker;
+    wrChecker = fetch('viet/schema-writing.json').then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(s => window.WritingJsonCheck.taoBoKiemTra(s, window.Ajv2020));
+    wrChecker.catch(() => { wrChecker = null; });
+    return wrChecker;
+  }
+  const wrNorm = x => String(x ?? '').trim().toLowerCase();
+  function wrFindStudent(id) {
+    const a = wrNorm(id); if (!a) return null;
+    const k = keyOf(id);
+    return students().find(s => wrNorm(s.code) === a || (k.length === 6 && s.key === k)) || null;
+  }
+  const wrBox = (cls, html) => `<div class="notice ${cls}">${html}</div>`;
+  function wrStore(stu, data) {
+    if (S.writing[stu.key] && !confirm(`${stu.name} đã có bài Writing. Ghi đè bằng file mới?`)) return false;
+    S.writing[stu.key] = { data, at: Date.now() }; save(); return true;
+  }
+  // xử lý một JSON: trả về { html, ok, pending }
+  async function wrProcess(text, label, allowPick) {
+    let chk; try { chk = await wrLoadChecker(); }
+    catch (e) { return { ok: false, html: wrBox('err', `Không tải được viet/schema-writing.json (${esc(e.message)}). Mở app qua địa chỉ web, không mở trực tiếp file từ máy.`) }; }
+    const r = chk.kiemTra(text), pre = label ? `<b>${esc(label)}</b>: ` : '';
+    if (!r.ok) return { ok: false, html: wrBox('err', pre + 'JSON chưa đúng form:<ul>' + r.loi.map(m => `<li>${esc(m)}</li>`).join('') + '</ul>') };
+    const d = r.data;
+    if (d.level !== S.level) return { ok: false, html: wrBox('err', `${pre}JSON là bài ${esc(d.level)}, nhưng lớp này chấm ${esc(S.level)}.`) };
+    const warn = r.canhBao.length ? '<br>Cảnh báo số liệu: ' + r.canhBao.map(esc).join(' ') : '';
+    if (d.test && d.test.id && d.test.id !== S.test && !confirm(`${label || 'JSON'}: test.id là "${d.test.id}" nhưng đề đang chấm là "${S.test}". Vẫn lưu?`))
+      return { ok: false, html: wrBox('warn', pre + 'Đã huỷ vì khác mã đề.') };
+    const stu = wrFindStudent(d.student && d.student.id);
+    if (!stu) {
+      if (!allowPick) return { ok: false, html: wrBox('warn', `${pre}không tìm thấy học sinh có mã "${esc(d.student.id)}" trong lớp. Hãy dán riêng file này để chọn học sinh.`) };
+      wrPending = { data: d, warn };
+      return { ok: false, pending: true, html: wrBox('warn', `Không tìm thấy học sinh có mã "<b>${esc(d.student.id)}</b>" (${esc(d.student.name || '')}) trong lớp này. Chọn học sinh để ghép:`
+        + `<div class="row" style="margin-top:8px"><select id="wrPick">${students().map(s => `<option value="${esc(s.key)}">${esc(s.code)} - ${esc(s.name)}</option>`).join('')}</select>`
+        + `<button class="btn small primary" id="wrPickOk">Ghép và lưu</button></div>`) };
+    }
+    if (!wrStore(stu, d)) return { ok: false, html: wrBox('warn', pre + 'Không ghi đè.') };
+    return { ok: true, html: wrBox('info', `${pre}đã lưu cho <b>${esc(stu.name)}</b> (${esc(stu.code)}): ${d.total.raw}/${d.total.raw_max}, thang ${esc(wrScaleText(d))}.${warn}`) };
+  }
+  async function wrRun(items, allowPick) {
+    const out = []; let okAny = false;
+    for (const it of items) { const r = await wrProcess(it.text, it.label, allowPick); out.push(r.html); okAny = okAny || r.ok; if (r.pending) break; }
+    $('#wrMsg').innerHTML = out.join('');
+    const b = $('#wrPickOk');
+    if (b) b.onclick = () => {
+      const stu = stuByKey($('#wrPick').value);
+      if (stu && wrPending && wrStore(stu, wrPending.data)) {
+        $('#wrMsg').innerHTML = wrBox('info', `Đã lưu cho <b>${esc(stu.name)}</b> (${esc(stu.code)}).${wrPending.warn}`); wrPending = null; $('#wrText').value = ''; renderWritingTable();
+      }
+    };
+    if (okAny) { $('#wrText').value = ''; renderWritingTable(); }
+  }
+  function renderWritingTable() {
+    const rows = students().map((s, i) => { const d = writingOf(s);
+      return `<tr class="${d ? '' : 'missing'}"><td class="num">${i + 1}</td><td>${esc(s.code)}</td><td>${esc(s.name)}</td>
+        <td>${d ? `${esc(d.level)} · ${d.parts.length} Part` : 'Chưa có'}</td><td class="num">${d ? d.total.raw + '/' + d.total.raw_max : '—'}</td>
+        <td class="num">${d ? esc(wrScaleText(d)) : '—'}</td><td>${d ? `<button class="btn small" data-wdel="${esc(s.key)}">Xoá</button>` : ''}</td></tr>`; });
+    $('#wrTable').innerHTML = '<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Bài Writing</th><th>Điểm thô</th><th>Thang</th><th></th></tr></thead><tbody>' + rows.join('') + '</tbody>';
+    $('#wrTable').querySelectorAll('[data-wdel]').forEach(b => b.onclick = () => {
+      const s = stuByKey(b.dataset.wdel); if (s && confirm(`Xoá bài Writing của ${s.name}?`)) { delete S.writing[s.key]; save(); renderWritingTable(); }
+    });
+  }
+  function renderWriting() {
+    S.writing = S.writing || {}; wrPending = null; $('#wrMsg').innerHTML = '';
+    wrLoadChecker().catch(() => {});
+    $('#wrSave').onclick = () => wrRun([{ text: $('#wrText').value, label: '' }], true);
+    $('#wrClear').onclick = () => { $('#wrText').value = ''; $('#wrMsg').innerHTML = ''; wrPending = null; };
+    $('#wrFile').onchange = async function () {
+      const files = [...this.files]; this.value = ''; if (!files.length) return;
+      const items = []; for (const f of files) items.push({ text: await f.text(), label: f.name });
+      if (items.length === 1) $('#wrText').value = items[0].text;
+      wrRun(items, items.length === 1);
+    };
+    renderWritingTable();
+  }
+
   // ---------- kết quả & xuất file ----------
   function warnings() {
     const w = [];
@@ -691,12 +777,12 @@
     $('#exportWarn').innerHTML = w.length ? `<div class="notice warn">${w.map(esc).join('<br>')}</div>` : '';
     const rs = results();
     $('#resTable').innerHTML = `<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Lớp</th>${L.phan.map(s =>
-      `<th>${s.ten} /${secMax(S.level, s)}</th><th>Thang</th><th>CEFR</th>`).join('')}<th>Tô không chuẩn</th></tr></thead><tbody>` +
+      `<th>${s.ten} /${secMax(S.level, s)}</th><th>Thang</th><th>CEFR</th>`).join('')}${hasWriting() ? '<th>Writing</th><th>Writing thang</th>' : ''}<th>Tô không chuẩn</th></tr></thead><tbody>` +
       rs.map(r => `<tr class="${r.any ? '' : 'missing'}"><td class="num">${r.stt}</td><td>${esc(r.s.code)}</td>
         <td class="nm-cell"><div class="nm-in"><span>${esc(r.s.name)}</span>${r.any ? `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>` : ''}</div></td>
         <td>${esc(r.s.vh)}</td>${L.phan.map(s => { const g = r.secs[s.id], t = secCell(g);
           return t ? `<td colspan="3">${t}</td>` : `<td class="num">${g.raw}</td><td class="num">${scaleText(g.scale)}</td><td>${g.cefr}</td>`; }).join('')}
-        <td class="num">${r.nonstd || ''}</td></tr>`).join('') + '</tbody>';
+        ${hasWriting() ? wrCells(r) : ''}<td class="num">${r.nonstd || ''}</td></tr>`).join('') + '</tbody>';
     $('#resTable').querySelectorAll('[data-rp]').forEach(b => b.onclick = () => studentReport(b.dataset.rp));
   }
   function note(r) {
@@ -720,11 +806,12 @@
   function exportHeader() {
     const L = lvl(), qCols = p => Object.keys(QMAP[S.level][p]).map(Number).sort((a, b) => a - b).map(q => PAPER_SHORT[p] + q);
     const secCols = sec => [`${sec.ten} /${secMax(S.level, sec)}`, `${sec.ten} thang`, `${sec.ten} CEFR`, ...partsOf(S.level, sec).map(([p, n]) => `${sec.viet} Part ${p} (/${n})`)];
-    return { qCols, cols: ['STT', 'Mã HS', 'Họ tên', 'Lớp', ...qCols('reading'), ...qCols('listening'), ...L.phan.flatMap(secCols), 'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét'] };
+    return { qCols, cols: ['STT', 'Mã HS', 'Họ tên', 'Lớp', ...qCols('reading'), ...qCols('listening'), ...L.phan.flatMap(secCols), ...(hasWriting() ? WR_COLS : []), 'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét'] };
   }
   function secVals(r) {
-    return lvl().phan.flatMap(sec => { const g = r.secs[sec.id], ok = g && !g.incomplete, t = !g ? '' : g.incomplete ? 'thiếu trang' : '';
-      return [ok ? g.raw : t, ok ? scaleText(g.scale) : '', ok ? g.cefr : '', ...partsOf(S.level, sec).map(([p]) => ok ? g.parts[p] : '')]; });
+    return [...lvl().phan.flatMap(sec => { const g = r.secs[sec.id], ok = g && !g.incomplete, t = !g ? '' : g.incomplete ? 'thiếu trang' : '';
+      return [ok ? g.raw : t, ok ? scaleText(g.scale) : '', ok ? g.cefr : '', ...partsOf(S.level, sec).map(([p]) => ok ? g.parts[p] : '')]; }),
+      ...(hasWriting() ? wrVals(r) : [])];
   }
   async function exportXlsx() {
     if (!confirmWarn()) return;
@@ -920,7 +1007,7 @@
   async function clearSession() {
     if (!confirm(`Xoá toàn bộ phiếu đã chụp của ${S.testTitle} – ${S.cls}? Không thể hoàn tác.`)) return;
     await idb.del(S.id);
-    S = { id: S.id, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {} };
+    S = { id: S.id, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, writing: {} };
     go('scan');
   }
 

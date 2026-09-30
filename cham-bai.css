@@ -196,3 +196,8 @@ td.nm-cell .nm-in { display: flex; gap: 8px; align-items: center; justify-conten
 #syncStatus[hidden] { display: none; }
 
 .wcell.mid { border-color: #C98A00; background: #FFF3CC; }
+
+/* Writing (bước 5) */
+#wrText { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: var(--r); font: 13px/1.45 ui-monospace, Menlo, Consolas, monospace; resize: vertical; }
+#wrMsg ul { margin: 6px 0 0; padding-left: 20px; }
+#wrMsg .notice { margin-bottom: 8px; }
