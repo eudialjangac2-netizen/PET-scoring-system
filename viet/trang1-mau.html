@@ -1,51 +1,43 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Trang 1 mẫu</title>
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Trang 1 mẫu v2</title>
 <style>
 @page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;font:14px/1.45 "Be Vietnam Pro",system-ui,sans-serif;color:#172033}
-.pg{width:794px;height:1123px;overflow:hidden;page-break-after:always;display:flex;flex-direction:column;background:#fff}
-.hd{color:#fff;padding:22px 36px 18px}.hd small{display:block;letter-spacing:.12em;font-size:11px;font-weight:600;opacity:.9}.hd h1{margin:2px 0 0;font-size:24px}
-.main{padding:20px 36px;flex:1;display:flex;flex-direction:column;gap:16px}
-.info{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:8px 18px}.info span{display:block;color:#5B6576;font-size:11px}.info b{font-size:15px}
-.exam{border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
-.exam b{font-size:16px}.exam span{font-size:12px;color:#5B6576;display:block}
+.pg{width:794px;height:1123px;overflow:hidden;page-break-after:always;display:flex;flex-direction:column;background:#fff;border-top:8px solid var(--a)}
+.hd{padding:16px 36px 14px;background:var(--t);display:flex;justify-content:space-between;align-items:flex-end}
+.hd small{display:block;letter-spacing:.12em;font-size:11px;font-weight:600;color:var(--d)}.hd h1{margin:2px 0 0;font-size:22px;color:#172033}.hd .lv{font-size:13px;font-weight:700;color:var(--d)}
+.main{padding:16px 36px 8px;flex:1;display:flex;flex-direction:column;gap:14px;min-height:0}
+.info{display:grid;grid-template-columns:1.4fr 1fr .8fr 1fr;gap:6px 16px}.info span{display:block;color:#5B6576;font-size:11px}.info b{font-size:14px}
 .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
-.c{grid-column:span 3;border:1px solid #DCE1E8;border-radius:12px;padding:12px 14px}
+.c{grid-column:span 3;border:1px solid #E3E7ED;border-radius:12px;padding:12px 14px;background:#fff}
 .g3 .c{grid-column:span 2}
 .c h2{margin:0 0 6px;font-size:15px;display:flex;justify-content:space-between;align-items:center}
-.c h2 em{font-style:normal;font-size:12px;font-weight:700;padding:1px 9px;border-radius:99px}
-.big{display:flex;gap:14px;align-items:baseline;margin-bottom:8px}.big b{font-size:28px;line-height:1}.big span{white-space:nowrap;font-size:11px;color:#5B6576}
+.c h2 em{font-style:normal;font-size:12px;font-weight:700;padding:1px 9px;border-radius:99px;background:var(--t);color:var(--d)}
+.big{display:flex;gap:14px;align-items:baseline;margin-bottom:8px}.big b{font-size:28px;line-height:1;color:var(--d)}.big span{white-space:nowrap;font-size:11px;color:#5B6576}
 .row{display:grid;grid-template-columns:96px 1fr 36px;gap:8px;align-items:center;font-size:11.5px;margin-top:4px}
-.bar{height:8px;background:#EEF1F5;border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;border-radius:99px}
-.box{border-radius:12px;padding:12px 16px}.box h3{margin:0 0 6px;font-size:14px}.box p{margin:0;font-size:13px;line-height:1.55}
-.box ul{margin:0;padding-left:18px;font-size:13px;line-height:1.55}
-.cm{background:#F5F7FA;border:1px solid #DCE1E8}.up{background:#FFF8E1;border:1px solid #F1DFA0}
-.ft{padding:10px 36px 16px;font-size:11px;color:#9aa3b1;display:flex;justify-content:space-between}
-.tag{font-size:10.5px;color:#5B6576;font-weight:400}
+.bar{height:8px;background:#EEF1F5;border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;border-radius:99px;background:var(--a)}
+.bar i.m{opacity:.6}.bar i.l{opacity:.32}
+.leg{font-size:10.5px;color:#7a8494;display:flex;gap:14px;align-items:center}.leg i{display:inline-block;width:18px;height:7px;border-radius:9px;background:var(--a);margin-right:4px;vertical-align:middle}
+.box{border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;min-height:0;overflow:hidden}.box h3{margin:0 0 6px;font-size:14px;color:var(--d)}.box p{margin:0;font-size:13.5px;line-height:1.6}
+.box ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.6}.box li{margin-bottom:3px}
+.cm{background:#F6F8FA;border:1px solid #E3E7ED;flex:11}.up{background:var(--t);border:1px solid var(--t2);flex:9}
+.ft{padding:8px 36px 14px;font-size:11px;color:#9aa3b1;display:flex;justify-content:space-between}
 </style></head><body>
 <script>
-const G=f=>f>=.75?'#1E7F4F':f>=.5?'#E0A100':'#B42318';
-const row=(t,v,n)=>`<div class="row"><span>${t}</span><div class="bar"><i style="width:${v/n*100}%;background:${G(v/n)}"></i></div><b>${v}/${n}</b></div>`;
-function card(m,t,lv,raw,max,sc,rows){return `<div class="c"><h2>${t}<em style="background:${m}1f;color:${m}">${lv}</em></h2><div class="big"><div><b>${raw}</b><span> / ${max} điểm</span></div><div><b>${sc}</b><span> Scale</span></div></div>${rows.join('')}</div>`}
-function page(o){return `<div class="pg"><div class="hd" style="background:${o.m}"><small>RUBY SCHOOL · CAMBRIDGE ${o.lv}</small><h1>Phiếu kết quả bài thi thử</h1></div><div class="main">
-<div class="exam" style="background:${o.m}12;border:1px solid ${o.m}40"><div><span>Bài thi</span><b>${o.exam}</b></div><div><span>Ngày thi</span><b>${o.date}</b></div><div><span>Hình thức</span><b>Thi thử (Mock Test)</b></div></div>
-<div class="info"><div><span>Họ và tên</span><b>Nguyen Van A (mẫu)</b></div><div><span>Mã học sinh</span><b>C260125MC</b></div><div><span>Lớp</span><b>6/1</b></div></div>
+const band=(v,n)=>{const f=v/n;return f>=.75?'':f>=.5?'m':'l'};
+const row=(t,v,n)=>`<div class="row"><span>${t}</span><div class="bar"><i class="${band(v,n)}" style="width:${v/n*100}%"></i></div><b>${v}/${n}</b></div>`;
+const card=(t,lv,raw,max,sc,rows)=>`<div class="c"><h2>${t}<em>${lv}</em></h2><div class="big"><div><b>${raw}</b><span> / ${max} điểm</span></div><div><b>${sc}</b><span> Scale</span></div></div>${rows.join('')}</div>`;
+const CM='Em làm bài khá tốt, đặc biệt là Listening với kết quả vững ở hầu hết các Part. Ở Reading, em cần đọc kỹ đề hơn ở Part 3 và Part 5 vì các câu sai chủ yếu do chọn nhanh khi chưa gạch chân từ khóa. Phần Writing em đã trả lời đủ ý, bố cục rõ ràng nhưng còn sai dạng quá khứ của động từ bất quy tắc và chưa dùng nhiều từ nối. Phần Speaking em nói tự tin, phát âm rõ; em cần mở rộng câu trả lời thay vì chỉ trả lời ngắn. Em cần duy trì luyện tập đều đặn mỗi tuần để đạt kết quả tốt hơn ở bài thi sau.';
+const UP=['Reading: mỗi tuần làm 2 bài Part 3, gạch chân từ khóa trong câu hỏi trước khi đọc bài.','Writing: học thuộc quá khứ của 10 động từ bất quy tắc thông dụng (go, buy, break, build...) và dùng first, then, after that để nối ý.','Speaking: mỗi ngày luyện 5 phút trả lời bằng câu đầy đủ, thêm một lý do hoặc ví dụ cho mỗi câu.','Listening: nghe lại các câu sai ở Part 4 và ghi lại từ khóa em nghe được.'];
+const pg=(o)=>`<div class="pg" style="--a:${o.a};--d:${o.d};--t:${o.a}1c;--t2:${o.a}44"><div class="hd"><div><small>RUBY SCHOOL · CAMBRIDGE ${o.lv}</small><h1>Phiếu kết quả bài thi thử</h1></div><div class="lv">${o.exam}</div></div><div class="main">
+<div class="info"><div><span>Họ và tên</span><b>Nguyen Van A (mẫu)</b></div><div><span>Mã học sinh</span><b>C260125MC</b></div><div><span>Lớp</span><b>6/1</b></div><div><span>Ngày chấm</span><b>30/09/2026</b></div></div>
 <div class="grid ${o.cards.length>4?'g3':''}">${o.cards.join('')}</div>
-<div class="box cm"><h3>Nhận xét tổng thể của giáo viên</h3><p>${o.cm}</p></div>
-<div class="box up"><h3>Đề xuất cải thiện</h3><ul>${o.up.map(x=>`<li>${x}</li>`).join('')}</ul></div>
-</div><div class="ft"><span>Điểm quy đổi theo bảng Cambridge English Scale của ${o.lv}.</span><span>Ruby School</span></div></div>`}
-const cm='Em làm bài khá tốt, đặc biệt là Listening. Em cần chú ý đọc kỹ đề ở Reading Part 3 và luyện thêm chia động từ trong bài viết. Em cần cố gắng duy trì việc luyện tập đều đặn mỗi tuần.';
-const up=['Reading: luyện đọc kỹ đề và gạch chân từ khóa ở Part 3 mỗi tuần 2 bài.','Writing: học lại thì quá khứ đơn của 10 động từ bất quy tắc; dùng từ chỉ trình tự (first, then, after that).','Speaking: luyện trả lời đủ ý bằng câu hoàn chỉnh, mỗi ngày 5 phút.'];
-let m='#019EA5';
-document.body.insertAdjacentHTML('beforeend',page({m,lv:'KET',exam:'KET Test 1 (A2 Key for Schools)',date:'25/09/2026',cm,up,cards:[
-card(m,'Reading','A2',38,56,132,[row('Part 1',5,6),row('Part 3',4,6),row('Part 5',5,6)]),
-card(m,'Listening','A2',19,25,138,[row('Part 1',4,5),row('Part 3',4,5),row('Part 5',3,5)]),
-card(m,'Writing','A2',22,30,130,[row('Nội dung',9,10),row('Bố cục',7,10),row('Ngôn ngữ',6,10)]),
-card(m,'Speaking','A2',null,'',null,[])].map((c,i)=>i==3?card(m,'Speaking','A2',13,15,135,[row('NP, từ vựng',4,5),row('Phát âm',4,5),row('Giao tiếp',5,5)]):c)}));
-m='#99CB38';
-const dk='#5C7F1E';
-document.body.insertAdjacentHTML('beforeend',page({m,lv:'FCE',exam:'FCE Test 5 (B2 First for Schools)',date:'25/09/2026',cm,up,cards:[
-card(m,'Reading','B2',30,42,168,[row('Part 5',4,6),row('Part 6',5,6),row('Part 7',5,10)]),
-card(m,'Use of English','B2',22,28,172,[row('Part 1',6,8),row('Part 3',6,8),row('Part 4',5,6)]),
-card(m,'Listening','B2',20,30,165,[row('Part 1',6,8),row('Part 2',7,10),row('Part 3',4,5)]),
-card(m,'Writing','B2',28,40,170,[row('Nội dung',7,10),row('Giao tiếp',7,10),row('Bố cục',7,10),row('Ngôn ngữ',7,10)]),
-card(m,'Speaking','B2',15,20,168,[row('NP, từ vựng',4,5),row('Phát âm',4,5),row('Giao tiếp',4,5)])]}));
+<div class="leg"><span>Thanh điểm:</span><span><i></i>từ 75% điểm tối đa</span><span><i style="opacity:.6"></i>50-75%</span><span><i style="opacity:.32"></i>dưới 50%</span></div>
+<div class="box cm"><h3>Nhận xét tổng thể của giáo viên</h3><p>${CM}</p></div>
+<div class="box up"><h3>Đề xuất cải thiện</h3><ul>${UP.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+</div><div class="ft"><span>Điểm quy đổi theo bảng Cambridge English Scale của ${o.lv}.</span><span>Ruby School</span></div></div>`;
+const sp=(l)=>card('Speaking',l,13,15,135,[row('NP, từ vựng',4,5),row('Phát âm',4,5),row('Giao tiếp',5,5)]);
+document.body.insertAdjacentHTML('beforeend',
+pg({a:'#019EA5',d:'#017A80',lv:'KET',exam:'KET Test 1',cards:[card('Reading','A2',38,56,132,[row('Part 1',5,6),row('Part 3',4,6),row('Part 5',5,6)]),card('Listening','A2',19,25,138,[row('Part 1',4,5),row('Part 3',4,5),row('Part 5',3,5)]),card('Writing','A2',22,30,130,[row('Nội dung',9,10),row('Bố cục',7,10),row('Ngôn ngữ',6,10)]),sp('A2')]})+
+pg({a:'#EB6383',d:'#9E1B32',lv:'PET',exam:'PET Test 3',cards:[card('Reading','B1',30,42,152,[row('Part 1',4,5),row('Part 3',5,6),row('Part 5',2,6)]),card('Listening','B1',18,25,148,[row('Part 1',5,7),row('Part 2',5,6),row('Part 4',4,6)]),card('Writing','B1',28,40,150,[row('Nội dung',7,10),row('Giao tiếp',7,10),row('Bố cục',7,10),row('Ngôn ngữ',7,10)]),sp('B1')]})+
+pg({a:'#99CB38',d:'#4F6F16',lv:'FCE',exam:'FCE Test 5',cards:[card('Reading','B2',30,42,168,[row('Part 5',4,6),row('Part 6',5,6),row('Part 7',5,10)]),card('Use of English','B2',22,28,172,[row('Part 1',6,8),row('Part 3',6,8),row('Part 4',5,6)]),card('Listening','B2',20,30,165,[row('Part 1',6,8),row('Part 2',7,10),row('Part 3',4,5)]),card('Writing','B2',28,40,170,[row('Nội dung',7,10),row('Giao tiếp',7,10),row('Bố cục',7,10),row('Ngôn ngữ',7,10)]),sp('B2')]}));
+document.body.dataset.ready=1;
 </script></body></html>
