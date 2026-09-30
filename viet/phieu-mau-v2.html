@@ -1,0 +1,75 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Phiếu mẫu v2</title>
+<link rel="stylesheet" href="phieu-font.css"><link rel="stylesheet" href="phieu-trang.css"><link rel="stylesheet" href="writing-report.css">
+<style>@page{size:A4;margin:0}body{margin:0}.pg{width:794px;height:1123px;overflow:hidden;page-break-after:always}</style></head><body>
+<script src="phieu-trang.js"></script><script src="writing-report.js"></script>
+<script>
+const P=(name,v,n,d)=>({name,v,n,d});
+const sum=a=>a.reduce((x,p)=>x+p.v,0), sumN=a=>a.reduce((x,p)=>x+p.n,0);
+function skill(id,name,parts,hist,gapNote){const s={id,name,parts,raw:sum(parts),max:sumN(parts),scale:hist[hist.length-1],d:hist.length>1?hist[hist.length-1]-hist[hist.length-2]:null,gapNote};return s}
+function model(level,exam,skills,hs,extra){
+  const n=hs[Object.keys(hs)[0]].length,history=[];
+  for(let i=0;i<n;i++){const s={};skills.forEach(k=>s[k.id]=hs[k.id][i]);
+    history.push({label:'Mock '+(i+1),s,overall:Math.round(skills.reduce((a,k)=>a+hs[k.id][i],0)/skills.length)})}
+  const c=history[n-1],p=history[n-2]||c;
+  return Object.assign({first:n===1,level,exam,date:'30/09/2026',student:{name:'Nguyen Van A (mẫu)',id:'C260125MC',cls:'6/1'},skills,history,overall:{scale:c.overall,d:c.overall-p.overall}},extra)}
+const grp={grammar:'#FAD9D3',vocabulary:'#E6DCF5',content:'#FCEEB0',organisation:'#CFEEFB',style:'#F8D9E4'};
+const ket=model('KET','KET Mock Test 1',[
+ skill('reading','Reading',[P('Part 1',5,6,null),P('Part 2',5,7,null),P('Part 3',4,6,null),P('Part 4',5,6,null),P('Part 5',5,6,null)],[132]),
+ skill('listening','Listening',[P('Part 1',4,5,null),P('Part 2',4,5,null),P('Part 3',3,5,null),P('Part 4',4,5,null),P('Part 5',4,5,null)],[134]),
+ skill('writing','Writing',[P('Part 6',11,15,null),P('Part 7',11,15,null)],[130]),
+ skill('speaking','Speaking',[P('Grammar & Vocab',4,5,null),P('Pronunciation',4,5,null),P('Interaction',5,5,null)],[140])],
+ {reading:[132],listening:[134],writing:[130],speaking:[140]},{
+ comment:'Đây là bài thi thử đầu tiên của em nên kết quả này là mốc xuất phát để so sánh với các lần sau. Overall của em đã đạt Grade B, trong đó Speaking đạt Grade A, Listening đạt Grade B, Reading và Writing đạt Grade C. Reading còn thiếu vài câu ở Part 3. Bài Writing đủ ý, cần chú ý chia động từ. Overall cách Grade A 6 điểm Scale, nên em có thể đặt mục tiêu này cho Mock 2.',
+ priorities:['Mục tiêu Mock 2: Overall từ 134 lên 140 (Grade A) bằng cách tăng Writing và Reading, hai kỹ năng thấp nhất.','Writing: học cách chia động từ sau "would like" và động từ ngôi thứ ba số ít.','Reading Part 3: gạch chân từ khóa trong câu hỏi trước khi đọc bài.'],
+ diagnosis:{causes:[
+  {skill:'writing',title:'Chia động từ chưa nhất quán',body:'Cả hai bài Writing sai chia động từ sau "like" và ngôi thứ ba số ít, làm mất điểm Language.',fix:'Rà lại mọi động từ theo checklist trước khi nộp.'},
+  {skill:'reading',title:'Đọc lướt ở Part 3',body:'Các câu sai ở Reading Part 3 do chọn đáp án có từ giống bài đọc nhưng ý khác.',fix:'Tìm câu chứa bằng chứng và đối chiếu từng đáp án.'},
+  {skill:'listening',title:'Nghe theo từ, chưa theo ý chính',body:'Listening Part 3 có câu em chọn đáp án xuất hiện trong bài nghe nhưng bị đổi ý ở câu sau.',fix:'Nghe hết câu sau từ khóa trước khi chọn.'},
+  {skill:'speaking',title:'Duy trì điểm mạnh',body:'Speaking đã đạt Grade A; em chỉ cần giữ thói quen trả lời đầy đủ câu.',fix:'Tiếp tục luyện 5 phút mỗi ngày.'}],
+  writingGroups:[{ten:'Grammar errors',n:6,mau:grp.grammar,note:'chia động từ, thì quá khứ'}],
+  habits:['Còn 1 câu Reading bỏ trống.','Tô đáp án rõ ràng, không có câu tô sai cách.'],
+  wrong:[{skill:'reading',name:'Reading',items:['Q3: B, C','Q14: A, D','Q22: blank, A']},{skill:'listening',name:'Listening',items:['Q8: A, C','Q17: B, A','Q21: C, B']}]}});
+const pet=model('PET','PET Test 1',[
+ skill('reading','Reading',[P('Part 1',5,5,1),P('Part 2',4,5,0),P('Part 3',4,5,-1),P('Part 4',4,5,1),P('Part 5',5,6,1),P('Part 6',5,6,0)],[138,142,147,149,153]),
+ skill('listening','Listening',[P('Part 1',5,7,0),P('Part 2',5,6,-1),P('Part 3',5,6,1),P('Part 4',4,6,-1)],[135,140,142,146,144],'Cần thêm khoảng 2 câu đúng'),
+ skill('writing','Writing',[P('Part 1',15,20,2),P('Part 2',13,20,3)],[128,134,141,147,152]),
+ skill('speaking','Speaking',[P('Grammar & Vocab',4,5,0),P('Discourse',4,5,1),P('Pronunciation',4,5,0),P('Interaction',4,5,1)],[150,152,155,157,160])],
+ {reading:[138,142,147,149,153],listening:[135,140,142,146,144],writing:[128,134,141,147,152],speaking:[150,152,155,157,160]},{
+ comment:'Em tiến bộ đều qua 5 lần thi thử, rõ nhất ở Writing (từ 128 lên 152) và Speaking đã đạt Grade A. Reading đạt Grade B. Listening giảm nhẹ ở Part 2 và Part 4, nơi em chọn đáp án theo từ nghe được thay vì theo ý chính. Bài Writing đủ ý nhưng còn sai chia động từ. Overall chỉ còn cách Grade B 1 điểm Scale, nên chỉ cần thêm vài câu đúng ở Listening là em vượt mốc.',
+ priorities:['Listening: nghe lại các câu sai ở Part 2 và Part 4, ghi ra từ khóa và bẫy gây nhiễu.','Writing: ôn 15 động từ bất quy tắc và luyện kiểm tra chủ ngữ - động từ trước khi nộp bài.','Reading Part 3: gạch chân từ khóa trong câu hỏi trước khi đọc bài.'],
+ diagnosis:{causes:[
+  {skill:'listening',title:'Nghe theo từ, chưa theo ý chính',body:'Các câu sai ở Listening Part 2 và Part 4 đều có đáp án em chọn xuất hiện trong bài nghe nhưng bị phủ định hoặc sửa lại ở câu sau.',fix:'Nghe hết câu sau từ khóa, gạch bỏ đáp án bị đổi ý.'},
+  {skill:'reading',title:'Đọc lướt ở dạng chọn câu đúng',body:'Reading Part 3 và Part 5 sai do chọn đáp án có từ giống bài đọc nhưng ý khác.',fix:'Tìm câu chứa bằng chứng và đối chiếu từng đáp án.'},
+  {skill:'writing',title:'Chia động từ chưa nhất quán',body:'Cả hai bài Writing đều sai ngôi thứ ba số ít và quá khứ bất quy tắc, làm mất điểm Language.',fix:'Rà lại mọi động từ theo checklist trước khi nộp.'},
+  {skill:'speaking',title:'Câu trả lời còn ngắn',body:'Speaking đạt Grade A nhưng tiêu chí Mạch lạc và Tương tác còn bị ảnh hưởng khi em dừng ở câu trả lời một mệnh đề.',fix:'Thêm một lý do hoặc ví dụ cho mỗi câu trả lời.'}],
+  writingGroups:[{ten:'Grammar errors',n:9,mau:grp.grammar,note:'chia động từ, I/me'},{ten:'Vocabulary errors',n:1,mau:grp.vocabulary,note:'hang / hung'}],
+  habits:['Có 2 câu Reading bỏ trống.','Làm Listening Part 4 quá nhanh, chưa đọc trước câu hỏi.','Tô đáp án rõ ràng, không có câu tô sai cách.'],
+  wrong:[{skill:'reading',name:'Reading',items:['Q3: B, C','Q9: A, D','Q14: C, B','Q22: blank, A','Q27: D, A']},{skill:'listening',name:'Listening',items:['Q8: A, C','Q12: B, A','Q19: blank, C','Q21: C, B','Q24: A, D']}]}});
+const fce=model('FCE','FCE Test 5',[
+ skill('reading','Reading',[P('Part 1',6,8,1),P('Part 5',8,12,0),P('Part 6',9,12,2),P('Part 7',6,10,-1)],[155,158,163,165,168]),
+ skill('uoe','Use of English',[P('Part 2',6,8,0),P('Part 3',6,8,1),P('Part 4',8,12,2)],[160,164,166,169,172]),
+ skill('listening','Listening',[P('Part 1',6,8,0),P('Part 2',7,10,-1),P('Part 3',3,5,-1),P('Part 4',5,7,1)],[158,162,167,168,165]),
+ skill('writing','Writing',[P('Part 1',14,20,2),P('Part 2',13,20,2)],[150,156,160,166,170]),
+ skill('speaking','Speaking',[P('Grammar & Vocab',4,5,0),P('Discourse',4,5,1),P('Pronunciation',4,5,0),P('Interaction',4,5,1)],[165,168,170,173,176])],
+ {reading:[155,158,163,165,168],uoe:[160,164,166,169,172],listening:[158,162,167,168,165],writing:[150,156,160,166,170],speaking:[165,168,170,173,176]},{
+ comment:'Overall của em tăng đều 5 lần liên tiếp, từ 158 lên 170; Speaking đã đạt Grade B và Writing tăng nhanh nhất (150 lên 170). Use of English và Reading đang ổn định ở Grade C. Listening giảm nhẹ vì Part 2 và Part 3. Bài Writing có đủ ý và bố cục tốt, cần rà lỗi hòa hợp chủ vị lặp lại và giữ giọng trang trọng. Chỉ cần thêm 3 điểm Scale là Overall lên Grade B.',
+ priorities:['Listening Part 2 và Part 3: luyện nghe lấy thông tin cụ thể, chú ý số liệu và từ bị đổi ý.','Writing: kiểm tra chủ ngữ - động từ và thay từ khẩu ngữ bằng từ trang trọng.','Reading Part 7: luyện xác định câu chứa thông tin cần tìm trước khi chọn đáp án.'],
+ diagnosis:{causes:[
+  {skill:'listening',title:'Mất điểm ở thông tin chi tiết',body:'Listening Part 2 và Part 3 sai ở câu cần điền số liệu hoặc chọn thái độ của người nói; em nghe đúng chủ đề nhưng bỏ lỡ chi tiết.',fix:'Đọc trước câu hỏi, dự đoán loại thông tin cần nghe.'},
+  {skill:'reading',title:'Part 7 sai do ghép sai đoạn',body:'Các câu sai ở Reading Part 7 do chọn đoạn có từ khóa giống câu hỏi, nhưng ý khác.',fix:'Đánh dấu ý chính từng đoạn trước rồi mới ghép.'},
+  {skill:'uoe',title:'Use of English còn chậm ở Part 4',body:'Part 4 (biến đổi câu) mất điểm ở những câu cần cấu trúc cố định và từ cho sẵn không đổi dạng.',fix:'Học 10 cấu trúc thông dụng và luyện 2 câu mỗi ngày.'},
+  {skill:'writing',title:'Lỗi hòa hợp chủ vị lặp lại',body:'Cả hai bài Writing đều sai động từ ngôi thứ ba (stays, helps, loves, enjoy, are), làm mất điểm Language ở mọi tiêu chí.',fix:'Gạch chân chủ ngữ và động từ của từng câu khi rà lỗi.'}],
+  writingGroups:[{ten:'Grammar errors',n:9,mau:grp.grammar,note:'hòa hợp chủ vị, mạo từ'},{ten:'Style issues',n:2,mau:grp.style,note:'từ khẩu ngữ'}],
+  habits:['Còn 3 câu bỏ trống ở Reading Part 7.','Kiểm tra Use of English Part 4 chưa đủ thời gian.','Tô đáp án rõ ràng, không có câu tô sai cách.'],
+  wrong:[{skill:'reading',name:'Reading',items:['Q8: B, C','Q20: A, D','Q33: blank, F','Q35: C, A']},{skill:'uoe',name:'Use of English',items:['Q15: incorrect','Q21: half marks','Q27: blank']},{skill:'listening',name:'Listening',items:['Q9: A, C','Q14: 2,5 kg, 25 kg','Q17: B, A','Q24: C, D']}]}});
+(async()=>{
+ for(const [m,f,ten] of [[ket,'mau-ket-day-du.json','A2 KEY'],[pet,'mau-pet-day-du.json','B1 PRELIMINARY'],[fce,'mau-fce-day-du.json','B2 FIRST']]){
+  const w=await (await fetch(f)).json(), T=PhieuTrang.THEME[m.level];
+  const o=i=>({mau:T.a,dark:T.d,soft:T.soft,tenCapDo:ten,trang:i+3});
+  const pages=[PhieuTrang.overview(m),PhieuTrang.diagnosis(m),WritingReport.partPage(w,0,o(0)),WritingReport.partPage(w,1,o(1))];
+  pages.forEach(x=>document.body.insertAdjacentHTML('beforeend','<div class="pg">'+x+'</div>'));
+  document.querySelectorAll('.pg .wr-page:not([data-fit])').forEach(el=>{el.dataset.fit=WritingReport.fit(el)});
+ }
+ document.body.dataset.ready=1;
+})();
+</script></body></html>

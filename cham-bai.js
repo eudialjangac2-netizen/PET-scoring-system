@@ -265,7 +265,7 @@
     if ((KEY.level || t.level) !== R.level) { alert(`Đề ${t.title} là đề ${KEY.level}, lớp này học ${R.level}.`); return; }
     lsSet('omr-last', { test: tid, cls });
     const id = `s2:${tid}:${cls}`;
-    S = (await idb.get(id)) || { id, test: tid, testTitle: t.title, level: R.level, cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, writing: {} };
+    S = (await idb.get(id)) || { id, test: tid, testTitle: t.title, level: R.level, cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {} };
     S.comments = S.comments || {}; S.writing = S.writing || {};
     document.documentElement.style.setProperty('--ruby', LV[S.level].mau);
     $('#ctx').textContent = `${t.title} · ${cls}`;
@@ -898,6 +898,131 @@
   }
   const S_comment = r => { const c = S.comments?.[r.s.key]; return c === undefined ? suggestComment(r) : c; };
 
+  // ---------- phiếu 4 trang cho phụ huynh (viet/phieu-trang.js + viet/writing-report.js) ----------
+  const LIMIT_CM = 700, LIMIT_PR = 140;   // số ký tự tối đa: nhận xét tổng thể, mỗi ý ưu tiên
+  const GROUP_VI = { grammar: ['Grammar errors', '#FAD9D3'], vocabulary: ['Vocabulary errors', '#E6DCF5'], content: ['Content issues', '#FCEEB0'], organisation: ['Organisation issues', '#CFEEFB'], style: ['Style issues', '#F8D9E4'] };
+  const CRIT_VI = { content: 'Nội dung', communicative_achievement: 'Giao tiếp', organisation: 'Bố cục', language: 'Ngôn ngữ' };
+  const clip = (t, n) => {
+    t = String(t || '').replace(/\s+/g, ' ').trim(); if (t.length <= n) return t;
+    const c = t.slice(0, n - 1), k = c.lastIndexOf(' ');
+    return c.slice(0, k > n * 0.6 ? k : n - 1).replace(/[,;:\s]+$/, '') + '…';
+  };
+  const cap1 = t => String(t || '').replace(/^./, c => c.toUpperCase());
+  function suggestPriorities(r) {
+    const L = lvl(), cand = [];
+    for (const sec of L.phan) {
+      const g = r.secs[sec.id]; if (!g || g.incomplete) continue;
+      for (const [pt, n] of partsOf(S.level, sec)) {
+        const v = g.parts[pt], f = n ? v / n : 1; if (f >= 1) continue;
+        const adv = NX?.loiKhuyen?.[S.level]?.[sec.id]?.[pt] || 'luyện lại dạng câu này và xem lại các câu sai';
+        cand.push({ f, skill: sec.id, text: `${sec.ten} Part ${pt}: ${adv}.` });
+      }
+    }
+    const wr = writingOf(r.s);
+    if (wr) {
+      const p = wr.parts.slice().sort((a, b) => a.raw / a.raw_max - b.raw / b.raw_max)[0];
+      const tip = (p.issues && p.issues[0]) || (p.criteria.filter(c => c.to_move_up).sort((a, b) => a.band / a.max - b.band / b.max)[0] || {}).to_move_up;
+      if (tip) cand.push({ f: p.raw / p.raw_max, skill: 'writing', text: `Writing Part ${p.part}: ${tip}` });
+    }
+    cand.sort((a, b) => a.f - b.f);
+    const out = [], seen = new Set();
+    for (const c of cand) { if (out.length >= 3) break; if (!seen.has(c.skill)) { seen.add(c.skill); out.push(c); } }
+    for (const c of cand) { if (out.length >= 3) break; if (!out.includes(c)) out.push(c); }
+    return out.map(c => clip(cap1(c.text), LIMIT_PR));
+  }
+  const S_prior = r => { const p = S.priorities?.[r.s.key]; return p === undefined ? suggestPriorities(r) : p; };
+
+  function reportModel(r) {
+    const L = lvl(), T = window.PhieuTrang.THEME[S.level], wr = writingOf(r.s);
+    const dates = Object.values(S.sheets[r.s.key] || {}).map(x => x.at);
+    const day = dates.length ? new Date(Math.max(...dates)).toLocaleDateString('vi-VN') : '';
+    const skills = [];
+    for (const sec of L.phan) {
+      const g = r.secs[sec.id];
+      if (!g || g.incomplete) { skills.push({ id: sec.id, name: sec.ten, empty: true, scale: null, emptyNote: g ? 'Answer sheet missing' : 'No score yet', emptyVi: g ? 'Thiếu trang phiếu' : 'Chưa có bài' }); continue; }
+      skills.push({ id: sec.id, name: sec.ten, raw: g.raw, max: g.max, scale: g.scale, d: null,
+        parts: partsOf(S.level, sec).map(([pt, n]) => ({ name: 'Part ' + pt, v: g.parts[pt], n, d: null })) });
+    }
+    if (wr) skills.push({ id: 'writing', name: 'Writing', raw: wr.total.raw, max: wr.total.raw_max, scale: wr.total.cambridge_scale ?? null, est: !!wr.total.is_estimate, d: null,
+      parts: wr.parts.map(p => ({ name: 'Part ' + p.part, v: p.raw, n: p.raw_max, d: null })) });
+    else skills.push({ id: 'writing', name: 'Writing', empty: true, scale: null, emptyNote: 'No score yet', emptyVi: 'Chưa có bài Writing' });
+    skills.push({ id: 'speaking', name: 'Speaking', empty: true, scale: null, emptyNote: 'Not graded yet', emptyVi: 'Chưa có điểm Speaking' });
+    const sc = skills.filter(s => s.scale != null).map(s => s.scale);
+    const ov = sc.length ? Math.round(sc.reduce((a, b) => a + b, 0) / sc.length) : null;
+    const s1 = {}; skills.forEach(s => { s1[s.id] = s.scale; });
+    // chẩn đoán: lấy từ dữ liệu có sẵn, không bịa
+    const causes = [];
+    const cand = [];
+    for (const sec of L.phan) {
+      const g = r.secs[sec.id]; if (!g || g.incomplete) continue;
+      for (const [pt, n] of partsOf(S.level, sec)) {
+        const v = g.parts[pt]; if (!n || v >= n) continue;
+        const bad = g.items.filter(i => i.part === pt && !i.ok).length;
+        const adv = NX?.loiKhuyen?.[S.level]?.[sec.id]?.[pt];
+        cand.push({ f: v / n, c: { skill: sec.id, title: `Mất điểm ở ${sec.ten} Part ${pt}`, body: `Em được ${v}/${n} điểm ở Part này, có ${bad} câu cần xem lại.`, fix: cap1(adv || 'xem lại các câu sai và đối chiếu đáp án') + '.' } });
+      }
+    }
+    cand.sort((a, b) => a.f - b.f).slice(0, 2).forEach(x => causes.push(x.c));
+    if (wr) {
+      const crit = wr.parts.flatMap(p => p.criteria.map(c => ({ c, p }))).sort((a, b) => a.c.band / a.c.max - b.c.band / b.c.max)[0];
+      if (crit && crit.c.band < crit.c.max) causes.push({ skill: 'writing', title: `Writing: cần cải thiện ${CRIT_VI[crit.c.id] || crit.c.id}`, body: clip(crit.c.comment, 160), fix: clip(crit.c.to_move_up || crit.c.key_takeaway, 120) });
+    }
+    if (r.nonstd) causes.push({ title: 'Tô đáp án chưa đúng cách', body: `${r.nonstd} câu bị tô chưa đúng cách (tick, dấu X, tô không kín hoặc tô 2 ô) nên bị tính sai.`, fix: 'Tô kín một ô tròn cho mỗi câu.' });
+    if (!causes.length) causes.push({ title: 'Kết quả rất tốt', body: 'Em không mất điểm đáng kể ở các phần đã chấm.', fix: 'Tiếp tục luyện tập đều đặn mỗi tuần.' });
+    const gc = {}; (wr ? wr.parts : []).forEach(p => (p.errors || []).forEach(e => { gc[e.group] = (gc[e.group] || 0) + 1; }));
+    const writingGroups = Object.keys(gc).length ? Object.entries(gc).sort((a, b) => b[1] - a[1]).map(([g, n]) => ({ ten: (GROUP_VI[g] || [g])[0], n, mau: (GROUP_VI[g] || [0, '#E3E7ED'])[1], note: '' }))
+      : [{ ten: wr ? 'No errors listed' : 'No Writing result yet', n: '', mau: '#E3E7ED', note: wr ? 'Không có lỗi được liệt kê' : 'Chưa có bài Writing' }];
+    const habits = [];
+    for (const p of PAPERS) {
+      const nb = r.items[p].filter(i => i && !i.bad && i.marks === 0 && (i.type === 'write' ? i.shown === '' : !i.chosen)).length;
+      if (nb) habits.push(`Có ${nb} câu ${cap1(p)} bỏ trống.`);
+    }
+    if (r.nonstd) habits.push(`Có ${r.nonstd} câu tô chưa đúng cách.`); else habits.push('Tô đáp án rõ ràng, không có câu tô sai cách.');
+    const wrong = [];
+    for (const sec of L.phan) {
+      const g = r.secs[sec.id]; if (!g || g.incomplete) continue;
+      const items = g.items.filter(i => !i.ok).map(i => {
+        const key = [].concat(KEY[sec.giay][i.q]).join(' / ');
+        const what = i.type === 'write' ? (i.shown === '' ? 'blank' : i.marks > 0 ? `${i.marks}/${i.maxMarks}` : 'incorrect') : (i.bad && !i.chosen ? 'mark unclear' : (i.chosen || 'blank'));
+        return `Q${i.q}: ${what}, ${key}`;
+      });
+      const shown = items.slice(0, 18); if (items.length > 18) shown.push(`+${items.length - 18} more`);
+      wrong.push({ skill: sec.id, name: sec.ten, items: shown.length ? shown : ['No wrong answers'] });
+    }
+    const m = {
+      first: true, level: S.level, exam: S.testTitle, date: day,
+      student: { name: r.s.name, id: r.s.code, cls: r.s.vh },
+      skills, overall: { scale: ov, d: null, partial: sc.length < skills.length },
+      history: [{ label: 'Mock 1', s: s1, overall: ov }],
+      comment: clip(S_comment(r), LIMIT_CM), priorities: S_prior(r).map(x => clip(x, LIMIT_PR)),
+      diagnosis: { causes: causes.slice(0, 4), writingGroups, habits, wrong }
+    };
+    return m;
+  }
+  function reportPages(r) {
+    const PT = window.PhieuTrang, WR = window.WritingReport, L = lvl();
+    if (!PT || !WR) return [reportHTML(r)];   // dự phòng: phiếu 1 trang cũ nếu thiếu file viet/phieu-trang.js
+    const m = reportModel(r), wr = writingOf(r.s), nW = wr ? wr.parts.length : 0, T = PT.THEME[S.level];
+    m.totalPages = 2 + nW;
+    const pages = [PT.overview(m), PT.diagnosis(m)];
+    for (let i = 0; i < nW; i++) pages.push(WR.partPage(wr, i, { mau: T.a, dark: T.d, soft: T.soft, tenCapDo: L.ten.toUpperCase(), trang: 3 + i, total: m.totalPages }));
+    return pages;
+  }
+  const ensureFonts = async () => {
+    try { await Promise.all(['400', '500', '600', '700'].map(w => document.fonts.load(`${w} 13px "Be Vietnam Pro"`, 'Tiếng Việt ắằẳẵặ ưừ ơờ'))); await document.fonts.ready; } catch {}
+  };
+  async function renderReportCanvases(r) {
+    const stage = $('#reportStage'), out = [];
+    await ensureFonts();
+    for (const html of reportPages(r)) {
+      stage.innerHTML = html;
+      const el = stage.firstElementChild;
+      if (window.WritingReport && el.classList.contains('wr-page')) window.WritingReport.fit(el);
+      out.push(await window.html2canvas(el, { scale: 2, backgroundColor: '#ffffff', logging: false }));
+    }
+    return out;
+  }
+
   // ---------- phiếu kết quả cá nhân ----------
   const LIBS = ['https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
                 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'];
@@ -961,29 +1086,39 @@
     pdf.addImage(canvas.toDataURL('image/jpeg', 0.9), 'JPEG', (W - w) / 2, 0, w, h);
   }
   function busy(msg) { $('#loading').hidden = !msg; if (msg) $('#loadingMsg').textContent = msg; }
+  const lines = t => t.split('\n').map(x => x.trim()).filter(Boolean).slice(0, 3);
+  function updateCounts() {
+    const c = $('#reportComment').value.length, el = $('#reportCmCount');
+    el.textContent = `${c}/${LIMIT_CM}`; el.style.color = c > LIMIT_CM ? '#B42318' : '';
+    const over = lines($('#reportPriorities').value).filter(x => x.length > LIMIT_PR).length, pe = $('#reportPrCount');
+    pe.textContent = over ? `${over} ý vượt ${LIMIT_PR} ký tự, phiếu sẽ cắt bớt` : `tối đa 3 ý, mỗi ý ${LIMIT_PR} ký tự`; pe.style.color = over ? '#B42318' : '';
+  }
   async function studentReport(key, again) {
     if (!again && !confirmWarn()) return;
     const r = results().find(x => x.s.key === key); if (!r) return;
     $('#reportComment').value = S_comment(r);
-    $('#reportSuggest').onclick = () => { $('#reportComment').value = suggestComment(r); };
-    $('#reportUpdate').onclick = () => { S.comments[key] = $('#reportComment').value.trim(); save(); studentReport(key, true); };
+    $('#reportPriorities').value = S_prior(r).join('\n');
+    $('#reportComment').oninput = $('#reportPriorities').oninput = updateCounts; updateCounts();
+    $('#reportSuggest').onclick = () => { $('#reportComment').value = suggestComment(r); $('#reportPriorities').value = suggestPriorities(r).join('\n'); updateCounts(); };
+    $('#reportUpdate').onclick = () => { S.comments[key] = $('#reportComment').value.trim(); (S.priorities ||= {})[key] = lines($('#reportPriorities').value); save(); studentReport(key, true); };
     busy('Đang tạo phiếu kết quả…');
     try {
       await ensureLibs();
-      const canvas = await renderReportCanvas(r);
+      const canvases = await renderReportCanvases(r);
       const base = `phieu-ket-qua_${r.s.code}_${slug(r.s.name)}`;
-      const jpg = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
-      const file = new File([jpg], base + '.jpg', { type: 'image/jpeg' });
+      const jpgs = await Promise.all(canvases.map(c => new Promise(res => c.toBlob(res, 'image/jpeg', 0.9))));
+      const files = jpgs.map((b, i) => new File([b], `${base}_trang${i + 1}.jpg`, { type: 'image/jpeg' }));
       $('#reportTitle').textContent = `${r.s.name} (${r.s.code})`;
-      $('#reportImg').src = URL.createObjectURL(jpg);
-      $('#reportJpg').onclick = () => download(jpg, base + '.jpg');
-      $('#reportPdf').onclick = () => { const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' }); addPage(pdf, canvas, true); download(pdf.output('blob'), base + '.pdf'); };
-      const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+      const box = $('#reportImgs'); box.innerHTML = '';
+      jpgs.forEach((b, i) => { const im = document.createElement('img'); im.alt = `Trang ${i + 1}`; im.src = URL.createObjectURL(b); box.appendChild(im); });
+      $('#reportJpg').onclick = () => jpgs.forEach((b, i) => setTimeout(() => download(b, files[i].name), i * 400));
+      $('#reportPdf').onclick = () => { const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' }); canvases.forEach((c, i) => addPage(pdf, c, i === 0)); download(pdf.output('blob'), base + '.pdf'); };
+      const canShare = !!(navigator.canShare && navigator.canShare({ files }));
       $('#reportShare').hidden = !canShare;
-      $('#reportShare').onclick = () => navigator.share({ files: [file], title: `Phiếu kết quả — ${r.s.name}` }).catch(() => {});
+      $('#reportShare').onclick = () => navigator.share({ files, title: `Phiếu kết quả — ${r.s.name}` }).catch(() => {});
       $('#reportModal').hidden = false;
     } catch (e) { alert(e.message || e); }
-    finally { busy(''); }
+    finally { busy(''); $('#reportStage').innerHTML = ''; }
   }
   async function classReport() {
     const rs = results().filter(r => r.any);
@@ -993,7 +1128,8 @@
     try {
       await ensureLibs();
       const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
-      for (let i = 0; i < rs.length; i++) { busy(`Đang tạo phiếu ${i + 1}/${rs.length}…`); addPage(pdf, await renderReportCanvas(rs[i]), i === 0); }
+      let first = true;
+      for (let i = 0; i < rs.length; i++) { busy(`Đang tạo phiếu ${i + 1}/${rs.length}…`); for (const cv of await renderReportCanvases(rs[i])) { addPage(pdf, cv, first); first = false; } }
       const name = `phieu-ket-qua_${slug(S.testTitle)}_${slug(S.cls)}.pdf`, blob = pdf.output('blob');
       const file = new File([blob], name, { type: 'application/pdf' });
       busy('');
@@ -1007,7 +1143,7 @@
   async function clearSession() {
     if (!confirm(`Xoá toàn bộ phiếu đã chụp của ${S.testTitle} – ${S.cls}? Không thể hoàn tác.`)) return;
     await idb.del(S.id);
-    S = { id: S.id, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, writing: {} };
+    S = { id: S.id, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {} };
     go('scan');
   }
 

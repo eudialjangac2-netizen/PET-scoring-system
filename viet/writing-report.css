@@ -1,0 +1,84 @@
+/* Phiếu Writing cho phụ huynh: khối tóm tắt (trang 1) và trang chi tiết từng Part.
+   Dùng chung cho app (cham-bai.html) và bản mẫu (phieu-mau.html). Khổ A4 = 794 x 1123 px. */
+.wr-sum { border: 1px solid #DCE1E8; border-radius: 12px; padding: 12px 14px; }
+.wr-sum h2 { margin: 0 0 8px; font-size: 15px; display: flex; justify-content: space-between; align-items: baseline; }
+.wr-sum h2 em { font-style: normal; font-size: 12px; font-weight: 700; padding: 1px 9px; border-radius: 99px; }
+.wr-sum table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.wr-sum th { text-align: left; font-weight: 600; color: #5B6576; font-size: 11px; padding: 2px 6px 4px 0; }
+.wr-sum td { padding: 4px 6px 4px 0; border-top: 1px dotted #DCE1E8; vertical-align: middle; }
+.wr-sum td.c { width: 30%; }
+.wr-sum .cm { margin-top: 8px; display: grid; gap: 4px; font-size: 12.5px; }
+.wr-sum .cm b { color: #172033; }
+.wr-dots { display: inline-flex; gap: 3px; vertical-align: middle; margin-right: 6px; }
+.wr-dots i { width: 11px; height: 11px; border-radius: 50%; background: #E3E8EE; display: block; }
+.wr-page { width: 794px; height: 1123px; overflow: hidden; background: #fff; color: #172033; font: 400 12.5px/1.5 "Be Vietnam Pro", system-ui, sans-serif; -webkit-font-smoothing: antialiased; display: flex; flex-direction: column; }
+.wr-head { color: #fff; padding: 18px 36px 14px; display: flex; justify-content: space-between; align-items: flex-end; }
+.wr-head small { display: block; letter-spacing: .12em; font-size: 11px; opacity: .85; font-weight: 600; }
+.wr-head h1 { margin: 2px 0 0; font-size: 22px; font-weight: 700; }
+.wr-head .tot { text-align: right; } .wr-head .tot b { font-size: 28px; line-height: 1; } .wr-head .tot span { display: block; font-size: 11px; opacity: .9; }
+.wr-who { padding: 8px 36px; font-size: 12px; color: #5B6576; display: flex; gap: 18px; border-bottom: 1px solid #DCE1E8; }
+.wr-who b { color: #172033; }
+.wr-body { padding: 12px 36px 0; flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.wr-sec h3 { margin: 0 0 4px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: #5B6576; display: flex; justify-content: space-between; align-items: baseline; }
+.wr-sec h3 span { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 11px; }
+.wr-task { background: #F4F6F9; border-radius: 8px; padding: 7px 10px; color: #3a4457; font-size: 12px; }
+.wr-text { border: 1px solid #DCE1E8; border-radius: 8px; padding: 8px 10px; white-space: pre-wrap; font-size: 13px; line-height: 1.6; }
+.wr-text mark { border-radius: 3px; padding: 0 2px; color: inherit; }
+.wr-text mark.imp { font-weight: 700; }
+.wr-leg { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; font-size: 11px; }
+.wr-leg span { padding: 1px 8px; border-radius: 99px; }
+.wr-crit { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 12px; }
+.wr-crit td { overflow-wrap: anywhere; white-space: normal; }
+.wr-crit td { padding: 6px 8px 6px 0; border-top: 1px solid #DCE1E8; vertical-align: top; }
+.wr-crit td.n { width: 112px; font-weight: 700; }
+.wr-crit td.n small { display: block; font-weight: 400; color: #5B6576; }
+.wr-crit .up { color: #172033; margin-top: 2px; } .wr-crit .up b, .wr-crit .kt b { color: #5B6576; font-weight: 600; }
+.wr-crit .kt { color: #3a4457; margin-top: 2px; }
+.wr-err { margin: 0; padding: 0; list-style: none; font-size: 12px; }
+.wr-err li { padding: 3px 0; border-bottom: 1px dotted #DCE1E8; }
+.wr-err .o { color: #B42318; font-weight: 600; } .wr-err .k { color: #1E4FA0; font-weight: 600; }
+.wr-err .g { display: inline-block; font-size: 10px; padding: 0 6px; border-radius: 99px; margin-right: 6px; vertical-align: 1px; }
+.wr-imp { border: 1px solid; border-radius: 8px; padding: 8px 10px; white-space: pre-wrap; font-size: 13px; line-height: 1.6; }
+.wr-fb p { margin: 0 0 4px; } .wr-fb ul { margin: 0; padding-left: 18px; }
+.wr-foot { padding: 8px 36px 14px; font-size: 11px; color: #9aa3b1; display: flex; justify-content: space-between; }
+
+.wr-page, .wr-page * { box-sizing: border-box; }
+.wr-head.soft { color: #172033; } .wr-head.soft h1 { color: #172033; } .wr-head.soft .tot span { opacity: 1; color: #5B6576; }
+.wr-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.wr-si { border-radius: 10px; padding: 8px 12px; } .wr-si h3 { margin: 0 0 3px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.wr-si ul { margin: 0; padding-left: 16px; font-size: 12px; line-height: 1.5; }
+.wr-si.good { background: #E4F4EA; } .wr-si.good h3 { color: #2A7A47; } .wr-si.issue { background: #FDEBDD; } .wr-si.issue h3 { color: #B4501F; }
+.wr-ck { margin: 0; padding: 0; list-style: none; font-size: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 3px 14px; }
+.wr-ck li { display: flex; gap: 7px; align-items: flex-start; } .wr-ck i { flex: none; width: 12px; height: 12px; border: 1.6px solid; border-radius: 3px; margin-top: 2px; }
+
+.wr-page.c1 { font-size: 11.5px; } .wr-page.c1 .wr-body { gap: 7px; padding-top: 8px; }
+.wr-page.c1 .wr-text, .wr-page.c1 .wr-imp { font-size: 12px; line-height: 1.5; padding: 6px 9px; }
+.wr-page.c1 .wr-task { font-size: 11px; padding: 5px 9px; } .wr-page.c1 .wr-crit { font-size: 11px; } .wr-page.c1 .wr-crit td { padding: 4px 8px 4px 0; }
+.wr-page.c1 .wr-si ul, .wr-page.c1 .wr-err, .wr-page.c1 .wr-ck { font-size: 11px; line-height: 1.4; } .wr-page.c1 .wr-si { padding: 6px 10px; }
+.wr-page.c2 .wr-err li:nth-child(n+5), .wr-page.c2 .wr-ck li:nth-child(n+5), .wr-page.c2 .wr-si li:nth-child(n+3) { display: none; }
+.wr-page.c2 .wr-crit td.n small { display: none; }
+.wr-body { overflow: hidden; }
+
+.wr-text mark.low { opacity: .55; } .wr-err .o.lo { font-weight: 400; opacity: .75; }
+.wr-sec h3 { font-size: 14px; text-transform: none; letter-spacing: 0; color: #2F3B52; }
+.wr-si h3 { font-size: 13.5px; text-transform: none; letter-spacing: 0; }
+.wr-crit td.n { font-size: 13px; } .wr-crit td.n small { font-size: 10.5px; }
+.pt-sec h3 { font-size: 14px; text-transform: none; letter-spacing: 0; color: #2F3B52; } .pt-ch h3 { font-size: 14px; color: #2F3B52; }
+.pt-cm h3, .pt-pr3 h3 { font-size: 14px; color: #2F3B52; }
+.wr-crit td.n { width: 136px; }
+
+/* font Be Vietnam Pro, trọng số theo thứ bậc */
+.wr-page { font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+.wr-head h1 { font-weight: 700; font-size: 22px; line-height: 1.2; } .wr-head small { font-weight: 600; }
+.wr-head h1 .vi { font-size: 12px; font-weight: 400; color: #6b7686; display: block; margin-top: 2px; }
+.wr-page .vi { display: block; font-size: 10.5px; font-weight: 400; color: #6b7686; letter-spacing: 0; text-transform: none; margin-top: 1px; line-height: 1.3; }
+.wr-sec h3, .wr-si h3 { font-weight: 600; } .wr-crit td.n { font-weight: 600; } .wr-crit td.n small { font-weight: 400; }
+.wr-head .tot b { font-weight: 700; }
+.wr-sec h3 { align-items: flex-start; } .wr-sec h3 > div { line-height: 1.25; }
+/* Strengths xanh dương, Issues đỏ: cùng tông với phần Corrections (đỏ = lỗi, xanh = sửa) */
+.wr-si.good { background: #E8EFFB; } .wr-si.good h3 { color: #1E4FA0; } .wr-si.good .vi { color: #4a6aa0; }
+.wr-si.issue { background: #FCEAE6; } .wr-si.issue h3 { color: #B42318; } .wr-si.issue .vi { color: #a5564c; }
+
+.wr-page .tt { display: block; }
+.wr-sec h3 > span.tt, .pt-ch h3 > span.tt, .pt-sec h3 > span.tt { font-size: inherit; font-weight: inherit; color: inherit; text-transform: none; }
+.wr-sec h3 > span.tt small, .pt-ch h3 > span.tt small, .pt-sec h3 > span.tt small { font-size: 10.5px; }
