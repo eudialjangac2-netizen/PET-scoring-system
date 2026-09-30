@@ -95,7 +95,7 @@
       + '<span style="color:#5B6576">Bold = errors that make the text hard to understand; faded = minor</span></div></div>';
     h += '<div class="wr-sec"><h3><div>Rubric Scores<small class="vi">Điểm theo từng tiêu chí</small></div> <span>0-5 per criterion</span></h3><table class="wr-crit">' + cr.map(function (c) {
       var nm = critName(c.id);
-      return '<tr><td class="n">' + esc(nm[1]) + '<small>' + esc(nm[0]) + '</small><div style="margin-top:3px">' + dots(c.band, c.max, dark) + esc(c.band) + '/' + esc(c.max) + '</div></td><td>' + esc(c.comment)
+      return '<tr><td class="n">' + esc(nm[1]) + '<small>' + esc(nm[0]) + '</small><div style="margin-top:3px">' + dots(c.band, c.max, mau) + esc(c.band) + '/' + esc(c.max) + '</div></td><td>' + esc(c.comment)
         + (c.to_move_up ? '<div class="up"><b>To move up:</b> ' + esc(c.to_move_up) + '</div>' : '') + '</td></tr>';
     }).join('') + '</table></div>';
     h += '<div class="wr-two"><div class="wr-si good"><h3>Strengths<small class="vi">Điểm mạnh</small></h3><ul>' + li(st) + '</ul></div><div class="wr-si issue"><h3>Issues to Fix<small class="vi">Vấn đề cần khắc phục</small></h3><ul>' + li(is) + '</ul></div></div>';
