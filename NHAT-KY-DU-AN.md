@@ -38,7 +38,7 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 ## Cần thống nhất giữa hai người
 
 - Chỗ lưu lịch sử 5 Mock của mỗi học sinh (mã học sinh làm khóa).
-- Grade A/B/C: đang dùng mốc Cambridge English Scale chung cho từng kỹ năng và Overall: KET A 140, B 133, C 120; PET A 160, B 153, C 140; FCE A 180, B 173, C 160. Cần Elaine xác nhận.
+- Grade A/B/C: đang dùng mốc Cambridge English Scale chung cho từng kỹ năng và Overall: KET A 140, B 133, C 120; PET A 160, B 153, C 140; FCE A 180, B 173, C 160. Elaine đã xác nhận (2026-10-01): đúng, áp cho từng kỹ năng và Overall.
 - Nhận xét tổng thể và 3 ưu tiên: app gợi ý, giáo viên sửa, giới hạn 700 ký tự và 3 ý (mỗi ý khoảng 140 ký tự).
 
 ## Thay đổi file CHUNG đang chờ (cần bạn code xác nhận)
