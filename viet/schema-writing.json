@@ -351,6 +351,11 @@
             "type": "string"
           },
           "description": "Checklist tự kiểm tra trước khi nộp bài lần sau, mỗi ý một việc cụ thể, khoảng 90 ký tự. Nếu bỏ trống, app lấy từ next_steps."
+        },
+        "errors_omitted": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Số lỗi nhỏ khác của bài không được liệt kê trong errors (phiếu có hạn về chỗ). Quy tắc: errors chỉ liệt kê tối đa 6 lỗi nặng và cần sửa ngay, xếp theo thứ tự ưu tiên; phần còn lại ghi số lượng vào đây."
         }
       }
     }

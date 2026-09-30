@@ -77,33 +77,33 @@
     var used = {}; (p.errors || []).forEach(function (e) { used[e.group] = 1; });
     var rk = function (e) { return (e.severity || (e.impeding ? 'high' : 'medium')) === 'high' ? 2 : (e.severity === 'low' ? 0 : 1); };
     var errs = (p.errors || []).slice().sort(function (a, b) { return rk(b) - rk(a); });
-    var maxE = opt.maxErrors || 6, more = errs.length - maxE; errs = errs.slice(0, maxE);
+    var maxE = opt.maxErrors || 6, more = Math.max(errs.length - maxE, 0) + (p.errors_omitted || 0); errs = errs.slice(0, maxE);
     var cr = p.criteria || [];
     var st = (p.strengths && p.strengths.length) ? p.strengths : cr.filter(function (c) { return c.band >= c.max - 1 && c.comment; }).map(function (c) { return c.comment; });
     var is = (p.issues && p.issues.length) ? p.issues : cr.filter(function (c) { return c.band < c.max - 1 && c.to_move_up; }).map(function (c) { return c.to_move_up; });
     var ck = (p.checklist && p.checklist.length) ? p.checklist : (p.next_steps || []);
     var li = function (a) { return a.slice(0, 4).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join(''); };
     var h = '<div class="wr-page" style="border-top:8px solid ' + mau + '">';
-    h += '<div class="wr-head soft" style="background:' + soft + '"><div><small style="color:' + dark + '">RUBY SCHOOL · CAMBRIDGE ' + esc(opt.tenCapDo || d.level) + '</small><h1>Writing Part ' + esc(p.part) + ' · ' + esc(GENRE_EN[p.genre] || 'Writing') + '</h1></div>'
+    h += '<div class="wr-head soft" style="background:' + soft + '"><div><small style="color:' + dark + '">RUBY SCHOOL · CAMBRIDGE ' + esc(opt.tenCapDo || d.level) + '</small><h1>Writing Part ' + esc(p.part) + ' · ' + esc(GENRE_EN[p.genre] || 'Writing') + '<small class="vi">Bài viết Part ' + esc(p.part) + ' · ' + esc(GENRE[p.genre] || 'Bài viết') + '</small></h1></div>'
       + '<div class="tot" style="color:' + dark + '"><b>' + esc(p.raw) + '/' + esc(p.raw_max) + '</b><span>marks for this Part</span></div></div>';
     h += '<div class="wr-who"><span>Student: <b>' + esc(s.name) + '</b></span><span>ID: <b>' + esc(s.id) + '</b></span><span>Class: <b>' + esc(s.class) + '</b></span></div>';
     h += '<div class="wr-body">';
-    if (p.task) h += '<div class="wr-sec"><h3>Task</h3><div class="wr-task">' + esc(p.task) + '</div></div>';
-    h += '<div class="wr-sec"><h3>Student\'s Response <span>' + (p.word_count ? esc(p.word_count) + ' words' : '') + '</span></h3>'
+    if (p.task) h += '<div class="wr-sec"><h3><span class="tt">Task<small class="vi">Đề bài</small></span></h3><div class="wr-task">' + esc(p.task) + '</div></div>';
+    h += '<div class="wr-sec"><h3><div>Student\'s Response<small class="vi">Bài làm của em</small></div> <span>' + (p.word_count ? esc(p.word_count) + ' words' : '') + '</span></h3>'
       + '<div class="wr-text">' + highlight(p.text || '', p.errors) + '</div>'
       + '<div class="wr-leg">' + Object.keys(used).map(function (g) { return '<span style="background:' + (GROUP[g] || GROUP.grammar).mau + '">' + esc((GROUP[g] || GROUP.grammar).ten) + '</span>'; }).join('')
       + '<span style="color:#5B6576">Bold = errors that make the text hard to understand; faded = minor</span></div></div>';
-    h += '<div class="wr-sec"><h3>Rubric Scores <span>0-5 per criterion</span></h3><table class="wr-crit">' + cr.map(function (c) {
+    h += '<div class="wr-sec"><h3><div>Rubric Scores<small class="vi">Điểm theo từng tiêu chí</small></div> <span>0-5 per criterion</span></h3><table class="wr-crit">' + cr.map(function (c) {
       var nm = critName(c.id);
       return '<tr><td class="n">' + esc(nm[1]) + '<small>' + esc(nm[0]) + '</small><div style="margin-top:3px">' + dots(c.band, c.max, dark) + esc(c.band) + '/' + esc(c.max) + '</div></td><td>' + esc(c.comment)
         + (c.to_move_up ? '<div class="up"><b>To move up:</b> ' + esc(c.to_move_up) + '</div>' : '') + '</td></tr>';
     }).join('') + '</table></div>';
-    h += '<div class="wr-two"><div class="wr-si good"><h3>Strengths</h3><ul>' + li(st) + '</ul></div><div class="wr-si issue"><h3>Issues to Fix</h3><ul>' + li(is) + '</ul></div></div>';
-    if (errs.length) h += '<div class="wr-sec"><h3>Corrections</h3><ul class="wr-err">' + errs.map(function (e) {
+    h += '<div class="wr-two"><div class="wr-si good"><h3>Strengths<small class="vi">Điểm mạnh</small></h3><ul>' + li(st) + '</ul></div><div class="wr-si issue"><h3>Issues to Fix<small class="vi">Vấn đề cần khắc phục</small></h3><ul>' + li(is) + '</ul></div></div>';
+    if (errs.length) h += '<div class="wr-sec"><h3><span class="tt">Corrections<small class="vi">Lỗi cần sửa ngay</small></span></h3><ul class="wr-err">' + errs.map(function (e) {
       var g = GROUP[e.group] || GROUP.grammar;
       return '<li><span class="g" style="background:' + g.mau + '">' + esc(g.ten) + '</span><span class="o' + (rk(e) === 2 ? ' hi' : rk(e) === 0 ? ' lo' : '') + '">' + esc(e.original) + '</span> &rarr; <span class="k">' + esc(e.corrected) + '</span>. ' + esc(e.explanation) + '</li>';
     }).join('') + (more > 0 ? '<li style="color:#5B6576">and ' + more + ' more minor errors (see the teacher\'s marked copy).</li>' : '') + '</ul></div>';
-    if (ck.length) h += '<div class="wr-sec"><h3>Self-check Checklist <span>before submitting next time</span></h3><ul class="wr-ck">' + ck.slice(0, 5).map(function (x) { return '<li><i style="border-color:' + dark + '"></i>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
+    if (ck.length) h += '<div class="wr-sec"><h3><div>Self-check Checklist<small class="vi">Tự kiểm tra trước khi nộp bài lần sau</small></div></h3><ul class="wr-ck">' + ck.slice(0, 5).map(function (x) { return '<li><i style="border-color:' + dark + '"></i>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
     h += '</div><div class="wr-foot"><span>Each criterion is scored 0-5 using the Cambridge rubric. Page ' + (opt.trang || '') + '/4</span><span>Ruby School</span></div></div>';
     return h;
   }

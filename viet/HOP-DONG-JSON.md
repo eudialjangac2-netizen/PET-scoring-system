@@ -80,3 +80,15 @@ Schema tự kiểm tra: KET không được có `communicative_achievement` và 
 - Lưu trong `S.writing[key]` (cùng nơi lưu phiên chấm trên máy, IndexedDB).
 - Bảng Kết quả, file CSV và Excel có thêm cột Writing (điểm thô, tối đa, thang) khi lớp có ít nhất một bài Writing.
 - Chưa làm: đưa Writing vào phiếu kết quả PDF từng học sinh và vào bản sao lưu Google Sheet (cần chốt cột với Apps Script).
+
+## Trường hiển thị trong phiếu phụ huynh (tùy chọn, thêm ở mỗi Part)
+
+| Trường | Ý nghĩa | Nếu bỏ trống |
+|---|---|---|
+| `strengths` | Tối đa 4 ý điểm mạnh (mỗi ý khoảng 120 ký tự) | App lấy từ `comment` của tiêu chí đạt band cao |
+| `issues` | Tối đa 4 ý vấn đề chính cần khắc phục | App lấy từ `to_move_up` |
+| `checklist` | Tối đa 6 việc tự kiểm tra trước khi nộp bài lần sau | App lấy từ `next_steps` |
+| `errors[].severity` | `high` (in đậm, cản trở nghĩa), `medium` (tô thường), `low` (tô nhạt, lỗi nhỏ) | Lấy theo `impeding` |
+| `errors_omitted` | Số lỗi nhỏ không được liệt kê | 0 |
+
+**Quy tắc chọn lỗi cho `errors`** (phiếu chỉ có chỗ cho khoảng 6 lỗi): chỉ liệt kê lỗi nặng và cần sửa ngay, xếp theo thứ tự ưu tiên: (1) lỗi cản trở nghĩa (`high`); (2) lỗi lặp lại nhiều lần, ghi một lần và nêu trong `explanation` rằng lỗi xuất hiện mấy lần; (3) lỗi ảnh hưởng tiêu chí đang có band thấp nhất. Các lỗi nhỏ còn lại không liệt kê, chỉ ghi số lượng vào `errors_omitted`.

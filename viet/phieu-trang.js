@@ -8,15 +8,17 @@
 (function (root, f) { if (typeof module === 'object' && module.exports) module.exports = f(); else root.PhieuTrang = f(); })(typeof self !== 'undefined' ? self : this, function () {
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   // Màu chủ đạo mỗi cấp độ + bảng pastel riêng từng kỹ năng (bg = nền thẻ, ink = chữ và đường biểu đồ)
-  var OV = '#2F3B52'; // màu riêng của Overall (không trùng màu kỹ năng nào), dùng chung mọi cấp độ
+  // Màu kỹ năng dùng chung mọi cấp độ (để phụ huynh nhận ra ngay); Overall lấy màu chủ đạo của cấp độ
+  var SKILL = {
+    reading: { bg: '#E6EEFB', ink: '#5B84C4' }, listening: { bg: '#FCEBDC', ink: '#D08A52' }, writing: { bg: '#EDE7F8', ink: '#8A74BC' },
+    speaking: { bg: '#FBF2D2', ink: '#C9A23A' }, uoe: { bg: '#DDF0F1', ink: '#3F93A0' } };
+  var VI = { reading: 'Đọc hiểu', listening: 'Nghe hiểu', writing: 'Viết', speaking: 'Nói', uoe: 'Ngữ pháp và từ vựng' };
   var THEME = {
-    KET: { a: '#019EA5', d: '#0B6F74', soft: '#EAF6F6', skill: {
-      reading: { bg: '#DDF2F2', ink: '#1A8C91' }, listening: { bg: '#E0EAFA', ink: '#4A74C0' }, writing: { bg: '#E0F4E5', ink: '#4C9A68' }, speaking: { bg: '#FDF0D5', ink: '#C99A2E' } } },
-    PET: { a: '#B4455C', d: '#8A2A40', soft: '#FBF2F4', skill: {
-      reading: { bg: '#F6E2E6', ink: '#B5566B' }, listening: { bg: '#FBEBDA', ink: '#C9803A' }, writing: { bg: '#EAE5F3', ink: '#7B68A8' }, speaking: { bg: '#E1EEE2', ink: '#5E9468' } } },
-    FCE: { a: '#8DBF36', d: '#4F7A12', soft: '#F3F9E6', skill: {
-      reading: { bg: '#E8F4CC', ink: '#6E9A2A' }, uoe: { bg: '#FBF4C6', ink: '#C2A21E' }, listening: { bg: '#D9F1E5', ink: '#2F9470' }, writing: { bg: '#DCEBF8', ink: '#4A82BE' }, speaking: { bg: '#FCE5D8', ink: '#D0703A' } } }
+    KET: { a: '#019EA5', d: '#0B6F74', soft: '#E6F5F5', skill: SKILL },
+    PET: { a: '#B4455C', d: '#8A2A40', soft: '#FAEFF1', skill: SKILL },
+    FCE: { a: '#8DBF36', d: '#4F7A12', soft: '#F1F8E0', skill: SKILL }
   };
+  var ttl = function (en, vi) { return '<span class="tt">' + esc(en) + '<small class="vi">' + esc(vi) + '</small></span>'; };
   // Mức Grade theo Cambridge English Scale (chung cho từng kỹ năng và Overall)
   var GRADES = { KET: [[140, 'A'], [133, 'B'], [120, 'C']], PET: [[160, 'A'], [153, 'B'], [140, 'C']], FCE: [[180, 'A'], [173, 'B'], [160, 'C']] };
   function gradeOf(level, scale) {
@@ -36,7 +38,7 @@
   }
   function styleVars(m) { var t = THEME[m.level]; return '--a:' + t.a + ';--d:' + t.d + ';--soft:' + t.soft; }
   function head(m, title) {
-    return '<div class="pt-head"><div><small>RUBY SCHOOL · CAMBRIDGE ' + esc(m.level) + '</small><h1>' + esc(title) + '</h1></div><div class="pt-ex">' + esc(m.exam) + '<span>Graded ' + esc(m.date) + '</span></div></div>'
+    return '<div class="pt-head"><div><small>RUBY SCHOOL · CAMBRIDGE ' + esc(m.level) + '</small><h1>' + ttl(title[0], title[1]) + '</h1></div><div class="pt-ex">' + esc(m.exam) + '<span>Graded ' + esc(m.date) + '</span></div></div>'
       + '<div class="pt-who"><div><span>Student</span><b>' + esc(m.student.name) + '</b></div><div><span>Student ID</span><b>' + esc(m.student.id) + '</b></div><div><span>Class</span><b>' + esc(m.student.cls) + '</b></div></div>';
   }
   function foot(m, n) { return '<div class="pt-foot"><span>Scores use the Cambridge English Scale for ' + esc(m.level) + '. Grade A/B/C is based on Scale. Page ' + n + '/4</span><span>Ruby School</span></div>'; }
@@ -56,32 +58,32 @@
     return s;
   }
   function barChart(m) {
-    var W = 318, H = 236, L = 30, R = 44, T = 14, B = 52, r = ranges(m), lo = r.lo, hi = r.hi, n = m.skills.length, T0 = THEME[m.level];
+    var W = 318, H = 236, L = 30, R = 44, T = 14, B = 52, r = ranges(m), lo = r.lo, hi = r.hi, n = m.skills.length, T0 = THEME[m.level], OVC = T0.d;
     var Y = function (v) { return T + (hi - v) * (H - T - B) / (hi - lo); }, cw = (W - L - R) / n, bw = Math.min(38, cw * .56);
     var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
     for (var v = lo; v <= hi; v += 10) s += '<text x="' + (L - 5) + '" y="' + (Y(v) + 3) + '" text-anchor="end" font-size="9" fill="#9aa3b1">' + v + '</text>';
     s += gridLines(m, L, W - R, Y, lo, hi, W - R, m.overall.scale);
     m.skills.forEach(function (sk, i) {
       var cx = L + cw * i + cw / 2, y = Y(sk.scale), ink = T0.skill[sk.id].ink;
-      s += '<path d="M' + (cx - bw / 2) + ',' + Y(lo) + ' V' + (y + 4) + ' a4,4 0 0 1 4,-4 h' + (bw - 8) + ' a4,4 0 0 1 4,4 V' + Y(lo) + ' Z" fill="' + ink + '"/>';
+      s += '<path d="M' + (cx - bw / 2) + ',' + Y(lo) + ' V' + (y + 4) + ' a4,4 0 0 1 4,-4 h' + (bw - 8) + ' a4,4 0 0 1 4,4 V' + Y(lo) + ' Z" fill="' + ink + '" fill-opacity=".38" stroke="' + ink + '" stroke-width="1.3" stroke-opacity=".9"/>';
       var words = sk.name.replace(/^Use of /, 'Use of|').split('|');
       words.forEach(function (w, k) { s += '<text x="' + cx + '" y="' + (Y(lo) + 13 + k * 10) + '" text-anchor="middle" font-size="9.5" fill="#3a4457">' + esc(w) + '</text>'; });
       s += '<text x="' + cx + '" y="' + (Y(lo) + 14 + words.length * 10 + 2) + '" text-anchor="middle" font-size="12" font-weight="700" fill="#172033">' + sk.scale + '</text>';
     });
     var yo = Y(m.overall.scale);
-    s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yo + '" y2="' + yo + '" stroke="' + OV + '" stroke-width="2.4"/><text x="' + (W - R + 4) + '" y="' + (yo + 3) + '" font-size="9.5" font-weight="700" fill="' + OV + '">Overall</text>';
+    s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yo + '" y2="' + yo + '" stroke="' + OVC + '" stroke-width="2.4"/><text x="' + (W - R + 4) + '" y="' + (yo + 3) + '" font-size="9.5" font-weight="700" fill="' + OVC + '">Overall</text>';
     return s + '</svg>';
   }
   function lineChart(m) {
-    var W = 196, H = 236, L = 14, R = 40, T = 14, B = 52, r = ranges(m), lo = r.lo, hi = r.hi, n = Math.max(m.history.length, 2);
+    var OVC = THEME[m.level].d, W = 196, H = 236, L = 14, R = 40, T = 14, B = 52, r = ranges(m), lo = r.lo, hi = r.hi, n = Math.max(m.history.length, 2);
     var Y = function (v) { return T + (hi - v) * (H - T - B) / (hi - lo); }, X = function (i) { return m.history.length === 1 ? (L + (W - L - R) / 2) : L + i * (W - L - R) / (n - 1); };
     var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">' + gridLines(m, L, W - R, Y, lo, hi, W - R);
     var pts = m.history.map(function (h, i) { return X(i) + ',' + Y(h.overall); });
-    if (m.history.length > 1) s += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + OV + '" stroke-width="2.4" stroke-linejoin="round"/>';
+    if (m.history.length > 1) s += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + OVC + '" stroke-width="2.4" stroke-linejoin="round"/>';
     m.history.forEach(function (h, i) {
       var cur = i === m.history.length - 1;
-      s += '<circle cx="' + X(i) + '" cy="' + Y(h.overall) + '" r="' + (cur ? 5 : 3.6) + '" fill="' + (cur ? OV : '#fff') + '" stroke="' + OV + '" stroke-width="2"/>';
-      s += '<text x="' + (X(i) + (cur ? 6 : 0)) + '" y="' + (Y(h.overall) - 9) + '" text-anchor="' + (cur ? 'end' : 'middle') + '" font-size="10" font-weight="700" fill="' + OV + '">' + h.overall + '</text>';
+      s += '<circle cx="' + X(i) + '" cy="' + Y(h.overall) + '" r="' + (cur ? 5 : 3.6) + '" fill="' + (cur ? OVC : '#fff') + '" stroke="' + OVC + '" stroke-width="2"/>';
+      s += '<text x="' + (X(i) + (cur ? 6 : 0)) + '" y="' + (Y(h.overall) - 9) + '" text-anchor="' + (cur ? 'end' : 'middle') + '" font-size="10" font-weight="700" fill="' + OVC + '">' + h.overall + '</text>';
       s += '<text x="' + X(i) + '" y="' + (Y(lo) + 13) + '" text-anchor="middle" font-size="9.5" fill="#3a4457">' + esc(h.label.replace('Mock ', '')) + '</text>';
     });
     s += '<text x="' + ((L + W - R) / 2) + '" y="' + (Y(lo) + 27) + '" text-anchor="middle" font-size="9" fill="#7a8494">Mock test</text>';
@@ -93,10 +95,10 @@
     var t = THEME[m.level].skill[sk.id];
     var rows = sk.parts.map(function (p) {
       var f = p.n ? p.v / p.n : 0;
-      return '<div class="pt-pr"><span>' + esc(p.name) + '</span><div class="pt-bar"><i style="width:' + Math.max(f * 100, 3) + '%;background:' + t.ink + '"></i></div><b>' + p.v + '/' + p.n + '</b>' + delta(m.first ? null : p.d) + '</div>';
+      return '<div class="pt-pr"><span>' + esc(p.name) + '</span><div class="pt-bar"><i style="width:' + Math.max(f * 100, 3) + '%;background:' + t.ink + ';opacity:.6"></i></div><b>' + p.v + '/' + p.n + '</b>' + delta(m.first ? null : p.d) + '</div>';
     }).join('');
     var g = gradeOf(m.level, sk.scale);
-    return '<div class="pt-sk" style="background:' + t.bg + ';--ink:' + t.ink + '"><h2>' + esc(sk.name) + '</h2><div class="pt-gr">' + (g ? 'Grade ' + g : 'Below Grade C') + '</div>'
+    return '<div class="pt-sk" style="background:' + t.bg + ';--ink:' + t.ink + '"><h2>' + ttl(sk.name, VI[sk.id]) + '</h2><div class="pt-gr">' + (g ? 'Grade ' + g : 'Below Grade C') + '</div>'
       + '<div class="pt-sc"><b>' + sk.scale + '</b><span>Scale</span>' + delta(m.first ? null : sk.d) + '</div><div class="pt-raw">' + sk.raw + ' / ' + sk.max + ' marks</div>' + rows + '</div>';
   }
 
@@ -107,14 +109,14 @@
     var ovt = m.first
       ? 'First mock: this is your starting point.' + (nx ? ' Target for Mock 2: reach Grade ' + nx[1] + ' (' + nx[0] + '), ' + pl(nx[0] - o.scale) + ' away.' : '')
       : (nx ? pl(nx[0] - o.scale) + ' to reach Grade ' + nx[1] + '.' : 'Top grade reached.');
-    return '<div class="pt-page" style="' + styleVars(m) + '">' + head(m, 'Performance Overview') + '<div class="pt-main">'
+    return '<div class="pt-page" style="' + styleVars(m) + '">' + head(m, ['Performance Overview', 'Tổng quan kết quả']) + '<div class="pt-main">'
       + '<div class="pt-r1"><div class="pt-ov"><small>OVERALL</small><div class="pt-ovn"><b>' + o.scale + '</b><span>Scale</span></div><div class="pt-ovg">' + (g ? 'Grade ' + g : 'Below Grade C') + '</div>'
       + (m.first ? '<span class="pt-d n">Baseline</span>' : delta(o.d, ' vs previous mock'))
       + '<div class="pt-ovt">' + esc(ovt) + '</div></div>'
-      + '<div class="pt-ch"><h3>Skills &amp; Progress <span>Cambridge English Scale</span></h3><div class="pt-cc"><div><div class="pt-ct">This mock: score by skill</div>' + barChart(m) + '</div><div><div class="pt-ct">Overall across mocks</div>' + lineChart(m) + '</div></div></div></div>'
+      + '<div class="pt-ch"><h3>' + ttl('Skills & Progress', 'Kỹ năng và tiến bộ') + '<span>Cambridge English Scale</span></h3><div class="pt-cc"><div><div class="pt-ct">This mock: score by skill</div>' + barChart(m) + '</div><div><div class="pt-ct">Overall across mocks</div>' + lineChart(m) + '</div></div></div></div>'
       + '<div class="pt-skills">' + m.skills.map(function (s) { return skillCard(m, s); }).join('') + '</div>'
-      + '<div class="pt-r3"><div class="pt-cm"><h3>Teacher\'s Overall Comment</h3><p>' + esc(m.comment) + '</p></div>'
-      + '<div class="pt-pr3"><h3>Top 3 Priorities</h3><ol>' + m.priorities.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol></div></div>'
+      + '<div class="pt-r3"><div class="pt-cm"><h3>' + ttl('Teacher\'s Overall Comment', 'Nhận xét tổng thể của giáo viên') + '</h3><p>' + esc(m.comment) + '</p></div>'
+      + '<div class="pt-pr3"><h3>' + ttl('Top 3 Priorities', '3 ưu tiên tiếp theo') + '</h3><ol>' + m.priorities.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol></div></div>'
       + '</div>' + foot(m, 1) + '</div>';
   }
 
@@ -134,12 +136,12 @@
       var t = T0.skill[w.skill];
       return '<div class="pt-wq"><h5 style="color:' + t.ink + '">' + esc(w.name) + '</h5>' + w.items.map(function (x) { return '<span class="chip" style="background:' + t.bg + '">' + esc(x) + '</span>'; }).join('') + '</div>';
     }).join('');
-    return '<div class="pt-page" style="' + styleVars(m) + '">' + head(m, 'Learning Diagnosis') + '<div class="pt-main">'
-      + '<div class="pt-sec"><h3>Path to the Next Grade</h3><table class="pt-gap"><tr><th>Skill</th><th>Scale</th><th>Current level</th><th>Needed</th></tr>' + gap + '</table></div>'
-      + '<div class="pt-sec"><h3>Why Points Are Being Lost</h3><div class="pt-cas">' + causes + '</div></div>'
-      + '<div class="pt-two"><div class="pt-sec"><h3>Repeated Writing Errors</h3>' + wr + '</div><div class="pt-sec"><h3>Test-taking Habits</h3><ul class="pt-hb">' + D.habits.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></div>'
-      + '<div class="pt-sec"><h3>Questions to Review <small>(question: your answer, correct answer)</small></h3><div class="pt-wrs">' + wrong + '</div></div>'
+    return '<div class="pt-page" style="' + styleVars(m) + '">' + head(m, ['Learning Diagnosis', 'Chẩn đoán việc học']) + '<div class="pt-main">'
+      + '<div class="pt-sec"><h3>' + ttl('Path to the Next Grade', 'Lộ trình lên Grade tiếp theo') + '</h3><table class="pt-gap"><tr><th>Skill</th><th>Scale</th><th>Current level</th><th>Needed</th></tr>' + gap + '</table></div>'
+      + '<div class="pt-sec"><h3>' + ttl('Why Points Are Being Lost', 'Vì sao em đang mất điểm') + '</h3><div class="pt-cas">' + causes + '</div></div>'
+      + '<div class="pt-two"><div class="pt-sec"><h3>' + ttl('Repeated Writing Errors', 'Lỗi Writing lặp lại') + '</h3>' + wr + '</div><div class="pt-sec"><h3>' + ttl('Test-taking Habits', 'Thói quen làm bài') + '</h3><ul class="pt-hb">' + D.habits.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></div>'
+      + '<div class="pt-sec"><h3>' + ttl('Questions to Review', 'Câu cần xem lại (câu: em chọn, đáp án đúng)') + '</h3><div class="pt-wrs">' + wrong + '</div></div>'
       + '</div>' + foot(m, 2) + '</div>';
   }
-  return { THEME: THEME, OV: OV, GRADES: GRADES, gradeOf: gradeOf, nextGrade: nextGrade, overview: overview, diagnosis: diagnosis };
+  return { THEME: THEME, GRADES: GRADES, gradeOf: gradeOf, nextGrade: nextGrade, overview: overview, diagnosis: diagnosis };
 });
