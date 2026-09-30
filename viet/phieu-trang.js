@@ -41,13 +41,14 @@
     return '<div class="pt-head"><div><small>RUBY SCHOOL · CAMBRIDGE ' + esc(m.level) + '</small><h1>' + ttl(title[0], title[1]) + '</h1></div><div class="pt-ex">' + esc(m.exam) + '<span>Graded ' + esc(m.date) + '</span></div></div>'
       + '<div class="pt-who"><div><span>Student</span><b>' + esc(m.student.name) + '</b></div><div><span>Student ID</span><b>' + esc(m.student.id) + '</b></div><div><span>Class</span><b>' + esc(m.student.cls) + '</b></div></div>';
   }
-  function foot(m, n) { return '<div class="pt-foot"><span>Scores use the Cambridge English Scale for ' + esc(m.level) + '. Grade A/B/C is based on Scale. Page ' + n + '/4</span><span>Ruby School</span></div>'; }
+  function foot(m, n) { return '<div class="pt-foot"><span>Scores use the Cambridge English Scale for ' + esc(m.level) + '. Grade A/B/C is based on Scale. Page ' + n + '/' + (m.totalPages || 4) + '</span><span>Ruby School</span></div>'; }
 
   // ---- Biểu đồ kết hợp: cột = điểm từng kỹ năng của Mock hiện tại, đường ngang Overall; bên phải đường Overall qua các Mock
   function ranges(m) {
-    var vals = [m.overall.scale]; m.skills.forEach(function (s) { vals.push(s.scale); }); m.history.forEach(function (h) { vals.push(h.overall); });
-    var g = GRADES[m.level].map(function (x) { return x[0]; });
-    var nx = nextGrade(m.level, m.overall.scale); if (nx) vals.push(nx[0]);
+    var vals = []; if (m.overall.scale != null) vals.push(m.overall.scale);
+    m.skills.forEach(function (s) { if (s.scale != null) vals.push(s.scale); }); m.history.forEach(function (h) { if (h.overall != null) vals.push(h.overall); });
+    var nx = m.overall.scale != null ? nextGrade(m.level, m.overall.scale) : null; if (nx) vals.push(nx[0]);
+    if (!vals.length) GRADES[m.level].forEach(function (x) { vals.push(x[0]); });
     var lo = Math.floor((Math.min.apply(null, vals) - 6) / 10) * 10, hi = Math.ceil((Math.max.apply(null, vals) + 6) / 10) * 10;
     return { lo: lo, hi: hi };
   }
@@ -64,12 +65,13 @@
     for (var v = lo; v <= hi; v += 10) s += '<text x="' + (L - 5) + '" y="' + (Y(v) + 3) + '" text-anchor="end" font-size="9" fill="#9aa3b1">' + v + '</text>';
     s += gridLines(m, L, W - R, Y, lo, hi, W - R, m.overall.scale);
     m.skills.forEach(function (sk, i) {
-      var cx = L + cw * i + cw / 2, y = Y(sk.scale), ink = T0.skill[sk.id].ink;
-      s += '<path d="M' + (cx - bw / 2) + ',' + Y(lo) + ' V' + (y + 4) + ' a4,4 0 0 1 4,-4 h' + (bw - 8) + ' a4,4 0 0 1 4,4 V' + Y(lo) + ' Z" fill="' + ink + '" fill-opacity=".38" stroke="' + ink + '" stroke-width="1.3" stroke-opacity=".9"/>';
+      var cx = L + cw * i + cw / 2, ink = T0.skill[sk.id].ink, y = sk.scale == null ? Y(lo) : Y(sk.scale);
+      if (sk.scale != null) s += '<path d="M' + (cx - bw / 2) + ',' + Y(lo) + ' V' + (y + 4) + ' a4,4 0 0 1 4,-4 h' + (bw - 8) + ' a4,4 0 0 1 4,4 V' + Y(lo) + ' Z" fill="' + ink + '" fill-opacity=".38" stroke="' + ink + '" stroke-width="1.3" stroke-opacity=".9"/>';
       var words = sk.name.replace(/^Use of /, 'Use of|').split('|');
       words.forEach(function (w, k) { s += '<text x="' + cx + '" y="' + (Y(lo) + 13 + k * 10) + '" text-anchor="middle" font-size="9.5" fill="#3a4457">' + esc(w) + '</text>'; });
-      s += '<text x="' + cx + '" y="' + (Y(lo) + 14 + words.length * 10 + 2) + '" text-anchor="middle" font-size="12" font-weight="700" fill="#172033">' + sk.scale + '</text>';
+      s += '<text x="' + cx + '" y="' + (Y(lo) + 14 + words.length * 10 + 2) + '" text-anchor="middle" font-size="12" font-weight="700" fill="#172033">' + (sk.scale == null ? 'n/a' : sk.scale) + '</text>';
     });
+    if (m.overall.scale == null) return s + '</svg>';
     var yo = Y(m.overall.scale);
     s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yo + '" y2="' + yo + '" stroke="' + OVC + '" stroke-width="2.4"/><text x="' + (W - R + 4) + '" y="' + (yo + 3) + '" font-size="9.5" font-weight="700" fill="' + OVC + '">Overall</text>';
     return s + '</svg>';
@@ -78,10 +80,10 @@
     var OVC = THEME[m.level].d, W = 196, H = 236, L = 14, R = 40, T = 14, B = 52, r = ranges(m), lo = r.lo, hi = r.hi, n = Math.max(m.history.length, 2);
     var Y = function (v) { return T + (hi - v) * (H - T - B) / (hi - lo); }, X = function (i) { return m.history.length === 1 ? (L + (W - L - R) / 2) : L + i * (W - L - R) / (n - 1); };
     var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">' + gridLines(m, L, W - R, Y, lo, hi, W - R);
-    var pts = m.history.map(function (h, i) { return X(i) + ',' + Y(h.overall); });
-    if (m.history.length > 1) s += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + OVC + '" stroke-width="2.4" stroke-linejoin="round"/>';
-    m.history.forEach(function (h, i) {
-      var cur = i === m.history.length - 1;
+    var hist = m.history.filter(function (h) { return h.overall != null; }), pts = hist.map(function (h, i) { return X(i) + ',' + Y(h.overall); });
+    if (hist.length > 1) s += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + OVC + '" stroke-width="2.4" stroke-linejoin="round"/>';
+    hist.forEach(function (h, i) {
+      var cur = i === hist.length - 1;
       s += '<circle cx="' + X(i) + '" cy="' + Y(h.overall) + '" r="' + (cur ? 5 : 3.6) + '" fill="' + (cur ? OVC : '#fff') + '" stroke="' + OVC + '" stroke-width="2"/>';
       s += '<text x="' + (X(i) + (cur ? 6 : 0)) + '" y="' + (Y(h.overall) - 9) + '" text-anchor="' + (cur ? 'end' : 'middle') + '" font-size="10" font-weight="700" fill="' + OVC + '">' + h.overall + '</text>';
       s += '<text x="' + X(i) + '" y="' + (Y(lo) + 13) + '" text-anchor="middle" font-size="9.5" fill="#3a4457">' + esc(h.label.replace('Mock ', '')) + '</text>';
@@ -93,25 +95,28 @@
 
   function skillCard(m, sk) {
     var t = THEME[m.level].skill[sk.id];
+    if (sk.empty || sk.raw == null) {
+      return '<div class="pt-sk" style="background:' + t.bg + ';--ink:' + t.ink + '"><h2>' + ttl(sk.name, VI[sk.id]) + '</h2><div class="pt-none">' + esc(sk.emptyNote || 'No score yet') + '<small class="vi">' + esc(sk.emptyVi || 'Chưa có điểm') + '</small></div></div>';
+    }
     var rows = sk.parts.map(function (p) {
       var f = p.n ? p.v / p.n : 0;
       return '<div class="pt-pr"><span>' + esc(p.name) + '</span><div class="pt-bar"><i style="width:' + Math.max(f * 100, 3) + '%;background:' + t.ink + ';opacity:.6"></i></div><b>' + p.v + '/' + p.n + '</b>' + delta(m.first ? null : p.d) + '</div>';
     }).join('');
-    var g = gradeOf(m.level, sk.scale);
-    return '<div class="pt-sk" style="background:' + t.bg + ';--ink:' + t.ink + '"><h2>' + ttl(sk.name, VI[sk.id]) + '</h2><div class="pt-gr">' + (g ? 'Grade ' + g : 'Below Grade C') + '</div>'
-      + '<div class="pt-sc"><b>' + sk.scale + '</b><span>Scale</span>' + delta(m.first ? null : sk.d) + '</div><div class="pt-raw">' + sk.raw + ' / ' + sk.max + ' marks</div>' + rows + '</div>';
+    var g = sk.scale == null ? '' : gradeOf(m.level, sk.scale);
+    var gtxt = sk.scale == null ? 'No Scale yet' : (g ? 'Grade ' + g : 'Below Grade C');
+    return '<div class="pt-sk" style="background:' + t.bg + ';--ink:' + t.ink + '"><h2>' + ttl(sk.name, VI[sk.id]) + '</h2><div class="pt-gr">' + gtxt + '</div>'
+      + '<div class="pt-sc"><b>' + (sk.scale == null ? '&mdash;' : (sk.est ? '~' : '') + sk.scale) + '</b><span>Scale</span>' + delta(m.first ? null : sk.d) + '</div><div class="pt-raw">' + sk.raw + ' / ' + sk.max + ' marks</div>' + rows + '</div>';
   }
 
   function overview(m) {
-    var o = m.overall, nx = nextGrade(m.level, o.scale), g = gradeOf(m.level, o.scale);
-    var weakest = m.skills.slice().sort(function (a, b) { return a.scale - b.scale; })[0];
+    var o = m.overall, has = o.scale != null, nx = has ? nextGrade(m.level, o.scale) : null, g = has ? gradeOf(m.level, o.scale) : '';
     var pl = function (n) { return n + (n === 1 ? ' Scale point' : ' Scale points'); };
-    var ovt = m.first
+    var ovt = !has ? 'Scores will appear once all skills are graded.' : m.first
       ? 'First mock: this is your starting point.' + (nx ? ' Target for Mock 2: reach Grade ' + nx[1] + ' (' + nx[0] + '), ' + pl(nx[0] - o.scale) + ' away.' : '')
       : (nx ? pl(nx[0] - o.scale) + ' to reach Grade ' + nx[1] + '.' : 'Top grade reached.');
     return '<div class="pt-page" style="' + styleVars(m) + '">' + head(m, ['Performance Overview', 'Tổng quan kết quả']) + '<div class="pt-main">'
-      + '<div class="pt-r1"><div class="pt-ov"><small>OVERALL</small><div class="pt-ovn"><b>' + o.scale + '</b><span>Scale</span></div><div class="pt-ovg">' + (g ? 'Grade ' + g : 'Below Grade C') + '</div>'
-      + (m.first ? '<span class="pt-d n">Baseline</span>' : delta(o.d, ' vs previous mock'))
+      + '<div class="pt-r1"><div class="pt-ov"><small>OVERALL</small><div class="pt-ovn"><b>' + (has ? o.scale : '&mdash;') + '</b><span>Scale</span></div><div class="pt-ovg">' + (!has ? 'Waiting for scores' : (g ? 'Grade ' + g : 'Below Grade C')) + '</div>'
+      + (m.first ? '<span class="pt-d n">' + (o.partial ? 'Provisional' : 'Baseline') + '</span>' : delta(o.d, ' vs previous mock'))
       + '<div class="pt-ovt">' + esc(ovt) + '</div></div>'
       + '<div class="pt-ch"><h3>' + ttl('Skills & Progress', 'Kỹ năng và tiến bộ') + '<span>Cambridge English Scale</span></h3><div class="pt-cc"><div><div class="pt-ct">This mock: score by skill</div>' + barChart(m) + '</div><div><div class="pt-ct">Overall across mocks</div>' + lineChart(m) + '</div></div></div></div>'
       + '<div class="pt-skills">' + m.skills.map(function (s) { return skillCard(m, s); }).join('') + '</div>'
@@ -124,7 +129,9 @@
   function diagnosis(m) {
     var T0 = THEME[m.level], D = m.diagnosis;
     var gap = m.skills.map(function (sk) {
-      var nx = nextGrade(m.level, sk.scale), t = T0.skill[sk.id], need = nx ? nx[0] - sk.scale : 0;
+      var t = T0.skill[sk.id];
+      if (sk.empty || sk.scale == null) return '<tr><td><i style="background:' + t.ink + '"></i>' + esc(sk.name) + '</td><td><b>-</b></td><td colspan="2" style="color:#6B7280">Not graded yet</td></tr>';
+      var nx = nextGrade(m.level, sk.scale), need = nx ? nx[0] - sk.scale : 0;
       return '<tr><td><i style="background:' + t.ink + '"></i>' + esc(sk.name) + '</td><td><b>' + sk.scale + '</b></td><td>' + gradeBadge(m.level, sk.scale) + '</td><td>' + (nx ? '<span class="pt-need" style="background:' + t.bg + ';color:' + t.ink + '">+' + need + '</span> to Grade ' + nx[1] : 'Top grade reached') + '</td></tr>';
     }).join('');
     var causes = D.causes.map(function (c) {

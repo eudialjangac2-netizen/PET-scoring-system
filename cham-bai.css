@@ -201,3 +201,7 @@ td.nm-cell .nm-in { display: flex; gap: 8px; align-items: center; justify-conten
 #wrText { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: var(--r); font: 13px/1.45 ui-monospace, Menlo, Consolas, monospace; resize: vertical; }
 #wrMsg ul { margin: 6px 0 0; padding-left: 20px; }
 #wrMsg .notice { margin-bottom: 8px; }
+
+/* xem trước phiếu nhiều trang */
+.modal-body img + img { margin-top: 10px; }
+.modal-comment .hint#reportCmCount, .modal-comment .hint#reportPrCount { float: right; }

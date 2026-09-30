@@ -79,6 +79,6 @@
 .wr-si.good { background: #E8EFFB; } .wr-si.good h3 { color: #1E4FA0; } .wr-si.good .vi { color: #4a6aa0; }
 .wr-si.issue { background: #FCEAE6; } .wr-si.issue h3 { color: #B42318; } .wr-si.issue .vi { color: #a5564c; }
 
-.tt { display: block; }
+.wr-page .tt { display: block; }
 .wr-sec h3 > span.tt, .pt-ch h3 > span.tt, .pt-sec h3 > span.tt { font-size: inherit; font-weight: inherit; color: inherit; text-transform: none; }
 .wr-sec h3 > span.tt small, .pt-ch h3 > span.tt small, .pt-sec h3 > span.tt small { font-size: 10.5px; }

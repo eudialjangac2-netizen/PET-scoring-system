@@ -104,7 +104,7 @@
       return '<li><span class="g" style="background:' + g.mau + '">' + esc(g.ten) + '</span><span class="o' + (rk(e) === 2 ? ' hi' : rk(e) === 0 ? ' lo' : '') + '">' + esc(e.original) + '</span> &rarr; <span class="k">' + esc(e.corrected) + '</span>. ' + esc(e.explanation) + '</li>';
     }).join('') + (more > 0 ? '<li style="color:#5B6576">and ' + more + ' more minor errors (see the teacher\'s marked copy).</li>' : '') + '</ul></div>';
     if (ck.length) h += '<div class="wr-sec"><h3><div>Self-check Checklist<small class="vi">Tự kiểm tra trước khi nộp bài lần sau</small></div></h3><ul class="wr-ck">' + ck.slice(0, 5).map(function (x) { return '<li><i style="border-color:' + dark + '"></i>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
-    h += '</div><div class="wr-foot"><span>Each criterion is scored 0-5 using the Cambridge rubric. Page ' + (opt.trang || '') + '/4</span><span>Ruby School</span></div></div>';
+    h += '</div><div class="wr-foot"><span>Each criterion is scored 0-5 using the Cambridge rubric. Page ' + (opt.trang || '') + '/' + (opt.total || 4) + '</span><span>Ruby School</span></div></div>';
     return h;
   }
   // Thu gọn dần cho vừa 1 trang A4: (1) chữ nhỏ hơn, (2) bớt lỗi/checklist, (3) thu nhỏ nội dung. Gọi sau khi gắn trang vào DOM.
