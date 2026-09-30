@@ -79,14 +79,16 @@
           "original": "This is bad for his health",
           "corrected": "This is harmful to his health",
           "explanation": "\"Bad\" hơi khẩu ngữ, bài luận nên dùng \"harmful\".",
-          "impeding": false
+          "impeding": false,
+          "severity": "low"
         },
         {
           "group": "style",
           "original": "Another idea is that",
           "corrected": "Another possible solution is that",
           "explanation": "Cụm này cụ thể hơn và trang trọng hơn cho phần ý riêng.",
-          "impeding": false
+          "impeding": false,
+          "severity": "low"
         },
         {
           "group": "grammar",
@@ -195,7 +197,8 @@
           "original": "recommend to go",
           "corrected": "recommend going",
           "explanation": "Sau \"recommend\" dùng V-ing hoặc \"that + mệnh đề\".",
-          "impeding": false
+          "impeding": false,
+          "severity": "low"
         }
       ],
       "short_comment": "Bài viết có bố cục và giọng phù hợp với tạp chí. Em cần thêm ví dụ và rà lỗi hòa hợp chủ vị.",

@@ -58,3 +58,11 @@
 .wr-page.c2 .wr-err li:nth-child(n+5), .wr-page.c2 .wr-ck li:nth-child(n+5), .wr-page.c2 .wr-si li:nth-child(n+3) { display: none; }
 .wr-page.c2 .wr-crit td.n small { display: none; }
 .wr-body { overflow: hidden; }
+
+.wr-text mark.low { opacity: .55; } .wr-err .o.lo { font-weight: 400; opacity: .75; }
+.wr-sec h3 { font-size: 14px; text-transform: none; letter-spacing: 0; color: #2F3B52; }
+.wr-si h3 { font-size: 13.5px; text-transform: none; letter-spacing: 0; }
+.wr-crit td.n { font-size: 13px; } .wr-crit td.n small { font-size: 10.5px; }
+.pt-sec h3 { font-size: 14px; text-transform: none; letter-spacing: 0; color: #2F3B52; } .pt-ch h3 { font-size: 14px; color: #2F3B52; }
+.pt-cm h3, .pt-pr3 h3 { font-size: 14px; color: #2F3B52; }
+.wr-crit td.n { width: 136px; }

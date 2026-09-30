@@ -252,6 +252,14 @@
               "impeding": {
                 "type": "boolean",
                 "description": "true = ảnh hưởng nghĩa (in đậm trong báo cáo)"
+              },
+              "severity": {
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ],
+                "description": "Mức độ nghiêm trọng của lỗi, quyết định độ đậm nhạt khi tô trong phiếu: high = in đậm (cản trở nghĩa), medium = tô thường, low = tô nhạt (lỗi nhỏ). Bỏ trống thì lấy theo impeding (true = high, false = medium)."
               }
             }
           },

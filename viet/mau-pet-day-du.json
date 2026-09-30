@@ -58,7 +58,8 @@
           "original": "I am agree",
           "corrected": "I agree",
           "explanation": "\"Agree\" là động từ thường, không đi với \"am\".",
-          "impeding": false
+          "impeding": false,
+          "severity": "high"
         },
         {
           "group": "grammar",
@@ -86,7 +87,8 @@
           "original": "Write me soon",
           "corrected": "Write to me soon",
           "explanation": "Sau \"write\" cần \"to\" khi có người nhận.",
-          "impeding": false
+          "impeding": false,
+          "severity": "low"
         }
       ],
       "short_comment": "Bài trả lời đủ ý, giọng thân mật. Em cần chú ý chia động từ và cách dùng \"I/me\".",
@@ -160,7 +162,8 @@
           "original": "nobody live",
           "corrected": "nobody had lived",
           "explanation": "Nói về việc xảy ra trước một mốc quá khứ nên dùng quá khứ hoàn thành.",
-          "impeding": false
+          "impeding": false,
+          "severity": "high"
         },
         {
           "group": "grammar",
@@ -188,7 +191,8 @@
           "original": "hanged it",
           "corrected": "hung it",
           "explanation": "\"Hang\" (treo tranh) có quá khứ là \"hung\"; \"hanged\" chỉ dùng cho hành hình.",
-          "impeding": false
+          "impeding": false,
+          "severity": "low"
         }
       ],
       "short_comment": "Câu chuyện có mở đầu, diễn biến, kết thúc rõ. Em cần luyện thêm quá khứ đơn và động từ bất quy tắc.",

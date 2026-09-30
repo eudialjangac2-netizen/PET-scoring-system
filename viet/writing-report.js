@@ -13,6 +13,7 @@
     content: { ten: 'Nội dung', mau: '#FCEEB0' }, style: { ten: 'Văn phong', mau: '#F8D9E4' },
     organisation: { ten: 'Bố cục', mau: '#CFEEFB' }, grammar: { ten: 'Ngữ pháp', mau: '#FAD9D3' }, vocabulary: { ten: 'Từ vựng', mau: '#E6DCF5' }
   };
+  var GENRE_EN = { short_message: 'Short Message', email: 'Email', letter_email: 'Letter / Email', essay: 'Essay', article: 'Article', story: 'Story', review: 'Review', other: 'Writing' };
   var CRIT = {
     content: ['Nội dung', 'Content'], communicative_achievement: ['Giao tiếp', 'Communicative Achievement'],
     organisation: ['Bố cục', 'Organisation'], language: ['Ngôn ngữ', 'Language']
@@ -41,13 +42,13 @@
       if (i < 0) return;
       var end = i + e.original.length;
       if (ranges.some(function (r) { return i < r.e && end > r.s; })) return;
-      ranges.push({ s: i, e: end, g: e.group, imp: !!e.impeding });
+      ranges.push({ s: i, e: end, g: e.group, sev: e.severity || (e.impeding ? 'high' : 'medium') });
     });
     ranges.sort(function (a, b) { return a.s - b.s; });
     var out = '', pos = 0;
     ranges.forEach(function (r) {
       out += esc(text.slice(pos, r.s));
-      out += '<mark class="' + (r.imp ? 'imp' : '') + '" style="background:' + (GROUP[r.g] || GROUP.grammar).mau + '">' + esc(text.slice(r.s, r.e)) + '</mark>';
+      out += '<mark class="' + (r.sev === 'high' ? 'imp' : r.sev === 'low' ? 'low' : '') + '" style="background:' + (GROUP[r.g] || GROUP.grammar).mau + '">' + esc(text.slice(r.s, r.e)) + '</mark>';
       pos = r.e;
     });
     return out + esc(text.slice(pos));
@@ -74,7 +75,8 @@
   function partPage(d, idx, opt) {
     opt = opt || {}; var mau = opt.mau || '#019EA5', dark = opt.dark || mau, soft = opt.soft || (mau + '1f'), p = d.parts[idx], s = d.student || {};
     var used = {}; (p.errors || []).forEach(function (e) { used[e.group] = 1; });
-    var errs = (p.errors || []).slice().sort(function (a, b) { return (b.impeding ? 1 : 0) - (a.impeding ? 1 : 0); });
+    var rk = function (e) { return (e.severity || (e.impeding ? 'high' : 'medium')) === 'high' ? 2 : (e.severity === 'low' ? 0 : 1); };
+    var errs = (p.errors || []).slice().sort(function (a, b) { return rk(b) - rk(a); });
     var maxE = opt.maxErrors || 6, more = errs.length - maxE; errs = errs.slice(0, maxE);
     var cr = p.criteria || [];
     var st = (p.strengths && p.strengths.length) ? p.strengths : cr.filter(function (c) { return c.band >= c.max - 1 && c.comment; }).map(function (c) { return c.comment; });
@@ -82,27 +84,27 @@
     var ck = (p.checklist && p.checklist.length) ? p.checklist : (p.next_steps || []);
     var li = function (a) { return a.slice(0, 4).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join(''); };
     var h = '<div class="wr-page" style="border-top:8px solid ' + mau + '">';
-    h += '<div class="wr-head soft" style="background:' + soft + '"><div><small style="color:' + dark + '">RUBY SCHOOL · CAMBRIDGE ' + esc(opt.tenCapDo || d.level) + ' · WRITING</small><h1>Part ' + esc(p.part) + ' · ' + esc(GENRE[p.genre] || 'Bài viết') + '</h1></div>'
-      + '<div class="tot" style="color:' + dark + '"><b>' + esc(p.raw) + '/' + esc(p.raw_max) + '</b><span>điểm Part này</span></div></div>';
-    h += '<div class="wr-who"><span>Học sinh: <b>' + esc(s.name) + '</b></span><span>Mã: <b>' + esc(s.id) + '</b></span><span>Lớp: <b>' + esc(s.class) + '</b></span></div>';
+    h += '<div class="wr-head soft" style="background:' + soft + '"><div><small style="color:' + dark + '">RUBY SCHOOL · CAMBRIDGE ' + esc(opt.tenCapDo || d.level) + '</small><h1>Writing Part ' + esc(p.part) + ' · ' + esc(GENRE_EN[p.genre] || 'Writing') + '</h1></div>'
+      + '<div class="tot" style="color:' + dark + '"><b>' + esc(p.raw) + '/' + esc(p.raw_max) + '</b><span>marks for this Part</span></div></div>';
+    h += '<div class="wr-who"><span>Student: <b>' + esc(s.name) + '</b></span><span>ID: <b>' + esc(s.id) + '</b></span><span>Class: <b>' + esc(s.class) + '</b></span></div>';
     h += '<div class="wr-body">';
-    if (p.task) h += '<div class="wr-sec"><h3>Đề bài</h3><div class="wr-task">' + esc(p.task) + '</div></div>';
-    h += '<div class="wr-sec"><h3>Bài làm của em <span>' + (p.word_count ? esc(p.word_count) + ' từ' : '') + '</span></h3>'
+    if (p.task) h += '<div class="wr-sec"><h3>Task</h3><div class="wr-task">' + esc(p.task) + '</div></div>';
+    h += '<div class="wr-sec"><h3>Student\'s Response <span>' + (p.word_count ? esc(p.word_count) + ' words' : '') + '</span></h3>'
       + '<div class="wr-text">' + highlight(p.text || '', p.errors) + '</div>'
       + '<div class="wr-leg">' + Object.keys(used).map(function (g) { return '<span style="background:' + (GROUP[g] || GROUP.grammar).mau + '">' + esc((GROUP[g] || GROUP.grammar).ten) + '</span>'; }).join('')
-      + '<span style="color:#5B6576">Chữ in đậm: lỗi làm người đọc khó hiểu</span></div></div>';
-    h += '<div class="wr-sec"><h3>Rubric: điểm từng tiêu chí <span>thang 5</span></h3><table class="wr-crit">' + cr.map(function (c) {
+      + '<span style="color:#5B6576">Bold = errors that make the text hard to understand; faded = minor</span></div></div>';
+    h += '<div class="wr-sec"><h3>Rubric Scores <span>0-5 per criterion</span></h3><table class="wr-crit">' + cr.map(function (c) {
       var nm = critName(c.id);
-      return '<tr><td class="n">' + esc(nm[0]) + '<small>' + esc(nm[1]) + '</small><div style="margin-top:3px">' + dots(c.band, c.max, dark) + esc(c.band) + '/' + esc(c.max) + '</div></td><td>' + esc(c.comment)
-        + (c.to_move_up ? '<div class="up"><b>Để lên band cao hơn:</b> ' + esc(c.to_move_up) + '</div>' : '') + '</td></tr>';
+      return '<tr><td class="n">' + esc(nm[1]) + '<small>' + esc(nm[0]) + '</small><div style="margin-top:3px">' + dots(c.band, c.max, dark) + esc(c.band) + '/' + esc(c.max) + '</div></td><td>' + esc(c.comment)
+        + (c.to_move_up ? '<div class="up"><b>To move up:</b> ' + esc(c.to_move_up) + '</div>' : '') + '</td></tr>';
     }).join('') + '</table></div>';
-    h += '<div class="wr-two"><div class="wr-si good"><h3>Strength</h3><ul>' + li(st) + '</ul></div><div class="wr-si issue"><h3>Issue cần khắc phục</h3><ul>' + li(is) + '</ul></div></div>';
-    if (errs.length) h += '<div class="wr-sec"><h3>Lỗi cần sửa</h3><ul class="wr-err">' + errs.map(function (e) {
+    h += '<div class="wr-two"><div class="wr-si good"><h3>Strengths</h3><ul>' + li(st) + '</ul></div><div class="wr-si issue"><h3>Issues to Fix</h3><ul>' + li(is) + '</ul></div></div>';
+    if (errs.length) h += '<div class="wr-sec"><h3>Corrections</h3><ul class="wr-err">' + errs.map(function (e) {
       var g = GROUP[e.group] || GROUP.grammar;
-      return '<li><span class="g" style="background:' + g.mau + '">' + esc(g.ten) + '</span><span class="o">' + esc(e.original) + '</span> nên là <span class="k">' + esc(e.corrected) + '</span>. ' + esc(e.explanation) + '</li>';
-    }).join('') + (more > 0 ? '<li style="color:#5B6576">Và ' + more + ' lỗi nhỏ khác (xem bản chấm chi tiết của giáo viên).</li>' : '') + '</ul></div>';
-    if (ck.length) h += '<div class="wr-sec"><h3>Checklist trước khi nộp bài lần sau</h3><ul class="wr-ck">' + ck.slice(0, 5).map(function (x) { return '<li><i style="border-color:' + dark + '"></i>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
-    h += '</div><div class="wr-foot"><span>Điểm mỗi tiêu chí thang 0-5 theo rubric Cambridge. Trang ' + (opt.trang || '') + '/4</span><span>Ruby School</span></div></div>';
+      return '<li><span class="g" style="background:' + g.mau + '">' + esc(g.ten) + '</span><span class="o' + (rk(e) === 2 ? ' hi' : rk(e) === 0 ? ' lo' : '') + '">' + esc(e.original) + '</span> &rarr; <span class="k">' + esc(e.corrected) + '</span>. ' + esc(e.explanation) + '</li>';
+    }).join('') + (more > 0 ? '<li style="color:#5B6576">and ' + more + ' more minor errors (see the teacher\'s marked copy).</li>' : '') + '</ul></div>';
+    if (ck.length) h += '<div class="wr-sec"><h3>Self-check Checklist <span>before submitting next time</span></h3><ul class="wr-ck">' + ck.slice(0, 5).map(function (x) { return '<li><i style="border-color:' + dark + '"></i>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
+    h += '</div><div class="wr-foot"><span>Each criterion is scored 0-5 using the Cambridge rubric. Page ' + (opt.trang || '') + '/4</span><span>Ruby School</span></div></div>';
     return h;
   }
   // Thu gọn dần cho vừa 1 trang A4: (1) chữ nhỏ hơn, (2) bớt lỗi/checklist, (3) thu nhỏ nội dung. Gọi sau khi gắn trang vào DOM.
@@ -111,7 +113,7 @@
     var over = function () { return body.scrollHeight > body.clientHeight + 1; };
     var scale = function () {
       var r = Math.max(0.8, body.clientHeight / body.scrollHeight);
-      body.style.transformOrigin = 'top left'; body.style.transform = 'scale(' + r + ')'; body.style.width = (100 / r) + '%'; return r;
+      body.style.overflow = 'visible'; body.style.transformOrigin = 'top left'; body.style.transform = 'scale(' + r + ')'; body.style.width = (100 / r) + '%'; return r;
     };
     if (over()) pageEl.classList.add('c1');
     if (over() && body.clientHeight / body.scrollHeight >= 0.9) return scale();

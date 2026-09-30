@@ -64,7 +64,8 @@
           "original": "I go there by bus",
           "corrected": "I will go there by bus",
           "explanation": "Kế hoạch trong tương lai dùng \"will + động từ\".",
-          "impeding": false
+          "impeding": false,
+          "severity": "low"
         }
       ],
       "short_comment": "Bài trả lời đủ ý, bố cục rõ. Em cần chú ý chia động từ và dùng thì tương lai khi nói về kế hoạch.",
@@ -134,7 +135,8 @@
           "original": "buyed",
           "corrected": "bought",
           "explanation": "\"Buy\" là động từ bất quy tắc, quá khứ là \"bought\", không thêm -ed.",
-          "impeding": false
+          "impeding": false,
+          "severity": "high"
         }
       ],
       "short_comment": "Kể đủ cả 3 tranh, có kết thúc rõ. Em cần học thêm quá khứ của động từ bất quy tắc và từ chỉ trình tự.",
