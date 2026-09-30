@@ -58,12 +58,17 @@
     GRADES[m.level].forEach(function (x) { if (x[0] > lo && x[0] < hi) s += '<line x1="' + L + '" x2="' + Rx + '" y1="' + Y(x[0]) + '" y2="' + Y(x[0]) + '" stroke="#9aa3b1" stroke-opacity=".55" stroke-dasharray="3 3"/>' + (skip != null && Math.abs(x[0] - skip) <= 4 ? '' : '<text x="' + (labelX + 4) + '" y="' + (Y(x[0]) + 3) + '" text-anchor="start" font-size="8.5" fill="#7a8494">Grade ' + x[1] + '</text>'); });
     return s;
   }
-  function barChart(m) {
-    var W = 318, H = 236, L = 30, R = 44, T = 14, B = 52, r = ranges(m), lo = r.lo, hi = r.hi, n = m.skills.length, T0 = THEME[m.level], OVC = T0.d;
-    var Y = function (v) { return T + (hi - v) * (H - T - B) / (hi - lo); }, cw = (W - L - R) / n, bw = Math.min(38, cw * .56);
+  // Một biểu đồ, một trục điểm: bên trái cột điểm từng kỹ năng của Mock này + đường ngang Overall;
+  // bên phải đường Overall qua các Mock (mỗi chấm ghi tên Mock và điểm). Đường Grade chạy xuyên cả hai bên.
+  function combinedChart(m) {
+    var W = 500, H = 232, L = 28, BX = 246, DX = 256, PL = 272, PR = 452, T = 30, B = 50, r = ranges(m), lo = r.lo, hi = r.hi, n = m.skills.length, T0 = THEME[m.level], OVC = T0.d;
+    var Y = function (v) { return T + (hi - v) * (H - T - B) / (hi - lo); }, cw = (BX - L) / n, bw = Math.min(36, cw * .56);
+    var halo = ' paint-order="stroke" stroke="#fff" stroke-width="3" stroke-linejoin="round"';
     var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
+    s += '<text x="' + L + '" y="12" font-size="10.5" font-weight="600" fill="#5B6576">This mock: score by skill</text><text x="' + PL + '" y="12" font-size="10.5" font-weight="600" fill="#5B6576">Overall across mocks</text>';
     for (var v = lo; v <= hi; v += 10) s += '<text x="' + (L - 5) + '" y="' + (Y(v) + 3) + '" text-anchor="end" font-size="9" fill="#9aa3b1">' + v + '</text>';
-    s += gridLines(m, L, W - R, Y, lo, hi, W - R, m.overall.scale);
+    s += gridLines(m, L, W - 40, Y, lo, hi, W - 40, null);
+    s += '<line x1="' + DX + '" x2="' + DX + '" y1="' + (T - 6) + '" y2="' + Y(lo) + '" stroke="#E3E7ED"/>';
     m.skills.forEach(function (sk, i) {
       var cx = L + cw * i + cw / 2, ink = T0.skill[sk.id].ink, y = sk.scale == null ? Y(lo) : Y(sk.scale);
       if (sk.scale != null) s += '<path d="M' + (cx - bw / 2) + ',' + Y(lo) + ' V' + (y + 4) + ' a4,4 0 0 1 4,-4 h' + (bw - 8) + ' a4,4 0 0 1 4,4 V' + Y(lo) + ' Z" fill="' + ink + '" fill-opacity=".38" stroke="' + ink + '" stroke-width="1.3" stroke-opacity=".9"/>';
@@ -71,26 +76,29 @@
       words.forEach(function (w, k) { s += '<text x="' + cx + '" y="' + (Y(lo) + 13 + k * 10) + '" text-anchor="middle" font-size="9.5" fill="#3a4457">' + esc(w) + '</text>'; });
       s += '<text x="' + cx + '" y="' + (Y(lo) + 14 + words.length * 10 + 2) + '" text-anchor="middle" font-size="12" font-weight="700" fill="#172033">' + (sk.scale == null ? 'n/a' : sk.scale) + '</text>';
     });
-    if (m.overall.scale == null) return s + '</svg>';
-    var yo = Y(m.overall.scale);
-    s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yo + '" y2="' + yo + '" stroke="' + OVC + '" stroke-width="2.4"/><text x="' + (W - R + 4) + '" y="' + (yo + 3) + '" font-size="9.5" font-weight="700" fill="' + OVC + '">Overall</text>';
+    if (m.overall.scale != null) {
+      var yo = Y(m.overall.scale);
+      s += '<line x1="' + L + '" x2="' + BX + '" y1="' + yo + '" y2="' + yo + '" stroke="' + OVC + '" stroke-width="2.4"/><text x="' + BX + '" y="' + (yo - 5) + '" text-anchor="end" font-size="9.5" font-weight="700" fill="' + OVC + '"' + halo + '>Overall ' + m.overall.scale + '</text>';
+    }
+    var hist = m.history.filter(function (h) { return h.overall != null; }), k = Math.max(hist.length, 2);
+    var X = function (i) { return hist.length === 1 ? (PL + PR) / 2 : PL + 10 + i * (PR - PL - 20) / (k - 1); };
+    if (hist.length > 1) s += '<polyline points="' + hist.map(function (h, i) { return X(i) + ',' + Y(h.overall); }).join(' ') + '" fill="none" stroke="' + OVC + '" stroke-width="2.4" stroke-linejoin="round"/>';
+    hist.forEach(function (h, i) {
+      var cur = i === hist.length - 1, x = X(i), y = Y(h.overall), up = y - 10 > T + 10;
+      s += '<circle cx="' + x + '" cy="' + y + '" r="' + (cur ? 5.2 : 3.8) + '" fill="' + (cur ? OVC : '#fff') + '" stroke="' + OVC + '" stroke-width="2"/>';
+      s += '<text x="' + x + '" y="' + (y - (up ? 20 : -16)) + '" text-anchor="middle" font-size="8.5" fill="#5B6576"' + halo + '>' + esc(h.label) + '</text>';
+      s += '<text x="' + x + '" y="' + (y - (up ? 9 : -27)) + '" text-anchor="middle" font-size="11" font-weight="700" fill="' + OVC + '"' + halo + '>' + h.overall + '</text>';
+    });
+    if (hist.length <= 1) s += '<text x="' + ((PL + PR) / 2) + '" y="' + (Y(lo) - 10) + '" text-anchor="middle" font-size="9" fill="#7a8494">Baseline: the line starts from Mock 2</text>';
     return s + '</svg>';
   }
-  function lineChart(m) {
-    var OVC = THEME[m.level].d, W = 196, H = 236, L = 14, R = 40, T = 14, B = 52, r = ranges(m), lo = r.lo, hi = r.hi, n = Math.max(m.history.length, 2);
-    var Y = function (v) { return T + (hi - v) * (H - T - B) / (hi - lo); }, X = function (i) { return m.history.length === 1 ? (L + (W - L - R) / 2) : L + i * (W - L - R) / (n - 1); };
-    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">' + gridLines(m, L, W - R, Y, lo, hi, W - R);
-    var hist = m.history.filter(function (h) { return h.overall != null; }), pts = hist.map(function (h, i) { return X(i) + ',' + Y(h.overall); });
-    if (hist.length > 1) s += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + OVC + '" stroke-width="2.4" stroke-linejoin="round"/>';
-    hist.forEach(function (h, i) {
-      var cur = i === hist.length - 1;
-      s += '<circle cx="' + X(i) + '" cy="' + Y(h.overall) + '" r="' + (cur ? 5 : 3.6) + '" fill="' + (cur ? OVC : '#fff') + '" stroke="' + OVC + '" stroke-width="2"/>';
-      s += '<text x="' + (X(i) + (cur ? 6 : 0)) + '" y="' + (Y(h.overall) - 9) + '" text-anchor="' + (cur ? 'end' : 'middle') + '" font-size="10" font-weight="700" fill="' + OVC + '">' + h.overall + '</text>';
-      s += '<text x="' + X(i) + '" y="' + (Y(lo) + 13) + '" text-anchor="middle" font-size="9.5" fill="#3a4457">' + esc(h.label.replace('Mock ', '')) + '</text>';
-    });
-    s += '<text x="' + ((L + W - R) / 2) + '" y="' + (Y(lo) + 27) + '" text-anchor="middle" font-size="9" fill="#7a8494">Mock test</text>';
-    if (m.history.length === 1) s += '<text x="' + ((L + W - R) / 2) + '" y="' + (Y(lo) - 34) + '" text-anchor="middle" font-size="9" fill="#7a8494">Progress line starts</text><text x="' + ((L + W - R) / 2) + '" y="' + (Y(lo) - 23) + '" text-anchor="middle" font-size="9" fill="#7a8494">from Mock 2</text>';
-    return s + '</svg>';
+  function trendNote(m) {
+    var h = m.history.filter(function (x) { return x.overall != null; });
+    if (h.length < 2) return '<div class="pt-sum">This is your Baseline. Every later mock will be compared with it.<small class="vi">Đây là mốc xuất phát. Các Mock sau sẽ được so với mốc này.</small></div>';
+    var d = h[h.length - 1].overall - h[0].overall, a = Math.abs(d), pt = a === 1 ? 'point' : 'points';
+    var en = d > 0 ? 'Overall rose ' + a + ' Scale ' + pt + ' across ' + h.length + ' mocks.' : d < 0 ? 'Overall is ' + a + ' Scale ' + pt + ' lower than Mock 1.' : 'Overall is the same as Mock 1.';
+    var vi = d > 0 ? 'Overall tăng ' + a + ' điểm Scale sau ' + h.length + ' Mock.' : d < 0 ? 'Overall thấp hơn Mock 1 là ' + a + ' điểm Scale.' : 'Overall bằng Mock 1.';
+    return '<div class="pt-sum">' + en + '<small class="vi">' + vi + '</small></div>';
   }
 
   function skillCard(m, sk) {
@@ -118,7 +126,7 @@
       + '<div class="pt-r1"><div class="pt-ov"><small>OVERALL</small><div class="pt-ovn"><b>' + (has ? o.scale : '&mdash;') + '</b><span>Scale</span></div><div class="pt-ovg">' + (!has ? 'Waiting for scores' : (g ? 'Grade ' + g : 'Below Grade C')) + '</div>'
       + (m.first ? '<span class="pt-d n">' + (o.partial ? 'Provisional' : 'Baseline') + '</span>' : delta(o.d, ' vs previous mock'))
       + '<div class="pt-ovt">' + esc(ovt) + '</div></div>'
-      + '<div class="pt-ch"><h3>' + ttl('Skills & Progress', 'Kỹ năng và tiến bộ') + '<span>Cambridge English Scale</span></h3><div class="pt-cc"><div><div class="pt-ct">This mock: score by skill</div>' + barChart(m) + '</div><div><div class="pt-ct">Overall across mocks</div>' + lineChart(m) + '</div></div></div></div>'
+      + '<div class="pt-ch"><h3>' + ttl('Skills & Progress', 'Kỹ năng và tiến bộ') + '<span>Cambridge English Scale</span></h3><div class="pt-cc">' + combinedChart(m) + '</div>' + trendNote(m) + '</div></div>'
       + '<div class="pt-skills">' + m.skills.map(function (s) { return skillCard(m, s); }).join('') + '</div>'
       + '<div class="pt-r3"><div class="pt-cm"><h3>' + ttl('Teacher\'s Overall Comment', 'Nhận xét tổng thể của giáo viên') + '</h3><p>' + esc(m.comment) + '</p></div>'
       + '<div class="pt-pr3"><h3>' + ttl('Top 3 Priorities', '3 ưu tiên tiếp theo') + '</h3><ol>' + m.priorities.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol></div></div>'
