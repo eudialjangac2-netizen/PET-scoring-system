@@ -64,3 +64,10 @@ Schema tự kiểm tra: KET không được có `communicative_achievement` và 
 
 1. Bài mẫu KET band 0-1 để hoàn thiện calibration (bảng quy đổi Scale đã có).
 2. Cách app đọc JSON ở bước 4 "Câu viết": Elaine đã chọn hai cách, cần người code app (`cham-bai.*`) thực hiện: (a) một khung để dán JSON vào, app kiểm tra ngay JSON có đúng form (`schema-writing.json`) không và báo lỗi cụ thể; (b) hoặc tải file .json lên, kiểm tra cùng cách. Cả hai cách dùng chung một hàm kiểm tra. Cần thống nhất trước khi sửa `cham-bai.js`.
+
+## Công cụ kiểm tra JSON (đã làm xong)
+
+- `viet/kiem-tra-json.html`: trang có khung dán JSON, nút tải file .json lên và 3 nút xem thử mẫu. Báo lỗi đúng form bằng tiếng Việt, và cảnh báo khi số liệu không khớp (raw khác tổng band, sai quy đổi KET Scale).
+- `viet/kiem-tra-json.js`: hàm kiểm tra dùng chung, để gắn vào bước 4 "Câu viết" của app: `WritingJsonCheck.taoBoKiemTra(schema, Ajv2020).kiemTra(chuoiJson)` trả về `{ ok, loi, canhBao, tomTat, data }`.
+- `viet/ajv2020.bundle.js`: thư viện Ajv (JSON Schema 2020-12) đóng gói sẵn, không cần internet.
+- Mở trang qua địa chỉ web của app (ví dụ `/viet/kiem-tra-json.html`), không mở trực tiếp file từ máy vì trang cần đọc `schema-writing.json`.

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kiểm tra JSON Writing</title>
+<style>
+  :root { --bg:#f7f8f8; --card:#fff; --text:#1f2933; --muted:#5f6b76; --line:#d9dee3;
+          --accent:#019EA5; --accent-soft:#E6F5F5; --ok:#1c7a3d; --ok-bg:#e8f5ec;
+          --err:#b3261e; --err-bg:#fdecea; --warn:#8a5a00; --warn-bg:#fff4dc; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#14181b; --card:#1d2226; --text:#e6eaee; --muted:#9aa5af; --line:#33393f;
+            --accent:#2bc0c7; --accent-soft:#12302f; --ok:#6fd08c; --ok-bg:#15301f;
+            --err:#ff8a80; --err-bg:#3a1f1d; --warn:#f2c46b; --warn-bg:#3a2f14; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width:880px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:22px; margin:0 0 4px; color:var(--accent); }
+  p.sub { margin:0 0 18px; color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+  textarea { width:100%; min-height:260px; resize:vertical; padding:10px; border:1px solid var(--line);
+             border-radius:8px; background:var(--bg); color:var(--text);
+             font:13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  textarea:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; align-items:center; }
+  button, label.btn { font:inherit; padding:9px 16px; border-radius:8px; border:1px solid var(--line);
+             background:var(--card); color:var(--text); cursor:pointer; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  button:hover, label.btn:hover { filter:brightness(0.96); }
+  .spacer { flex:1; }
+  .hint { color:var(--muted); font-size:13px; }
+  .res { border-radius:8px; padding:12px 14px; margin-top:4px; }
+  .res.ok { background:var(--ok-bg); color:var(--ok); }
+  .res.bad { background:var(--err-bg); color:var(--err); }
+  .res h2 { font-size:16px; margin:0 0 6px; }
+  .res ul { margin:6px 0 0; padding-left:20px; }
+  .warn { background:var(--warn-bg); color:var(--warn); border-radius:8px; padding:12px 14px; margin-top:10px; }
+  .warn h3 { font-size:14px; margin:0 0 4px; }
+  table.sum { border-collapse:collapse; margin-top:10px; width:100%; }
+  table.sum td { padding:6px 8px; border-top:1px solid var(--line); }
+  table.sum td:first-child { color:var(--muted); width:38%; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Kiểm tra JSON Writing</h1>
+  <p class="sub">Dán JSON do skill chấm Writing (KET, PET, FCE) xuất ra, hoặc tải file .json lên. Trang sẽ kiểm tra đúng form theo <code>schema-writing.json</code>.</p>
+
+  <div class="card">
+    <textarea id="o" placeholder='Dán JSON vào đây, bắt đầu bằng { ...' spellcheck="false"></textarea>
+    <div class="row">
+      <button class="primary" id="btnCheck">Kiểm tra</button>
+      <label class="btn" for="file">Tải file .json lên</label>
+      <input type="file" id="file" accept=".json,application/json" hidden>
+      <button id="btnClear">Xóa</button>
+      <span class="spacer"></span>
+      <span class="hint">Xem thử:</span>
+      <button data-mau="mau-ket-part6.json">Mẫu KET</button>
+      <button data-mau="mau-pet-part1.json">Mẫu PET</button>
+      <button data-mau="mau-fce-part1.json">Mẫu FCE</button>
+    </div>
+  </div>
+
+  <div id="kq" aria-live="polite"></div>
+</main>
+
+<script src="ajv2020.bundle.js"></script>
+<script src="kiem-tra-json.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var bo = null, loiTai = '';
+
+  fetch('schema-writing.json')
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function (s) { bo = WritingJsonCheck.taoBoKiemTra(s, window.Ajv2020); })
+    .catch(function (e) {
+      loiTai = 'Không tải được schema-writing.json (' + e.message + '). Hãy mở trang này qua địa chỉ web của app (không mở trực tiếp file từ máy).';
+      hienLoiHeThong();
+    });
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  function hienLoiHeThong() {
+    $('kq').innerHTML = '<div class="card"><div class="res bad"><h2>Lỗi hệ thống</h2>' + esc(loiTai) + '</div></div>';
+  }
+
+  function hienKetQua(kq) {
+    var h = '<div class="card">';
+    if (kq.ok) {
+      h += '<div class="res ok"><h2>JSON đúng form</h2>Có thể dùng file này trong app.</div>';
+    } else {
+      h += '<div class="res bad"><h2>JSON chưa đúng form (' + kq.loi.length + ' lỗi)</h2><ul>' +
+        kq.loi.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>';
+    }
+    if (kq.canhBao.length) {
+      h += '<div class="warn"><h3>Cảnh báo về số liệu (' + kq.canhBao.length + ')</h3><ul>' +
+        kq.canhBao.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>';
+    }
+    var t = kq.tomTat;
+    if (kq.ok && t) {
+      var diem = t.raw != null ? t.raw + (t.rawMax != null ? ' / ' + t.rawMax : '') : '-';
+      var scale = t.scale != null ? t.scale + (t.uocLuong ? ' (ước lượng)' : '') : 'chưa có';
+      h += '<table class="sum">' +
+        '<tr><td>Học sinh</td><td>' + esc(t.hocSinh || '-') + '</td></tr>' +
+        '<tr><td>Lớp</td><td>' + esc(t.lop || '-') + '</td></tr>' +
+        '<tr><td>Bài thi (test.id)</td><td>' + esc(t.baiThi || '-') + '</td></tr>' +
+        '<tr><td>Cấp độ</td><td>' + esc(t.level) + '</td></tr>' +
+        '<tr><td>Số Part</td><td>' + t.soPart + '</td></tr>' +
+        '<tr><td>Điểm thô</td><td>' + esc(diem) + '</td></tr>' +
+        '<tr><td>Cambridge Scale</td><td>' + esc(scale) + '</td></tr></table>';
+    }
+    h += '</div>';
+    $('kq').innerHTML = h;
+  }
+
+  function kiemTra() {
+    if (!bo) { if (loiTai) hienLoiHeThong(); return; }
+    hienKetQua(bo.kiemTra($('o').value));
+  }
+
+  $('btnCheck').onclick = kiemTra;
+  $('btnClear').onclick = function () { $('o').value = ''; $('kq').innerHTML = ''; $('file').value = ''; };
+
+  $('file').onchange = function () {
+    var f = this.files[0]; if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function () { $('o').value = rd.result; kiemTra(); };
+    rd.readAsText(f, 'utf-8');
+  };
+
+  Array.prototype.forEach.call(document.querySelectorAll('button[data-mau]'), function (b) {
+    b.onclick = function () {
+      fetch(b.getAttribute('data-mau')).then(function (r) { return r.text(); })
+        .then(function (t) { $('o').value = t; kiemTra(); });
+    };
+  });
+})();
+</script>
+</body>
+</html>
