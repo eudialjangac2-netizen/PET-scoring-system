@@ -1,0 +1,387 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Kết quả chấm Writing KET-PET-FCE (Ruby School)",
+  "description": "Một file = một học sinh, một bài test. Phiên bản 1.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "student",
+    "test",
+    "level",
+    "parts",
+    "total",
+    "rubric_source"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "level": {
+      "enum": [
+        "KET",
+        "PET",
+        "FCE"
+      ]
+    },
+    "student": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "class"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Mã học sinh, trùng với STUDENT ID trong tab DANH SÁCH, ví dụ 61036TT"
+        },
+        "name": {
+          "type": "string"
+        },
+        "class": {
+          "type": "string",
+          "description": "Lớp hành chính, giữ nguyên dấu /, ví dụ 6/1"
+        }
+      }
+    },
+    "test": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Trùng với id trong de-thi/manifest.json, ví dụ fce-test1"
+        },
+        "label": {
+          "type": "string",
+          "description": "Tên hiển thị, ví dụ Test 01"
+        }
+      }
+    },
+    "graded_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "parts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/part"
+      }
+    },
+    "total": {
+      "type": "object",
+      "required": [
+        "raw",
+        "raw_max"
+      ],
+      "properties": {
+        "raw": {
+          "type": "number",
+          "description": "Tổng điểm thô các Part đã chấm"
+        },
+        "raw_max": {
+          "type": "number"
+        },
+        "cambridge_scale": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Điểm Cambridge English Scale. FCE: thang 190, PET: thang 170, KET Writing: thang 150. Null nếu chưa đủ dữ liệu."
+        },
+        "avg_band": {
+          "type": "number"
+        },
+        "grade": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Xếp loại theo skill PET: Grade A, Grade B, Grade C, Level A2, Below Scale. Null nếu không áp dụng."
+        },
+        "is_estimate": {
+          "type": "boolean",
+          "description": "true khi chỉ chấm 1 Part và điểm Scale, Grade là ước lượng bằng cách nhân đôi điểm thô (cách của skill PET)."
+        }
+      },
+      "description": "Chấm đủ Part 1 và 2: raw tối đa 40 (FCE, PET). KET tính từng Part /15."
+    },
+    "overall_next_steps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "report_url": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Link báo cáo Word/Google Docs nếu có"
+    },
+    "rubric_source": {
+      "enum": [
+        "fce-writing-grader",
+        "pet-writing-grader",
+        "ket-writing-grader"
+      ],
+      "description": "Nguồn rubric dùng để chấm: skill tương ứng với cấp độ."
+    }
+  },
+  "$defs": {
+    "part": {
+      "type": "object",
+      "required": [
+        "part",
+        "genre",
+        "task",
+        "text",
+        "criteria",
+        "raw",
+        "raw_max"
+      ],
+      "properties": {
+        "part": {
+          "type": "integer"
+        },
+        "genre": {
+          "enum": [
+            "short_message",
+            "email",
+            "letter_email",
+            "essay",
+            "article",
+            "story",
+            "review",
+            "other"
+          ],
+          "description": "KET: short_message, email, story. PET: email (Part 1), article hoặc story (Part 2). FCE: essay (Part 1); article, story, review, letter_email (Part 2)"
+        },
+        "task": {
+          "type": "string",
+          "description": "Đề bài gốc"
+        },
+        "text": {
+          "type": "string",
+          "description": "Bài làm gốc của học sinh"
+        },
+        "word_count": {
+          "type": "integer"
+        },
+        "criteria": {
+          "type": "array",
+          "minItems": 1,
+          "description": "KET: 3 tiêu chí (content, organisation, language), không có communicative_achievement. PET và FCE: đủ 4 tiêu chí. Mỗi tiêu chí band 0-5.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "band",
+              "max",
+              "comment",
+              "key_takeaway"
+            ],
+            "properties": {
+              "id": {
+                "enum": [
+                  "content",
+                  "communicative_achievement",
+                  "organisation",
+                  "language"
+                ]
+              },
+              "band": {
+                "type": "number",
+                "minimum": 0
+              },
+              "max": {
+                "type": "number"
+              },
+              "comment": {
+                "type": "string",
+                "description": "Nhận xét, trích dẫn câu của học sinh để minh chứng"
+              },
+              "to_move_up": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Null nếu đã đạt band tối đa"
+              },
+              "key_takeaway": {
+                "type": "string",
+                "description": "Bài học cốt lõi cho học sinh ở tiêu chí này"
+              }
+            }
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "group",
+              "original",
+              "corrected"
+            ],
+            "properties": {
+              "group": {
+                "enum": [
+                  "content",
+                  "style",
+                  "organisation",
+                  "grammar",
+                  "vocabulary"
+                ]
+              },
+              "original": {
+                "type": "string"
+              },
+              "corrected": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "explanation": {
+                "type": "string"
+              },
+              "impeding": {
+                "type": "boolean",
+                "description": "true = ảnh hưởng nghĩa (in đậm trong báo cáo)"
+              }
+            }
+          },
+          "description": "Danh sách lỗi. Prompt KET, PET, FCE chỉ liệt kê lỗi Language (group = grammar hoặc vocabulary). Báo cáo Word của skill FCE dùng đủ 5 nhóm."
+        },
+        "key_takeaways": {
+          "type": "object",
+          "description": "Mỗi nhóm lỗi một câu tổng kết",
+          "propertyNames": {
+            "enum": [
+              "content",
+              "style",
+              "organisation",
+              "grammar",
+              "vocabulary"
+            ]
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "improved": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "improved_sample",
+                "improved_version",
+                "advanced_suggestions"
+              ],
+              "description": "improved_sample là bài mẫu theo prompt KET, PET, FCE. Hai giá trị còn lại dùng cho báo cáo Word của skill FCE."
+            },
+            "text": {
+              "type": "string"
+            },
+            "word_count": {
+              "type": "integer"
+            }
+          }
+        },
+        "raw": {
+          "type": "number",
+          "description": "Tổng điểm thô của Part (cộng các band)"
+        },
+        "raw_max": {
+          "type": "number"
+        },
+        "avg_band": {
+          "type": "number"
+        },
+        "next_steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "general_feedback": {
+          "type": "string",
+          "description": "Đoạn tổng kết ưu điểm và điểm cần khắc phục"
+        },
+        "original_note": {
+          "type": "string",
+          "description": "Ghi chú nếu bài là ảnh chụp chữ viết tay (ví dụ: đã bỏ qua các từ bị gạch bỏ)"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "level": {
+            "const": "KET"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "parts": {
+            "items": {
+              "properties": {
+                "raw_max": {
+                  "const": 15
+                },
+                "criteria": {
+                  "maxItems": 3,
+                  "items": {
+                    "properties": {
+                      "id": {
+                        "not": {
+                          "const": "communicative_achievement"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "level": {
+            "enum": [
+              "PET",
+              "FCE"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "parts": {
+            "items": {
+              "properties": {
+                "raw_max": {
+                  "const": 20
+                },
+                "criteria": {
+                  "minItems": 4,
+                  "maxItems": 4
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "level": "KET",
+  "student": {
+    "id": "61036TT",
+    "name": "Sunny",
+    "class": "6/1"
+  },
+  "test": {
+    "id": "ket-test1",
+    "label": "KET Test 1"
+  },
+  "graded_at": "2026-09-30",
+  "parts": [
+    {
+      "part": 6,
+      "genre": "email",
+      "task": "(Ví dụ) Write an email to your friend ... Write 25 words or more.",
+      "text": "(Ví dụ) Bài làm nguyên văn của học sinh.",
+      "word_count": 32,
+      "original_note": "Bài chụp chữ viết tay, đã bỏ qua các từ bị gạch bỏ.",
+      "criteria": [
+        {
+          "id": "content",
+          "band": 4,
+          "max": 5,
+          "comment": "Đủ hầu hết ý, thiếu một chi tiết nhỏ.",
+          "to_move_up": "Trả lời đủ cả 3 ý của đề.",
+          "key_takeaway": "Đọc kỹ đề và tick từng ý trước khi nộp."
+        },
+        {
+          "id": "organisation",
+          "band": 4,
+          "max": 5,
+          "comment": "Dùng and, but, because đúng chỗ.",
+          "to_move_up": null,
+          "key_takeaway": "Nối câu bằng and, but, because giúp bài mạch lạc."
+        },
+        {
+          "id": "language",
+          "band": 3,
+          "max": 5,
+          "comment": "Từ vựng quen thuộc, có lỗi nhưng vẫn rõ nghĩa.",
+          "to_move_up": "Sửa lỗi chia động từ.",
+          "key_takeaway": "Nhớ thêm -s cho động từ ngôi thứ 3 số ít."
+        }
+      ],
+      "errors": [
+        {
+          "group": "grammar",
+          "original": "She like music",
+          "corrected": "She likes music",
+          "explanation": "Chủ ngữ she ở thì hiện tại đơn cần động từ thêm -s.",
+          "impeding": false
+        }
+      ],
+      "general_feedback": "(Ví dụ) Bài viết rõ ý, cần chú ý chia động từ.",
+      "improved": {
+        "kind": "improved_version",
+        "text": "(Ví dụ) Bài mẫu đã bổ sung ý còn thiếu.",
+        "word_count": 40
+      },
+      "raw": 11,
+      "raw_max": 15,
+      "avg_band": 3.67
+    }
+  ],
+  "total": {
+    "raw": 11,
+    "raw_max": 15,
+    "cambridge_scale": 130,
+    "avg_band": 3.67,
+    "grade": null,
+    "is_estimate": true
+  },
+  "overall_next_steps": [],
+  "report_url": null,
+  "rubric_source": "ket-writing-grader"
+}
