@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0",
+  "level": "PET",
+  "student": {
+    "id": "61036TT",
+    "name": "Sunny",
+    "class": "6/1"
+  },
+  "test": {
+    "id": "pet-test1",
+    "label": "PET Test 1"
+  },
+  "graded_at": "2026-09-30",
+  "parts": [
+    {
+      "part": 1,
+      "genre": "email",
+      "task": "(Ví dụ) Read the email from your English friend ... Write your email in 100 words or more.",
+      "text": "(Ví dụ) Bài làm nguyên văn.",
+      "word_count": 110,
+      "criteria": [
+        {
+          "id": "content",
+          "band": 4,
+          "max": 5,
+          "comment": "(Ví dụ) Nhận xét có trích dẫn.",
+          "to_move_up": "(Ví dụ) Việc cần làm để lên band.",
+          "key_takeaway": "(Ví dụ) Điều cần ghi nhớ."
+        },
+        {
+          "id": "communicative_achievement",
+          "band": 4,
+          "max": 5,
+          "comment": "(Ví dụ) Nhận xét có trích dẫn.",
+          "to_move_up": "(Ví dụ) Việc cần làm để lên band.",
+          "key_takeaway": "(Ví dụ) Điều cần ghi nhớ."
+        },
+        {
+          "id": "organisation",
+          "band": 3,
+          "max": 5,
+          "comment": "(Ví dụ) Nhận xét có trích dẫn.",
+          "to_move_up": "(Ví dụ) Việc cần làm để lên band.",
+          "key_takeaway": "(Ví dụ) Điều cần ghi nhớ."
+        },
+        {
+          "id": "language",
+          "band": 3,
+          "max": 5,
+          "comment": "(Ví dụ) Nhận xét có trích dẫn.",
+          "to_move_up": "(Ví dụ) Việc cần làm để lên band.",
+          "key_takeaway": "(Ví dụ) Điều cần ghi nhớ."
+        }
+      ],
+      "errors": [
+        {
+          "group": "grammar",
+          "original": "I am agree",
+          "corrected": "I agree",
+          "explanation": "Agree là động từ thường, không đi với am.",
+          "impeding": false
+        }
+      ],
+      "general_feedback": "(Ví dụ) Tổng kết ưu điểm và điểm cần khắc phục.",
+      "improved": {
+        "kind": "improved_sample",
+        "text": "(Ví dụ) Bài mẫu 110-140 chữ.",
+        "word_count": 125
+      },
+      "raw": 14,
+      "raw_max": 20,
+      "avg_band": 3.5
+    }
+  ],
+  "total": {
+    "raw": 14,
+    "raw_max": 20,
+    "cambridge_scale": null,
+    "avg_band": 3.5,
+    "grade": null,
+    "is_estimate": true
+  },
+  "overall_next_steps": [],
+  "report_url": null,
+  "rubric_source": "pet-writing-grader"
+}

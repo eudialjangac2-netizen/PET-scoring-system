@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "level": "FCE",
+  "student": {
+    "id": "61036TT",
+    "name": "Sunny",
+    "class": "6/1"
+  },
+  "test": {
+    "id": "fce-test1",
+    "label": "Test 01"
+  },
+  "graded_at": "2026-09-30",
+  "parts": [
+    {
+      "part": 1,
+      "genre": "essay",
+      "task": "(Ví dụ) Some people say that ... Write an essay using ALL the notes and give reasons.",
+      "text": "(Ví dụ) Bài làm nguyên văn của học sinh.",
+      "word_count": 195,
+      "criteria": [
+        {
+          "id": "content",
+          "band": 4,
+          "max": 5,
+          "comment": "Đủ 3 ý nhưng own idea chưa cụ thể.",
+          "to_move_up": "Thêm 1 hành động cụ thể cho own idea.",
+          "key_takeaway": "Own idea cần một hành động cụ thể, đo lường được."
+        },
+        {
+          "id": "communicative_achievement",
+          "band": 3,
+          "max": 5,
+          "comment": "Register nhất quán, trừ một chỗ dùng từ khẩu ngữ.",
+          "to_move_up": "Bỏ mọi từ khẩu ngữ.",
+          "key_takeaway": "Giữ register trung tính từ đầu đến cuối bài."
+        },
+        {
+          "id": "organisation",
+          "band": 3,
+          "max": 5,
+          "comment": "Chỉ dùng linker cơ bản.",
+          "to_move_up": "Thêm referencing giữa các đoạn.",
+          "key_takeaway": "Dùng đại từ quy chiếu để nối các đoạn thay vì chỉ dùng linker."
+        },
+        {
+          "id": "language",
+          "band": 3,
+          "max": 5,
+          "comment": "Lỗi hòa hợp chủ ngữ - động từ không nhất quán.",
+          "to_move_up": "Rà soát lỗi ngôi thứ 3 số ít.",
+          "key_takeaway": "Rà lại một lỗi lặp lại (chia động từ ngôi thứ 3) cho nhất quán."
+        }
+      ],
+      "errors": [
+        {
+          "group": "grammar",
+          "original": "the industry say",
+          "corrected": "the industry says",
+          "explanation": "Chủ ngữ số ít ngôi thứ 3 ở thì hiện tại đơn cần thêm -s.",
+          "impeding": false
+        }
+      ],
+      "key_takeaways": {
+        "grammar": "Ôn lại hòa hợp chủ ngữ - động từ ngôi thứ 3 số ít."
+      },
+      "improved": {
+        "kind": "improved_sample",
+        "text": "(Ví dụ) Bản đã sửa.",
+        "word_count": 200
+      },
+      "raw": 13,
+      "raw_max": 20,
+      "avg_band": 3.25,
+      "next_steps": [
+        "Rà soát lỗi hòa hợp chủ ngữ - động từ.",
+        "Thêm phép nối giữa các đoạn."
+      ],
+      "general_feedback": "(Ví dụ) Em triển khai đủ 3 ý, cần chú ý register và hòa hợp chủ ngữ - động từ."
+    }
+  ],
+  "total": {
+    "raw": 13,
+    "raw_max": 20,
+    "cambridge_scale": null,
+    "avg_band": 3.25
+  },
+  "overall_next_steps": [],
+  "report_url": null,
+  "rubric_source": "fce-writing-grader"
+}
