@@ -136,7 +136,7 @@
       var t = T0.skill[w.skill];
       return '<div class="pt-wq"><h5 style="color:' + t.ink + '">' + esc(w.name) + '</h5>' + w.items.map(function (x) { return '<span class="chip" style="background:' + t.bg + '">' + esc(x) + '</span>'; }).join('') + '</div>';
     }).join('');
-    return '<div class="pt-page" style="' + styleVars(m) + '">' + head(m, ['Learning Diagnosis', 'Phân tích kết quả và hướng cải thiện - Tổng quan ' + m.skills.length + ' kỹ năng']) + '<div class="pt-main">'
+    return '<div class="pt-page" style="' + styleVars(m) + '">' + head(m, ['Results Analysis & Improvement Plan', 'Phân tích kết quả và hướng cải thiện - Tổng quan ' + m.skills.length + ' kỹ năng']) + '<div class="pt-main">'
       + '<div class="pt-sec"><h3>' + ttl('Path to the Next Grade', 'Lộ trình lên Grade tiếp theo') + '</h3><table class="pt-gap"><tr><th>Skill</th><th>Scale</th><th>Current level</th><th>Needed</th></tr>' + gap + '</table></div>'
       + '<div class="pt-sec"><h3>' + ttl('Why Points Are Being Lost', 'Vì sao em đang mất điểm') + '</h3><div class="pt-cas">' + causes + '</div></div>'
       + '<div class="pt-two"><div class="pt-sec"><h3>' + ttl('Repeated Writing Errors', 'Lỗi Writing lặp lại') + '</h3>' + wr + '</div><div class="pt-sec"><h3>' + ttl('Test-taking Habits', 'Thói quen làm bài') + '</h3><ul class="pt-hb">' + D.habits.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></div>'

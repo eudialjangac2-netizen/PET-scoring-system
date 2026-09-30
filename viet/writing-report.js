@@ -84,7 +84,7 @@
     var ck = (p.checklist && p.checklist.length) ? p.checklist : (p.next_steps || []);
     var li = function (a) { return a.slice(0, 4).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join(''); };
     var h = '<div class="wr-page" style="border-top:8px solid ' + mau + '">';
-    h += '<div class="wr-head soft" style="background:' + soft + '"><div><small style="color:' + dark + '">RUBY SCHOOL · CAMBRIDGE ' + esc(opt.tenCapDo || d.level) + '</small><h1>Writing Part ' + esc(p.part) + ' · ' + esc(GENRE_EN[p.genre] || 'Writing') + '<small class="vi">Phân tích kết quả và hướng cải thiện Writing - ' + esc(GENRE[p.genre] || 'Bài viết') + '</small></h1></div>'
+    h += '<div class="wr-head soft" style="background:' + soft + '"><div><small style="color:' + dark + '">RUBY SCHOOL · CAMBRIDGE ' + esc(opt.tenCapDo || d.level) + '</small><h1>Writing Analysis &amp; Improvement · Part ' + esc(p.part) + ' ' + esc(GENRE_EN[p.genre] || 'Writing') + '<small class="vi">Phân tích kết quả và hướng cải thiện Writing - ' + esc(GENRE[p.genre] || 'Bài viết') + '</small></h1></div>'
       + '<div class="tot" style="color:' + dark + '"><b>' + esc(p.raw) + '/' + esc(p.raw_max) + '</b><span>marks for this Part</span></div></div>';
     h += '<div class="wr-who"><span>Student: <b>' + esc(s.name) + '</b></span><span>ID: <b>' + esc(s.id) + '</b></span><span>Class: <b>' + esc(s.class) + '</b></span></div>';
     h += '<div class="wr-body">';
