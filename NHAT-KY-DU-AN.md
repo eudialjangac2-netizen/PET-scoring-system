@@ -31,8 +31,8 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 ## Kế hoạch
 
 1. (XONG, đã merge PR #4) Gắn phiếu 4 trang vào app.
-2. Tách Use of English thành kỹ năng riêng cho FCE (chạm `cap-do.json` và phần tính điểm Reading của bạn code).
-3. Speaking: phiếu chấm Speaking làm cùng kiểu Reading/Listening (Elaine đang làm phiếu). App nhận điểm 4 tiêu chí, mỗi tiêu chí 0-5.
+2. (XONG từ trước) Use of English của FCE đã là kỹ năng riêng trong `cap-do.json` (id `uoe`); phiếu phụ huynh đã hiện đủ 5 thẻ. Không cần làm thêm.
+3. Speaking (ĐANG CHỜ Elaine): Elaine làm phiếu chấm Speaking để quét như Reading/Listening (4 tiêu chí, mỗi tiêu chí 0-5, tổng 20) và gửi bảng quy đổi chính thức sang Cambridge Scale cho KET, PET, FCE. Phần quét chạm OMR của Uyên nên cần hai người thống nhất. Hiện phiếu hiện Speaking "Not graded yet".
 4. Lưu lịch sử điểm theo học sinh qua 5 Mock để vẽ biểu đồ và tính tăng/giảm so với Mock trước (cần thống nhất chỗ lưu, xem "Cần thống nhất").
 5. Skill/prompt cho giáo viên: AI hỏi giáo viên cần JSON, bản Word hay cả hai.
 6. Đồng bộ Google Sheet có cột Writing (cần bạn code viết Apps Script).
