@@ -63,7 +63,7 @@ Schema tự kiểm tra: KET không được có `communicative_achievement` và 
 ## Điều cần thống nhất giữa hai người (chưa chốt)
 
 1. Bài mẫu KET band 0-1 để hoàn thiện calibration (bảng quy đổi Scale đã có).
-2. Cách app đọc JSON ở bước 4 "Câu viết": Elaine đã chọn hai cách, cần người code app (`cham-bai.*`) thực hiện: (a) một khung để dán JSON vào, app kiểm tra ngay JSON có đúng form (`schema-writing.json`) không và báo lỗi cụ thể; (b) hoặc tải file .json lên, kiểm tra cùng cách. Cả hai cách dùng chung một hàm kiểm tra. Cần thống nhất trước khi sửa `cham-bai.js`.
+2. (Đã làm, xem mục cuối) Cách app đọc JSON Writing. Lưu ý: bước 4 "Câu viết" của app là chấm các ô điền đáp án Reading/Listening, KHÔNG phải bài Writing, nên Writing có bước riêng. Ý ban đầu: Elaine đã chọn hai cách, cần người code app (`cham-bai.*`) thực hiện: (a) một khung để dán JSON vào, app kiểm tra ngay JSON có đúng form (`schema-writing.json`) không và báo lỗi cụ thể; (b) hoặc tải file .json lên, kiểm tra cùng cách. Cả hai cách dùng chung một hàm kiểm tra. Cần thống nhất trước khi sửa `cham-bai.js`.
 
 ## Công cụ kiểm tra JSON (đã làm xong)
 
@@ -71,3 +71,12 @@ Schema tự kiểm tra: KET không được có `communicative_achievement` và 
 - `viet/kiem-tra-json.js`: hàm kiểm tra dùng chung, để gắn vào bước 4 "Câu viết" của app: `WritingJsonCheck.taoBoKiemTra(schema, Ajv2020).kiemTra(chuoiJson)` trả về `{ ok, loi, canhBao, tomTat, data }`.
 - `viet/ajv2020.bundle.js`: thư viện Ajv (JSON Schema 2020-12) đóng gói sẵn, không cần internet.
 - Mở trang qua địa chỉ web của app (ví dụ `/viet/kiem-tra-json.html`), không mở trực tiếp file từ máy vì trang cần đọc `schema-writing.json`.
+
+## Bước 5 "Writing" trong app (đã gắn)
+
+- Nav có thêm bước 5 "Writing"; "Kết quả" thành bước 6.
+- Dán JSON hoặc tải file .json lên (nhiều file cùng lúc được). App kiểm tra bằng `kiem-tra-json.js`, chặn JSON sai form hoặc sai cấp độ (JSON KET vào lớp PET), cảnh báo nếu `test.id` khác đề đang chấm.
+- Ghép học sinh theo `student.id`: khớp mã đầy đủ (ví dụ `C260125MC`) hoặc 6 số đầu (`260125`). Không khớp thì hiện danh sách lớp để chọn tay.
+- Lưu trong `S.writing[key]` (cùng nơi lưu phiên chấm trên máy, IndexedDB).
+- Bảng Kết quả, file CSV và Excel có thêm cột Writing (điểm thô, tối đa, thang) khi lớp có ít nhất một bài Writing.
+- Chưa làm: đưa Writing vào phiếu kết quả PDF từng học sinh và vào bản sao lưu Google Sheet (cần chốt cột với Apps Script).

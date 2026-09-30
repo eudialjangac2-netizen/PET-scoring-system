@@ -6,7 +6,7 @@
 <title>Chấm phiếu Cambridge — Ruby School</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="cham-bai.css?v=20260928">
+<link rel="stylesheet" href="cham-bai.css?v=20260930">
 </head>
 <body>
 <header class="top"><div class="wrap">
@@ -19,7 +19,8 @@
   <button data-go="scan"><b>2</b>Chụp phiếu</button>
   <button data-go="review"><b>3</b>Duyệt<span class="badge" id="bReview" hidden></span></button>
   <button data-go="write"><b>4</b>Câu viết<span class="badge" id="bWrite" hidden></span></button>
-  <button data-go="export"><b>5</b>Kết quả</button>
+  <button data-go="writing"><b>5</b>Writing</button>
+  <button data-go="export"><b>6</b>Kết quả</button>
 </div></nav>
 
 <main class="wrap">
@@ -81,7 +82,24 @@
     <div id="wBody"></div>
   </section>
 
-  <!-- 5. Kết quả -->
+  <!-- 5. Writing (bài viết Cambridge, JSON từ skill chấm Writing) -->
+  <section class="view" id="v-writing">
+    <h2>Bài Writing</h2>
+    <p class="hint">Dán JSON do skill chấm Writing (KET, PET, FCE) xuất ra, hoặc tải file .json lên. App kiểm tra đúng form, ghép với học sinh theo mã và đưa điểm Writing vào bảng kết quả.</p>
+    <div class="card">
+      <textarea id="wrText" rows="8" spellcheck="false" placeholder="Dán JSON vào đây, bắt đầu bằng { ..."></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="wrSave">Kiểm tra và lưu</button>
+        <label class="btn" for="wrFile">Tải file .json lên</label>
+        <input type="file" id="wrFile" accept=".json,application/json" multiple hidden>
+        <button class="btn ghost" id="wrClear">Xoá khung</button>
+      </div>
+      <div id="wrMsg" style="margin-top:10px"></div>
+    </div>
+    <div class="tablewrap"><table id="wrTable"></table></div>
+  </section>
+
+  <!-- 6. Kết quả -->
   <section class="view" id="v-export">
     <h2>Kết quả</h2>
     <div id="exportWarn"></div>
@@ -141,8 +159,10 @@
 <div class="loading" id="loading"><div><div class="spinner"></div><div id="loadingMsg">Đang tải bộ nhận dạng phiếu…</div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="viet/ajv2020.bundle.js"></script>
+<script src="viet/kiem-tra-json.js"></script>
 <script src="omr-engine.js?v=20260928"></script>
-<script src="cham-bai.js?v=20260928"></script>
+<script src="cham-bai.js?v=20260930"></script>
 <script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"></script>
 </body>
 </html>
