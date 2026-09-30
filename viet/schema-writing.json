@@ -308,6 +308,10 @@
             "type": "string"
           }
         },
+        "short_comment": {
+          "type": "string",
+          "description": "Nhận xét ngắn 1-2 câu (khoảng 150 ký tự) cho trang đầu phiếu phụ huynh. Không bắt buộc; nếu thiếu, phiếu dùng đầu đoạn general_feedback."
+        },
         "general_feedback": {
           "type": "string",
           "description": "Đoạn tổng kết ưu điểm và điểm cần khắc phục"

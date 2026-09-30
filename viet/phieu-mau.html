@@ -1,0 +1,28 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Phiếu mẫu KET</title>
+<link rel="stylesheet" href="../cham-bai.css"><link rel="stylesheet" href="writing-report.css">
+<style>@page{size:A4;margin:0} body{margin:0;background:#fff} .pg{width:794px;height:1123px;overflow:hidden;page-break-after:always;position:relative} .pg .rp{height:1123px}</style>
+</head><body>
+<div id="p1" class="pg"></div><div id="p2" class="pg"></div><div id="p3" class="pg"></div><div id="p4" class="pg"></div>
+<script src="writing-report.js"></script>
+<script>
+fetch('mau-ket-day-du.json').then(r=>r.json()).then(d=>{
+ const mau='#019EA5';
+ const card=(t,raw,max,sc,parts)=>`<div class="rp-skill"><h2>${t}<em style="background:${mau}1f;color:${mau}">A2</em></h2><div class="rp-big"><div><b>${raw}</b><span> / ${max} điểm</span></div><div><b>${sc}</b><span> thang Cambridge</span></div></div>${parts.map(([p,v,n])=>{const f=v/n;const c=f>=.75?'#1E7F4F':f>=.5?'#E0A100':'#B42318';return `<div class="rp-part"><span>Part ${p}</span><div class="rp-bar"><i style="width:${f*100}%;background:${c}"></i></div><b>${v}/${n}</b></div>`}).join('')}</div>`;
+ const info=`<div class="rp-info"><div><span>Họ và tên</span><b>${d.student.name}</b></div><div><span>Mã học sinh</span><b>${d.student.id}</b></div><div><span>Lớp</span><b>${d.student.class}</b></div><div><span>Lớp Cambridge</span><b>KET 1</b></div><div><span>Đề</span><b>${d.test.label||d.test.id}</b></div><div><span>Ngày chấm</span><b>30/09/2026</b></div></div>`;
+ const band=t=>`<div class="rp-band" style="background:${mau}"><small>RUBY SCHOOL · CAMBRIDGE KET</small><h1>${t}</h1></div>`;
+ const foot='<div class="rp-foot"><span>Điểm quy đổi theo bảng Cambridge English Scale của KET.</span><span>Ruby School</span></div>';
+ document.getElementById('p1').innerHTML=`<div class="rp">${band('Phiếu kết quả Reading · Listening · Writing')}<div class="rp-main">${info}
+  <div class="rp-scores" style="grid-template-columns:1fr 1fr">${card('Reading',38,56,'132',[[1,5,6],[2,6,7],[3,4,6],[4,5,6],[5,5,6]])}${card('Listening',19,25,'138',[[1,4,5],[2,5,5],[3,4,5],[4,3,5],[5,3,5]])}</div>
+  ${WritingReport.summary(d,mau)}</div>${foot}</div>`;
+ const li=(q,a,k)=>`<li><b>${q}.</b> ${a} → đáp án <b>${k}</b></li>`;
+ document.getElementById('p2').innerHTML=`<div class="rp">${band('Câu cần xem lại')}<div class="rp-main">${info}
+  <div class="rp-wrong"><div><h3>Reading - câu cần xem lại</h3><ul><li class="pt">PART 1</li>${li(3,'em chọn B','C')}${li(5,'bỏ trống','A')}<li class="pt">PART 3</li>${li(14,'em chọn A','C')}${li(16,'em chọn C','B')}<li class="pt">PART 4</li>${li(21,'em chọn B','A')}</ul></div>
+  <div><h3>Listening - câu cần xem lại</h3><ul><li class="pt">PART 2</li>${li(8,'em chọn A','C')}<li class="pt">PART 4</li>${li(17,'em chọn B','A')}${li(19,'bỏ trống','C')}<li class="pt">PART 5</li>${li(23,'em chọn C','G')}</ul></div></div>
+  <div class="rp-note"><b>Nhận xét của giáo viên</b><p>Em làm bài Reading và Listening khá tốt, cần chú ý đọc kỹ đề ở Part 3 và Part 4. Phần Writing em đã có ý tưởng rõ ràng, cần luyện thêm cấu trúc động từ sau "like" và thì quá khứ đơn.</p></div>
+  </div>${foot}</div>`;
+ const o=i=>({mau,tenCapDo:'A2 KEY',trang:i+3});
+ document.getElementById('p3').innerHTML=WritingReport.partPage(d,0,o(0));
+ document.getElementById('p4').innerHTML=WritingReport.partPage(d,1,o(1));
+ document.body.dataset.ready=1;
+});
+</script></body></html>

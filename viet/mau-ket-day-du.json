@@ -1,0 +1,167 @@
+{
+  "schema_version": "1.0",
+  "level": "KET",
+  "student": {
+    "id": "C260125MC",
+    "name": "Nguyen Van A (mẫu)",
+    "class": "6/1"
+  },
+  "test": {
+    "id": "ket-test1",
+    "label": "KET Test 1"
+  },
+  "graded_at": "2026-09-30",
+  "parts": [
+    {
+      "part": 6,
+      "genre": "email",
+      "task": "Read the email from your English friend Jay. Write an email to Jay and answer his three questions: Can you come to the picnic? What food would you like to bring? How will you get there? Write 25 words or more.",
+      "text": "Hi Jay,\nYes, I can come to the picnic. I like bring sandwiches and juice because my friend like them. We can meet at the park at 9 o'clock. I go there by bus.",
+      "word_count": 34,
+      "criteria": [
+        {
+          "id": "content",
+          "band": 4,
+          "max": 5,
+          "comment": "Em trả lời đủ 3 ý của Jay, riêng ý \"how will you get there\" chỉ nói bằng câu hiện tại \"I go there by bus\" nên hơi thiếu ý tương lai.",
+          "to_move_up": "Dùng \"I will go there by bus\" để người đọc hiểu đây là kế hoạch sắp tới.",
+          "key_takeaway": "Đề hỏi về tương lai thì trả lời bằng will hoặc be going to."
+        },
+        {
+          "id": "organisation",
+          "band": 4,
+          "max": 5,
+          "comment": "Mỗi ý một câu riêng, có \"and\" và \"because\" nối ý đúng chỗ.",
+          "to_move_up": "Thêm \"so\" hoặc \"but\" và một từ chỉ trình tự như \"then\" để bài liền mạch hơn.",
+          "key_takeaway": "Mỗi câu hỏi một câu trả lời, nối bằng and, because, so."
+        },
+        {
+          "id": "language",
+          "band": 3,
+          "max": 5,
+          "comment": "Từ vựng quen thuộc, có lỗi chia động từ nhưng người đọc vẫn hiểu.",
+          "to_move_up": "Sửa lỗi \"I like bring\" và \"my friend like them\".",
+          "key_takeaway": "Sau \"would like\" dùng to + động từ; động từ ngôi 3 số ít thêm -s."
+        }
+      ],
+      "errors": [
+        {
+          "group": "grammar",
+          "original": "I like bring",
+          "corrected": "I would like to bring",
+          "explanation": "Nói về điều muốn mang theo cần \"would like to + động từ\".",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "my friend like them",
+          "corrected": "my friends like them",
+          "explanation": "\"Friend\" số ít thì động từ thêm -s; ở đây nói nhiều bạn nên dùng \"friends like\".",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "I go there by bus",
+          "corrected": "I will go there by bus",
+          "explanation": "Kế hoạch trong tương lai dùng \"will + động từ\".",
+          "impeding": false
+        }
+      ],
+      "short_comment": "Bài trả lời đủ ý, bố cục rõ. Em cần chú ý chia động từ và dùng thì tương lai khi nói về kế hoạch.",
+      "general_feedback": "Em đã trả lời đủ ba câu hỏi của Jay và nối ý khá tự nhiên bằng \"and\" và \"because\". Điểm cần cải thiện là lỗi ngữ pháp cơ bản: động từ sau \"would like\" và động từ ngôi thứ ba số ít.",
+      "next_steps": [
+        "Viết lại 3 câu có lỗi theo bản sửa ở trên.",
+        "Đọc lại đề và gạch chân thì của từng câu hỏi trước khi trả lời."
+      ],
+      "improved": {
+        "kind": "improved_version",
+        "text": "Hi Jay,\nYes, I can come to the picnic. I would like to bring sandwiches and juice because my friends like them. We can meet at the park at 9 o'clock. I will go there by bus, so I will see you there!",
+        "word_count": 46
+      },
+      "raw": 11,
+      "raw_max": 15,
+      "avg_band": 3.67
+    },
+    {
+      "part": 7,
+      "genre": "story",
+      "task": "Look at the three pictures. Write the story shown in the pictures. Write 35 words or more. (Tranh 1: Tom và bố đi biển. Tranh 2: Tom làm lâu đài cát nhưng sóng cuốn mất. Tranh 3: Bố mua kem cho Tom.)",
+      "text": "Last Sunday, Tom and his dad went to the beach. Tom build a sandcastle but a wave came and it break. Tom was sad. Then his dad buyed him an ice cream and Tom was happy again.",
+      "word_count": 37,
+      "criteria": [
+        {
+          "id": "content",
+          "band": 5,
+          "max": 5,
+          "comment": "Kể đủ cả 3 tranh, đúng diễn biến và có kết thúc khớp với tranh cuối.",
+          "to_move_up": null,
+          "key_takeaway": "Bài đủ ý: mỗi tranh một câu là đủ ở mức A2."
+        },
+        {
+          "id": "organisation",
+          "band": 3,
+          "max": 5,
+          "comment": "Các tranh nối được bằng \"but\", \"then\", \"and\" nhưng còn ít từ nối khác và câu 3 quá ngắn.",
+          "to_move_up": "Thêm \"first\", \"after that\", \"in the end\" để nối các tranh mạch lạc hơn.",
+          "key_takeaway": "Từ chỉ trình tự (first, then, after that) giúp kể chuyện liền mạch."
+        },
+        {
+          "id": "language",
+          "band": 3,
+          "max": 5,
+          "comment": "Dùng đúng thì quá khứ ở phần lớn bài, nhưng còn sai dạng quá khứ của động từ bất quy tắc.",
+          "to_move_up": "Học lại quá khứ của build, break, buy.",
+          "key_takeaway": "Động từ bất quy tắc: build - built, break - broke, buy - bought."
+        }
+      ],
+      "errors": [
+        {
+          "group": "grammar",
+          "original": "Tom build",
+          "corrected": "Tom built",
+          "explanation": "Câu kể chuyện ở quá khứ nên dùng \"built\".",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "it break",
+          "corrected": "it broke",
+          "explanation": "Quá khứ của \"break\" là \"broke\".",
+          "impeding": false
+        },
+        {
+          "group": "grammar",
+          "original": "buyed",
+          "corrected": "bought",
+          "explanation": "\"Buy\" là động từ bất quy tắc, quá khứ là \"bought\", không thêm -ed.",
+          "impeding": false
+        }
+      ],
+      "short_comment": "Kể đủ cả 3 tranh, có kết thúc rõ. Em cần học thêm quá khứ của động từ bất quy tắc và từ chỉ trình tự.",
+      "general_feedback": "Câu chuyện của em bám sát ba tranh và có mở đầu, diễn biến, kết thúc. Lỗi chính là dạng quá khứ của các động từ bất quy tắc, và bài sẽ mạch lạc hơn nếu dùng thêm từ chỉ trình tự.",
+      "next_steps": [
+        "Học thuộc quá khứ của 10 động từ bất quy tắc hay gặp (build, break, buy, go, see...).",
+        "Kể lại câu chuyện này với \"First, ... After that, ... In the end, ...\"."
+      ],
+      "improved": {
+        "kind": "improved_version",
+        "text": "Last Sunday, Tom and his dad went to the beach. First, Tom built a sandcastle, but a wave came and it broke. Tom was very sad. After that, his dad bought him an ice cream, and Tom was happy again.",
+        "word_count": 45
+      },
+      "raw": 11,
+      "raw_max": 15,
+      "avg_band": 3.67
+    }
+  ],
+  "total": {
+    "raw": 22,
+    "raw_max": 30,
+    "cambridge_scale": 130,
+    "avg_band": 3.67,
+    "grade": null,
+    "is_estimate": false
+  },
+  "overall_next_steps": [],
+  "report_url": null,
+  "rubric_source": "ket-writing-grader"
+}
