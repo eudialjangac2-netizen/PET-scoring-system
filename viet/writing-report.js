@@ -49,7 +49,11 @@
     var out = '', pos = 0;
     ranges.forEach(function (r) {
       out += esc(text.slice(pos, r.s));
-      out += '<mark class="' + (r.sev === 'high' ? 'imp' : r.sev === 'low' ? 'low' : '') + '" style="background:' + (GROUP[r.g] || GROUP.grammar).mau + '">' + esc(text.slice(r.s, r.e)) + '</mark>';
+      // Mỗi từ một thẻ mark: html2canvas vẽ sai khi một thẻ mark dài bị xuống dòng giữa chừng
+      var mcls = r.sev === 'high' ? 'imp' : r.sev === 'low' ? 'low' : '', mbg = (GROUP[r.g] || GROUP.grammar).mau;
+      out += text.slice(r.s, r.e).split(/(\s+)/).filter(function (w) { return w !== ''; }).map(function (w) {
+        return '<mark class="' + mcls + '" style="background:' + mbg + '">' + esc(w) + '</mark>';
+      }).join('');
       pos = r.e;
     });
     return out + esc(text.slice(pos));
