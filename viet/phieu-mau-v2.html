@@ -65,8 +65,9 @@ const fce=model('FCE','FCE Test 5',[
 (async()=>{
  for(const [m,f,ten] of [[ket,'mau-ket-day-du.json','A2 KEY'],[pet,'mau-pet-day-du.json','B1 PRELIMINARY'],[fce,'mau-fce-day-du.json','B2 FIRST']]){
   const w=await (await fetch(f)).json(), T=PhieuTrang.THEME[m.level];
-  const o=i=>({mau:T.a,dark:T.d,soft:T.soft,tenCapDo:ten,trang:i+3});
-  const pages=[PhieuTrang.overview(m),PhieuTrang.diagnosis(m),WritingReport.partPage(w,0,o(0)),WritingReport.partPage(w,1,o(1))];
+  const wp=[];let pg=3;w.parts.forEach((_,i)=>{const ps=WritingReport.partPages(w,i,{mau:T.a,dark:T.d,soft:T.soft,tenCapDo:ten,trang:pg});wp.push(...ps);pg+=ps.length});
+  m.totalPages=2+wp.length;
+  const pages=[PhieuTrang.overview(m),PhieuTrang.diagnosis(m),...wp].map(h=>h.replace(/__TOTAL__/g,m.totalPages));
   pages.forEach(x=>document.body.insertAdjacentHTML('beforeend','<div class="pg">'+x+'</div>'));
   document.querySelectorAll('.pg .wr-page:not([data-fit])').forEach(el=>{el.dataset.fit=WritingReport.fit(el)});
  }

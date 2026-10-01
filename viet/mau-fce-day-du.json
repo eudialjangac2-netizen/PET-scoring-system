@@ -96,6 +96,22 @@
           "corrected": "real friendships",
           "explanation": "Nói chung chung về mối quan hệ nên bỏ \"the\".",
           "impeding": false
+        },
+        {
+          "group": "style",
+          "original": "This is bad for his health and his skills.",
+          "corrected": "This is harmful to his health and skills.",
+          "explanation": "Dùng từ trang trọng hơn trong bài luận.",
+          "impeding": false,
+          "severity": "medium"
+        },
+        {
+          "group": "vocabulary",
+          "original": "help young people to find",
+          "corrected": "help young people find",
+          "explanation": "\"help\" thường đi với động từ nguyên mẫu không \"to\".",
+          "impeding": false,
+          "severity": "low"
         }
       ],
       "short_comment": "Bài luận đủ ý, bố cục rõ. Em cần giữ giọng trang trọng và rà lỗi hòa hợp chủ vị.",
@@ -121,7 +137,13 @@
       "next_steps": [
         "Đánh dấu 3 ý bắt buộc và kiểm tra bài đã có cả ba",
         "Đọc lại từng câu: có từ khẩu ngữ (bad, kids, a lot of) thì đổi"
-      ]
+      ],
+      "improved": {
+        "kind": "improved_version",
+        "text": "Nowadays, many teenagers use social media for several hours every day. In my opinion, this habit brings some serious problems, although it has advantages too.\n\nFirstly, teenagers who spend too much time online have less time for their hobbies. For example, a boy who could play football with his friends stays at home and watch videos instead. This is harmful to his health and his skills. Moreover, real friendships are often weaker because people talk through screens and they don't listen to each other properly.\n\nOn the other hand, social media helps young people to find information and to keep in touch with relatives who live far away. Another possible solution is that schools should teach students how to use it safely, so they can enjoy it without wasting time.\n\nTo sum up, I believe that teenagers can use social media, but they must control the time. Parents and teachers should help them to make good choices.",
+        "word_count": 157
+      },
+      "errors_omitted": 0
     },
     {
       "part": 2,
@@ -199,6 +221,22 @@
           "explanation": "Sau \"recommend\" dùng V-ing hoặc \"that + mệnh đề\".",
           "impeding": false,
           "severity": "low"
+        },
+        {
+          "group": "vocabulary",
+          "original": "even sleep in one of the rooms",
+          "corrected": "even stay overnight in one of the rooms",
+          "explanation": "Chính xác hơn khi nói về du lịch.",
+          "impeding": false,
+          "severity": "medium"
+        },
+        {
+          "group": "grammar",
+          "original": "I never felt bored",
+          "corrected": "I have never felt bored",
+          "explanation": "Cùng thì hiện tại hoàn thành với \"I have been there\".",
+          "impeding": false,
+          "severity": "medium"
         }
       ],
       "short_comment": "Bài viết có bố cục và giọng phù hợp với tạp chí. Em cần thêm ví dụ và rà lỗi hòa hợp chủ vị.",
@@ -224,7 +262,13 @@
       "next_steps": [
         "Kiểm tra bài trả lời đủ 2 câu hỏi của đề (làm gì, vì sao đặc biệt)",
         "Gạch chân chủ ngữ và động từ của từng câu để kiểm tra hòa hợp"
-      ]
+      ],
+      "improved": {
+        "kind": "improved_version",
+        "text": "A Hidden Gem in My Town\n\nIf you ever visit Da Lat, you must go to the Crazy House. It is not just a hotel, it is a fantasy world made by an architect who loves nature.\n\nWhen you arrive, you will see strange towers and tunnels that look like trees and caves. Visitors can climb the narrow stairs, take photos from the small windows and even stay overnight in one of the rooms if they are lucky. Kids enjoy it the most because every corner is different.\n\nWhat makes this place special is the creativity. The architect wanted to show that buildings can be part of nature, not enemies of it. As a result, the garden is full of real plants and the walls have shapes of animals.\n\nI have been there three times and I have never felt bored. Therefore, I recommend going early in the morning, when there are fewer people and the light is perfect for photos.",
+        "word_count": 161
+      },
+      "errors_omitted": 0
     }
   ],
   "total": {

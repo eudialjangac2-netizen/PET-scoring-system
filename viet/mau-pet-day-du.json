@@ -89,6 +89,22 @@
           "explanation": "Sau \"write\" cần \"to\" khi có người nhận.",
           "impeding": false,
           "severity": "low"
+        },
+        {
+          "group": "grammar",
+          "original": "I enjoyed the space room most",
+          "corrected": "I enjoyed the space room the most",
+          "explanation": "Dùng \"the most\" khi so sánh cao nhất.",
+          "impeding": false,
+          "severity": "low"
+        },
+        {
+          "group": "vocabulary",
+          "original": "arrived late in the morning",
+          "corrected": "arrived late",
+          "explanation": "\"late in the morning\" nghe lạ, chỉ cần \"late\".",
+          "impeding": false,
+          "severity": "medium"
         }
       ],
       "short_comment": "Bài trả lời đủ ý, giọng thân mật. Em cần chú ý chia động từ và cách dùng \"I/me\".",
@@ -114,7 +130,13 @@
       "next_steps": [
         "Gạch chân 3 câu hỏi và đánh dấu mình đã trả lời từng câu",
         "Kiểm tra động từ: quá khứ hay hiện tại, ngôi thứ ba có thêm -s/-ed chưa"
-      ]
+      ],
+      "improved": {
+        "kind": "improved_version",
+        "text": "Hi Sam,\nThank you for your email. I agree that the school trip was very exciting. We went to a science museum in Ho Chi Minh City last Friday. I enjoyed the space room the most because we could touch many real machines. My teacher explained everything clearly and my friends and I took a lot of photos. However, the bus was very slow so we arrived late. I would like to go there again with my family, because there are many interesting things which I haven't seen yet. Do you want to come with us next month? Write to me soon!\nBest wishes,\nAn",
+        "word_count": 105
+      },
+      "errors_omitted": 0
     },
     {
       "part": 2,
@@ -193,6 +215,22 @@
           "explanation": "\"Hang\" (treo tranh) có quá khứ là \"hung\"; \"hanged\" chỉ dùng cho hành hình.",
           "impeding": false,
           "severity": "low"
+        },
+        {
+          "group": "grammar",
+          "original": "First they looked in the kitchen but",
+          "corrected": "First, they looked in the kitchen, but",
+          "explanation": "Có dấu phẩy sau từ nối đầu câu và trước \"but\".",
+          "impeding": false,
+          "severity": "low"
+        },
+        {
+          "group": "vocabulary",
+          "original": "read it together the whole evening",
+          "corrected": "read it together all evening",
+          "explanation": "Cách nói tự nhiên hơn.",
+          "impeding": false,
+          "severity": "medium"
         }
       ],
       "short_comment": "Câu chuyện có mở đầu, diễn biến, kết thúc rõ. Em cần luyện thêm quá khứ đơn và động từ bất quy tắc.",
@@ -218,7 +256,13 @@
       "next_steps": [
         "Gạch chân mọi động từ và kiểm tra thì quá khứ",
         "Ôn 15 động từ bất quy tắc thông dụng (go, find, hang, put...)"
-      ]
+      ],
+      "improved": {
+        "kind": "improved_version",
+        "text": "Last Saturday, Anna found an old key in her garden. She was very surprised because nobody had lived in the house before her family. She showed the key to her brother, Tom, and they decided to look for a door. First, they looked in the kitchen, but they found nothing. Then they went to the old shed at the end of the garden. The key opened a small wooden box under the table. Inside there was a letter from a girl who lived there fifty years ago. Anna and Tom were so happy that they read it together all evening. In the end, they put the letter in a frame and hung it on the wall.",
+        "word_count": 116
+      },
+      "errors_omitted": 0
     }
   ],
   "total": {

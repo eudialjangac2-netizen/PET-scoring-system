@@ -1,7 +1,8 @@
 /*
  * Phiếu Writing cho phụ huynh, tạo HTML từ JSON Writing (viet/schema-writing.json).
  *   WritingReport.summary(data, mau)                -> khối tóm tắt Writing cho trang 1 của phiếu
- *   WritingReport.partPage(data, partIndex, opt)    -> trang A4 chi tiết một Part (dùng cho trang 3, 4)
+ *   WritingReport.partPages(data, partIndex, opt)  -> mảng trang A4 chi tiết của một Part (KET thường 1 trang, PET/FCE 2 trang trở lên)
+ *   WritingReport.partPage(...)                     -> bản cũ, trả về trang đầu
  * CSS: viet/writing-report.css. Chạy được ở trình duyệt và Node.
  */
 (function (root, factory) {
@@ -71,55 +72,135 @@
     return h;
   }
 
-  // Trang A4 chi tiết một Part: bài gốc, rubric, strength/issue, lỗi cần sửa, checklist
-  function partPage(d, idx, opt) {
-    opt = opt || {}; var mau = opt.mau || '#019EA5', dark = opt.dark || mau, soft = opt.soft || (mau + '1f'), p = d.parts[idx], s = d.student || {};
-    var used = {}; (p.errors || []).forEach(function (e) { used[e.group] = 1; });
+  // ---------- Trang chi tiết một Part ----------
+  // partPages(d, idx, opt) -> mảng HTML các trang A4 của Part đó.
+  //   KET: cố gắng gọn trong 1 trang (đủ lỗi + bài mẫu); nếu không vừa thì tách A/B như PET, FCE.
+  //   PET, FCE: trang A (đề, bài làm tô lỗi, điểm từng tiêu chí, điểm mạnh/vấn đề),
+  //             trang B (đủ lỗi cần sửa, bài mẫu improved, nhận xét chi tiết, checklist, việc cần làm tiếp);
+  //             nhiều lỗi thì trang B tự tràn sang trang tiếp.
+  // opt.trang = số trang bắt đầu của Part này; chân trang ghi "Page n/__TOTAL__" để nơi gọi thay tổng số trang.
+  var IMP_TITLE = {
+    improved_version: ['Improved Version', 'Bài viết đã sửa'], advanced_suggestions: ['Advanced Suggestions', 'Gợi ý nâng cao'],
+    improved_sample: ['Model Answer', 'Bài mẫu tham khảo']
+  };
+  function ctx(d, idx, opt) {
+    opt = opt || {}; var mau = opt.mau || '#019EA5', p = d.parts[idx], cr = p.criteria || [];
     var rk = function (e) { return (e.severity || (e.impeding ? 'high' : 'medium')) === 'high' ? 2 : (e.severity === 'low' ? 0 : 1); };
-    var errs = (p.errors || []).slice().sort(function (a, b) { return rk(b) - rk(a); });
-    var maxE = opt.maxErrors || 6, more = Math.max(errs.length - maxE, 0) + (p.errors_omitted || 0); errs = errs.slice(0, maxE);
-    var cr = p.criteria || [];
     var st = (p.strengths && p.strengths.length) ? p.strengths : cr.filter(function (c) { return c.band >= c.max - 1 && c.comment; }).map(function (c) { return c.comment; });
     var is = (p.issues && p.issues.length) ? p.issues : cr.filter(function (c) { return c.band < c.max - 1 && c.to_move_up; }).map(function (c) { return c.to_move_up; });
-    var ck = (p.checklist && p.checklist.length) ? p.checklist : (p.next_steps || []);
-    var li = function (a) { return a.slice(0, 4).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join(''); };
-    var h = '<div class="wr-page" style="border-top:8px solid ' + mau + '">';
-    h += '<div class="wr-head soft" style="background:' + soft + '"><div><small style="color:' + dark + '">RUBY SCHOOL · CAMBRIDGE ' + esc(opt.tenCapDo || d.level) + '</small><h1>Writing Analysis &amp; Improvement · Part ' + esc(p.part) + ' ' + esc(GENRE_EN[p.genre] || 'Writing') + '<small class="vi">Phân tích kết quả và hướng cải thiện Writing - ' + esc(GENRE[p.genre] || 'Bài viết') + '</small></h1></div>'
-      + '<div class="tot" style="color:' + dark + '"><b>' + esc(p.raw) + '/' + esc(p.raw_max) + '</b><span>marks for this Part</span></div></div>';
-    h += '<div class="wr-who"><span>Student: <b>' + esc(s.name) + '</b></span><span>ID: <b>' + esc(s.id) + '</b></span><span>Class: <b>' + esc(s.class) + '</b></span></div>';
-    h += '<div class="wr-body">';
-    if (p.task) h += '<div class="wr-sec"><h3><span class="tt">Task<small class="vi">Đề bài</small></span></h3><div class="wr-task">' + esc(p.task) + '</div></div>';
-    h += '<div class="wr-sec"><h3><div>Student\'s Response<small class="vi">Bài làm của em</small></div> <span>' + (p.word_count ? esc(p.word_count) + ' words' : '') + '</span></h3>'
+    var hasCk = !!(p.checklist && p.checklist.length);
+    var used = {}; (p.errors || []).forEach(function (e) { used[e.group] = 1; });
+    return { d: d, p: p, s: d.student || {}, cr: cr, mau: mau, dark: opt.dark || mau, soft: opt.soft || (mau + '1f'), opt: opt, rk: rk, st: st, is: is,
+      ck: hasCk ? p.checklist : (p.next_steps || []), next: hasCk ? (p.next_steps || []) : [], used: used,
+      errs: (p.errors || []).slice().sort(function (a, b) { return rk(b) - rk(a); }) };
+  }
+  function secTask(c) { return c.p.task ? '<div class="wr-sec"><h3><span class="tt">Task<small class="vi">Đề bài</small></span></h3><div class="wr-task">' + esc(c.p.task) + '</div></div>' : ''; }
+  function secText(c) {
+    var p = c.p;
+    return '<div class="wr-sec"><h3><div>Student\'s Response<small class="vi">Bài làm của em</small></div> <span>' + (p.word_count ? esc(p.word_count) + ' words' : '') + '</span></h3>'
       + '<div class="wr-text">' + highlight(p.text || '', p.errors) + '</div>'
-      + '<div class="wr-leg">' + Object.keys(used).map(function (g) { return '<span style="background:' + (GROUP[g] || GROUP.grammar).mau + '">' + esc((GROUP[g] || GROUP.grammar).ten) + '</span>'; }).join('')
+      + '<div class="wr-leg">' + Object.keys(c.used).map(function (g) { return '<span style="background:' + (GROUP[g] || GROUP.grammar).mau + '">' + esc((GROUP[g] || GROUP.grammar).ten) + '</span>'; }).join('')
       + '<span style="color:#5B6576">Bold = errors that make the text hard to understand; faded = minor</span></div></div>';
-    h += '<div class="wr-sec"><h3><div>Rubric Scores<small class="vi">Điểm theo từng tiêu chí</small></div> <span>0-5 per criterion</span></h3><table class="wr-crit">' + cr.map(function (c) {
-      var nm = critName(c.id);
-      return '<tr><td class="n">' + esc(nm[1]) + '<small>' + esc(nm[0]) + '</small><div style="margin-top:3px">' + dots(c.band, c.max, mau) + esc(c.band) + '/' + esc(c.max) + '</div></td><td>' + esc(c.comment)
-        + (c.to_move_up ? '<div class="up"><b>To move up:</b> ' + esc(c.to_move_up) + '</div>' : '') + '</td></tr>';
+  }
+  function secRubric(c, full) {
+    return '<div class="wr-sec"><h3><div>Rubric Scores<small class="vi">Điểm theo từng tiêu chí</small></div> <span>0-5 per criterion</span></h3><table class="wr-crit">' + c.cr.map(function (x) {
+      var nm = critName(x.id);
+      return '<tr><td class="n">' + esc(nm[1]) + '<small>' + esc(nm[0]) + '</small><div style="margin-top:3px">' + dots(x.band, x.max, c.mau) + esc(x.band) + '/' + esc(x.max) + '</div></td><td>' + esc(x.comment)
+        + (x.to_move_up ? '<div class="up"><b>To move up:</b> ' + esc(x.to_move_up) + '</div>' : '')
+        + (full && x.key_takeaway ? '<div class="kt"><b>Key takeaway:</b> ' + esc(x.key_takeaway) + '</div>' : '') + '</td></tr>';
     }).join('') + '</table></div>';
-    h += '<div class="wr-two"><div class="wr-si good"><h3>Strengths<small class="vi">Điểm mạnh</small></h3><ul>' + li(st) + '</ul></div><div class="wr-si issue"><h3>Issues to Fix<small class="vi">Vấn đề cần khắc phục</small></h3><ul>' + li(is) + '</ul></div></div>';
-    if (errs.length) h += '<div class="wr-sec"><h3><span class="tt">Corrections<small class="vi">Lỗi cần sửa ngay</small></span></h3><ul class="wr-err">' + errs.map(function (e) {
-      var g = GROUP[e.group] || GROUP.grammar;
-      return '<li><span class="g" style="background:' + g.mau + '">' + esc(g.ten) + '</span><span class="o' + (rk(e) === 2 ? ' hi' : rk(e) === 0 ? ' lo' : '') + '">' + esc(e.original) + '</span> &rarr; <span class="k">' + esc(e.corrected) + '</span>. ' + esc(e.explanation) + '</li>';
-    }).join('') + (more > 0 ? '<li style="color:#5B6576">and ' + more + ' more minor errors (see the teacher\'s marked copy).</li>' : '') + '</ul></div>';
-    if (ck.length) h += '<div class="wr-sec"><h3><div>Self-check Checklist<small class="vi">Tự kiểm tra trước khi nộp bài lần sau</small></div></h3><ul class="wr-ck">' + ck.slice(0, 5).map(function (x) { return '<li><i style="border-color:' + dark + '"></i>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
-    h += '</div><div class="wr-foot"><span>Each criterion is scored 0-5 using the Cambridge rubric. Page ' + (opt.trang || '') + '/' + (opt.total || 4) + '</span><span>Ruby School</span></div></div>';
+  }
+  function secTwo(c) {
+    var li = function (a) { return a.slice(0, 4).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join(''); };
+    return '<div class="wr-two"><div class="wr-si good"><h3>Strengths<small class="vi">Điểm mạnh</small></h3><ul>' + li(c.st) + '</ul></div><div class="wr-si issue"><h3>Issues to Fix<small class="vi">Vấn đề cần khắc phục</small></h3><ul>' + li(c.is) + '</ul></div></div>';
+  }
+  function errBlocks(c) {
+    var b = c.errs.map(function (e, i) {
+      var g = GROUP[e.group] || GROUP.grammar, r = c.rk(e);
+      return { k: 'err', i: i, h: '<li><span class="g" style="background:' + g.mau + '">' + esc(g.ten) + '</span><span class="o' + (r === 2 ? ' hi' : r === 0 ? ' lo' : '') + '">' + esc(e.original) + '</span> &rarr; <span class="k">' + esc(e.corrected == null ? '(rewrite this part)' : e.corrected) + '</span>. ' + esc(e.explanation) + '</li>' };
+    });
+    if (c.p.errors_omitted > 0) b.push({ k: 'err', i: b.length, h: '<li style="color:#5B6576">Plus ' + esc(c.p.errors_omitted) + ' very minor errors not listed (spelling, punctuation).</li>' });
+    return b;
+  }
+  function secImproved(c) {
+    var im = c.p.improved; if (!im || !im.text) return '';
+    var t = IMP_TITLE[im.kind] || IMP_TITLE.improved_version;
+    return '<div class="wr-sec"><h3><div>' + t[0] + '<small class="vi">' + t[1] + '</small></div> <span>' + (im.word_count ? esc(im.word_count) + ' words' : '') + '</span></h3><div class="wr-imp" style="border-color:' + c.mau + ';background:' + c.soft + '">' + esc(im.text) + '</div></div>';
+  }
+  function secFeedback(c) {
+    var g = c.p.general_feedback; if (!g) return '';
+    return '<div class="wr-sec"><h3><span class="tt">Teacher\'s Feedback<small class="vi">Nhận xét chi tiết của cô</small></span></h3><div class="wr-fb"><p>' + esc(g).replace(/\n+/g, '</p><p>') + '</p></div></div>';
+  }
+  function secCheck(c) {
+    return c.ck.length ? '<div class="wr-sec"><h3><div>Self-check Checklist<small class="vi">Tự kiểm tra trước khi nộp bài lần sau</small></div></h3><ul class="wr-ck">' + c.ck.slice(0, 6).map(function (x) { return '<li><i style="border-color:' + c.dark + '"></i>' + esc(x) + '</li>'; }).join('') + '</ul></div>' : '';
+  }
+  function secNext(c) {
+    return c.next.length ? '<div class="wr-sec"><h3><span class="tt">Next Steps<small class="vi">Việc cần làm tiếp</small></span></h3><div class="wr-fb"><ul>' + c.next.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></div>' : '';
+  }
+  function bodyOf(blocks) {
+    var out = '', i = 0;
+    while (i < blocks.length) {
+      if (blocks[i].k === 'err') {
+        var j = i, lis = '', first = blocks[i].i;
+        while (j < blocks.length && blocks[j].k === 'err') { lis += blocks[j].h; j++; }
+        out += '<div class="wr-sec"><h3><span class="tt">Corrections' + (first > 0 ? ' (continued)' : '') + '<small class="vi">Lỗi cần sửa</small></span></h3><ul class="wr-err">' + lis + '</ul></div>'; i = j;
+      } else { out += blocks[i].h; i++; }
+    }
+    return out;
+  }
+  function pageHTML(c, body, n, cls) {
+    var p = c.p, s = c.s, o = c.opt;
+    var h = '<div class="wr-page' + (cls ? ' ' + cls : '') + '" style="border-top:8px solid ' + c.mau + '">';
+    h += '<div class="wr-head soft" style="background:' + c.soft + '"><div><small style="color:' + c.dark + '">RUBY SCHOOL · CAMBRIDGE ' + esc(o.tenCapDo || c.d.level) + '</small><h1>Writing Analysis &amp; Improvement · Part ' + esc(p.part) + ' ' + esc(GENRE_EN[p.genre] || 'Writing') + '<small class="vi">Phân tích kết quả và hướng cải thiện Writing - ' + esc(GENRE[p.genre] || 'Bài viết') + '</small></h1></div>'
+      + '<div class="tot" style="color:' + c.dark + '"><b>' + esc(p.raw) + '/' + esc(p.raw_max) + '</b><span>marks for this Part</span></div></div>';
+    h += '<div class="wr-who"><span>Student: <b>' + esc(s.name) + '</b></span><span>ID: <b>' + esc(s.id) + '</b></span><span>Class: <b>' + esc(s.class) + '</b></span></div>';
+    h += '<div class="wr-body">' + body + '</div><div class="wr-foot"><span>Each criterion is scored 0-5 using the Cambridge rubric. Page ' + n + '/__TOTAL__</span><span>Ruby School</span></div></div>';
     return h;
   }
-  // Thu gọn dần cho vừa 1 trang A4: (1) chữ nhỏ hơn, (2) bớt lỗi/checklist, (3) thu nhỏ nội dung. Gọi sau khi gắn trang vào DOM.
+  // Đo xem nội dung có tràn trang không (chỉ chạy ở trình duyệt)
+  var host = null;
+  function overflows(html) {
+    if (typeof document === 'undefined') return false;
+    if (!host || !host.isConnected) { host = document.createElement('div'); host.style.cssText = 'position:fixed;left:-10000px;top:0;visibility:hidden;pointer-events:none'; document.body.appendChild(host); }
+    host.innerHTML = html;
+    var b = host.querySelector('.wr-body'), r = b.scrollHeight > b.clientHeight + 1;
+    host.innerHTML = ''; return r;
+  }
+  function partPages(d, idx, opt) {
+    var c = ctx(d, idx, opt), n0 = (opt && opt.trang) || 1;
+    var eb = errBlocks(c), tail = [secImproved(c), secFeedback(c), secCheck(c), secNext(c)].filter(Boolean).map(function (h) { return { k: 'sec', h: h }; });
+    // KET: thử gọn trong 1 trang
+    if (d.level === 'KET' && !(opt && opt.split)) {
+      var one = [{ k: 'sec', h: secTask(c) }, { k: 'sec', h: secText(c) }, { k: 'sec', h: secRubric(c, false) }, { k: 'sec', h: secTwo(c) }].concat(eb, tail.filter(function (x) { return x.h.indexOf('Teacher') < 0 && x.h.indexOf('Next Steps') < 0; }));
+      var tryOne = [bodyOf(one)].map(function (b) { return [pageHTML(c, b, n0, ''), pageHTML(c, b, n0, 'c1')]; })[0];
+      if (!overflows(tryOne[0])) return [tryOne[0]];
+      if (!overflows(tryOne[1])) return [tryOne[1]];
+    }
+    // Tách trang A / B...
+    var aBody = secTask(c) + secText(c) + secRubric(c, true) + secTwo(c), pages = [], aN = n0;
+    var aCls = overflows(pageHTML(c, aBody, aN, '')) ? 'c1' : '';
+    pages.push(pageHTML(c, aBody, aN, aCls));
+    var blocks = eb.concat(tail), cur = [], n = n0 + 1;
+    blocks.forEach(function (b) {
+      var test = cur.concat([b]);
+      if (cur.length && overflows(pageHTML(c, bodyOf(test), n, ''))) { pages.push(pageHTML(c, bodyOf(cur), n, '')); n++; cur = [b]; }
+      else cur = test;
+    });
+    if (cur.length) pages.push(pageHTML(c, bodyOf(cur), n, ''));
+    return pages;
+  }
+  // Giữ tương thích bản cũ: trả về trang đầu của Part
+  function partPage(d, idx, opt) { return partPages(d, idx, opt)[0].replace(/__TOTAL__/g, (opt && opt.total) || 4); }
+  // Thu gọn nếu vẫn tràn 1 trang: chữ nhỏ hơn, rồi thu nhỏ tối đa 15%. Gọi sau khi gắn trang vào DOM.
   function fit(pageEl) {
     var body = pageEl.querySelector('.wr-body'); if (!body) return 0;
     var over = function () { return body.scrollHeight > body.clientHeight + 1; };
-    var scale = function () {
-      var r = Math.max(0.8, body.clientHeight / body.scrollHeight);
-      body.style.overflow = 'visible'; body.style.transformOrigin = 'top left'; body.style.transform = 'scale(' + r + ')'; body.style.width = (100 / r) + '%'; return r;
-    };
     if (over()) pageEl.classList.add('c1');
-    if (over() && body.clientHeight / body.scrollHeight >= 0.9) return scale();
-    if (over()) pageEl.classList.add('c2');
-    if (over()) return scale();
+    if (over()) {
+      var r = Math.max(0.85, body.clientHeight / body.scrollHeight);
+      body.style.overflow = 'visible'; body.style.transformOrigin = 'top left'; body.style.transform = 'scale(' + r + ')'; body.style.width = (100 / r) + '%'; return r;
+    }
     return 1;
   }
-  return { summary: summary, partPage: partPage, highlight: highlight, fit: fit };
+  return { summary: summary, partPage: partPage, partPages: partPages, highlight: highlight, fit: fit };
 });
