@@ -1002,11 +1002,15 @@
   function reportPages(r) {
     const PT = window.PhieuTrang, WR = window.WritingReport, L = lvl();
     if (!PT || !WR) return [reportHTML(r)];   // dự phòng: phiếu 1 trang cũ nếu thiếu file viet/phieu-trang.js
-    const m = reportModel(r), wr = writingOf(r.s), nW = wr ? wr.parts.length : 0, T = PT.THEME[S.level];
-    m.totalPages = 2 + nW;
-    const pages = [PT.overview(m), PT.diagnosis(m)];
-    for (let i = 0; i < nW; i++) pages.push(WR.partPage(wr, i, { mau: T.a, dark: T.d, soft: T.soft, tenCapDo: L.ten.toUpperCase(), trang: 3 + i, total: m.totalPages }));
-    return pages;
+    const m = reportModel(r), wr = writingOf(r.s), T = PT.THEME[S.level];
+    // Trang Writing trước (số trang mỗi Part tùy độ dài lỗi và bài mẫu), rồi mới biết tổng số trang
+    const wpages = []; let pg = 3;
+    for (let i = 0; wr && i < wr.parts.length; i++) {
+      const ps = WR.partPages(wr, i, { mau: T.a, dark: T.d, soft: T.soft, tenCapDo: L.ten.toUpperCase(), trang: pg });
+      wpages.push(...ps); pg += ps.length;
+    }
+    m.totalPages = 2 + wpages.length;
+    return [PT.overview(m), PT.diagnosis(m), ...wpages].map(h => h.replace(/__TOTAL__/g, m.totalPages));
   }
   const ensureFonts = async () => {
     try { await Promise.all(['400', '500', '600', '700'].map(w => document.fonts.load(`${w} 13px "Be Vietnam Pro"`, 'Tiếng Việt ắằẳẵặ ưừ ơờ'))); await document.fonts.ready; } catch {}

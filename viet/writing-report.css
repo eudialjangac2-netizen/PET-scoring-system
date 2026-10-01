@@ -23,7 +23,7 @@
 .wr-sec h3 span { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 11px; }
 .wr-task { background: #F4F6F9; border-radius: 8px; padding: 7px 10px; color: #3a4457; font-size: 12px; }
 .wr-text { border: 1px solid #DCE1E8; border-radius: 8px; padding: 8px 10px; white-space: pre-wrap; font-size: 13px; line-height: 1.6; }
-.wr-text mark { border-radius: 3px; padding: 0 2px; color: inherit; }
+.wr-text mark { border-radius: 2px; padding: 0 1px; color: inherit; }
 .wr-text mark.imp { font-weight: 700; }
 .wr-leg { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; font-size: 11px; }
 .wr-leg span { padding: 1px 8px; border-radius: 99px; }

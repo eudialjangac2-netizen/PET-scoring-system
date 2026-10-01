@@ -91,4 +91,6 @@ Schema tự kiểm tra: KET không được có `communicative_achievement` và 
 | `errors[].severity` | `high` (in đậm, cản trở nghĩa), `medium` (tô thường), `low` (tô nhạt, lỗi nhỏ) | Lấy theo `impeding` |
 | `errors_omitted` | Số lỗi nhỏ không được liệt kê | 0 |
 
-**Quy tắc chọn lỗi cho `errors`** (phiếu chỉ có chỗ cho khoảng 6 lỗi): chỉ liệt kê lỗi nặng và cần sửa ngay, xếp theo thứ tự ưu tiên: (1) lỗi cản trở nghĩa (`high`); (2) lỗi lặp lại nhiều lần, ghi một lần và nêu trong `explanation` rằng lỗi xuất hiện mấy lần; (3) lỗi ảnh hưởng tiêu chí đang có band thấp nhất. Các lỗi nhỏ còn lại không liệt kê, chỉ ghi số lượng vào `errors_omitted`.
+**Danh sách lỗi `errors` và bài mẫu `improved` (cập nhật 01/10/2026):** phiếu không còn giới hạn số lỗi. Liệt kê đầy đủ các lỗi có giá trị sửa, xếp theo ưu tiên: (1) lỗi cản trở nghĩa (`high`); (2) lỗi lặp lại nhiều lần, ghi một lần và nêu số lần trong `explanation`; (3) lỗi ảnh hưởng tiêu chí có band thấp nhất; (4) các lỗi còn lại. Lỗi quá vụn có thể gộp, số lượng bỏ đi ghi vào `errors_omitted`. `improved` có trong mọi Part (KET `improved_sample`, PET và FCE `improved_version` hoặc `advanced_suggestions`).
+
+**Bố cục phiếu Writing:** KET gọn trong 1 trang cho mỗi Part (đủ lỗi, bài mẫu, checklist); nếu nội dung không vừa thì tự tách như PET, FCE. PET và FCE: trang A (đề, bài làm tô lỗi, điểm từng tiêu chí kèm Key takeaway, điểm mạnh và vấn đề), trang B (đủ lỗi cần sửa, bài mẫu, nhận xét chi tiết, checklist, việc cần làm tiếp). Nhiều lỗi thì trang B tự tràn sang trang kế tiếp. Số trang tổng của phiếu được tính tự động.
