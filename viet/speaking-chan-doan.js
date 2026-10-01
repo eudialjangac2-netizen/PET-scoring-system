@@ -29,6 +29,29 @@
   };
   function rank(c, k) { var o = ORD[c]; for (var i = 0; i < o.length; i++) if (o[i].test(k)) return i; return 99; }
 
+  // Thuat ngu Anh -> Viet (cau mau trong ngoac kep nhu "How about...?" giu nguyen tieng Anh)
+  var GLOS = [['stress/intonation', 'trọng âm và ngữ điệu'], ['subject-verb agreement', 'hòa hợp chủ vị'], ['sentence stress', 'trọng âm câu'], ['word stress', 'trọng âm từ'], ['intonation', 'ngữ điệu'],
+    ['intelligibility', 'độ dễ hiểu'], ['listener effort', 'sự nỗ lực của người nghe'], ['individual sounds', 'từng âm riêng lẻ'], ['sound patterns', 'mẫu âm'], ['sound pattern', 'mẫu âm'], ['accent', 'giọng nói'], ['rhythm', 'nhịp điệu'],
+    ['thought groups', 'cụm ý'], ['chunking', 'chia cụm'], ['topic chunks', 'cụm từ theo chủ đề'], ['chunks', 'cụm từ'], ['collocations', 'cụm từ kết hợp'], ['collocation', 'cụm từ kết hợp'], ['correction bank', 'sổ ghi các cụm đã sửa'],
+    ['complex forms', 'cấu trúc phức tạp'], ['complex grammar', 'ngữ pháp phức tạp'], ['simple grammar', 'ngữ pháp đơn giản'], ['lexical range', 'vốn từ'], ['word choice', 'cách chọn từ'], ['extended discourse', 'bài nói dài'], ['extended responses', 'câu trả lời dài'],
+    ['hesitation', 'sự ngập ngừng'], ['interaction', 'tương tác'], ['collaborative exchange', 'cuộc trao đổi hợp tác'], ['collaborative discussion', 'cuộc thảo luận hợp tác'], ['tasks', 'các phần thi'], ['task', 'phần thi'], ['discussion', 'phần thảo luận'], ['exchange', 'phần trao đổi'], ['examiner', 'giám khảo'], ['partner', 'bạn cùng thi'], ['turns', 'lượt nói'], ['turn', 'lượt nói'],
+    ['isolated words/phrases', 'từ hoặc cụm từ rời rạc'], ['sentence frames', 'khung câu'], ['monologues', 'bài độc thoại'], ['flow', 'mạch nói'], ['support', 'hỗ trợ'], ['message', 'thông điệp'], ['response', 'câu trả lời']];
+  function vi(t) {
+    return t.split(/(".*?"|“.*?”)/).map(function (seg, i) {
+      if (i % 2) return seg;
+      GLOS.forEach(function (g) { seg = seg.replace(new RegExp('\\b' + g[0].replace(/[\/\-]/g, '\\$&') + '\\b(?![-\\w])', 'gi'), g[1]); });
+      return seg;
+    }).join('');
+  }
+  var TITLES = [[/^G-S/, 'Ngữ pháp cơ bản chưa ổn định'], [/^(G-C|Complex)/, 'Ngữ pháp phức tạp còn hạn chế'], [/^G-R/, 'Lỗi ngữ pháp lặp lại'], [/^V-R/, 'Vốn từ còn hạn chế'], [/^(V-A|Lexical)/, 'Chọn từ chưa chính xác'],
+    [/^DM-E/, 'Câu trả lời còn ngắn'], [/^DM-D\/R/, 'Ý chưa được phát triển'], [/^DM-C/, 'Liên kết ý còn đơn giản'], [/^DM-H/, 'Ngập ngừng làm đứt mạch nói'],
+    [/^P-I/, 'Phát âm chưa rõ'], [/^P-W/, 'Trọng âm từ chưa chính xác'], [/^P-S\/IN/, 'Trọng âm câu và ngữ điệu còn hạn chế'], [/^P-SND/, 'Lỗi phát âm lặp lại'],
+    [/^GA-L/, 'Câu nói còn quá ngắn'], [/^GA-H/, 'Ngập ngừng nhiều'], [/^(GA-|Whole-test|Extended)/, 'Chưa ổn định giữa các phần thi']];
+  function titleOf(code) {
+    for (var i = 0; i < TITLES.length; i++) if (TITLES[i][0].test(code)) return TITLES[i][1];
+    return 'Tương tác chưa chủ động';
+  }
+
   function pick(level, sp) {
     var B = ((typeof window !== 'undefined' && window.SPEAKING_BANK) || globalThis.SPEAKING_BANK || {})[level] || {};
     if (!sp || !sp.evidence) return null;
@@ -67,7 +90,8 @@
     var str = items.filter(function (x) { return x.s && !x.a && x.c !== 'WP'; })
       .sort(function (x, y) { return (b[y.c] == null ? 0 : b[y.c]) - (b[x.c] == null ? 0 : b[x.c]); })[0]
       || items.filter(function (x) { return x.s && x.c !== 'WP'; }).sort(function (x, y) { return (b[y.c] == null ? 0 : b[y.c]) - (b[x.c] == null ? 0 : b[x.c]); })[0];
-    var out = { rule: tierBranch, gate: gate, strength: str ? str.s : '', areas: areas.map(function (x) { return { code: x.k, text: x.a, tier: x.t }; }), next: areas[0] ? areas[0].n : (str ? str.n : '') };
+    var vs = function (x) { return x ? vi(x) : x; };
+    var out = { rule: tierBranch, title: areas[0] ? 'Speaking: ' + titleOf(areas[0].k).replace(/^./, function (c) { return c.toLowerCase(); }) : '', gate: gate, strength: str ? vs(str.s) : '', areas: areas.map(function (x) { return { code: x.k, text: vs(x.a), tier: x.t }; }), next: vs(areas[0] ? areas[0].n : (str ? str.n : '')) };
     if (sp.weakPart && out.areas[0]) out.areas[0].part = sp.weakPart.replace(/^P/, 'Part ');
     return out;
   }

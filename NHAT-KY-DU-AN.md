@@ -55,7 +55,7 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 | | | | |
 
 ## 01/10/2026 - Speaking: diem can cai thien tren trang 2 (ban xem truoc, nhanh viet-speaking-diem-yeu)
-- Them khoi "Speaking: Areas to Improve" (1 Strength, toi da 2 Area to Improve, 1 Next Step) vao trang 2 phieu.
+- Speaking thanh 1 the trong luoi "Why Points Are Being Lost" (tieu de tieng Viet, noi dung toi da 2 diem + How to fix = Next Step), cung khung voi cac ky nang khac. Strength dua vao Teacher's Overall Comment o trang 1. Thuat ngu Anh duoc dich sang tieng Viet (bang GLOS trong speaking-chan-doan.js).
 - Chon theo 3 tang cua Elaine: G/V hoac P duoi band 3 -> lay tieu chi do truoc (hoa: G/V truoc); bang chung nang nhat theo thu tu noi bo; ca hai tu band 3 -> bang 4 muc uu tien cua Uyen.
 - "Weak part" hien thanh "The hien ro nhat o Part x" trong Area to Improve.
 - File moi: viet/speaking-bank.js (ngan hang nhan xet KET/PET/FCE), viet/speaking-chan-doan.js (logic chon). Du lieu vao: m.speaking = {bands, evidence, weakPart} (dang la du lieu gia trong phieu-mau-v2.html).
