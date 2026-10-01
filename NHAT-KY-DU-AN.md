@@ -60,3 +60,9 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 - "Weak part" hien thanh "The hien ro nhat o Part x" trong Area to Improve.
 - File moi: viet/speaking-bank.js (ngan hang nhan xet KET/PET/FCE), viet/speaking-chan-doan.js (logic chon). Du lieu vao: m.speaking = {bands, evidence, weakPart} (dang la du lieu gia trong phieu-mau-v2.html).
 - Chua noi voi cham-bai.js: can Uyen dua ma chan doan Speaking tu phieu diem chi tiet vao reportModel.
+
+## 01/10/2026 - Tab Speaking trong app cham bai (nhanh viet-speaking-diem-yeu)
+- Them buoc 6 "Speaking" (Ket qua thanh buoc 7): nhap cho tung hoc sinh band tung tieu chi (KET 4 tieu chi, PET/FCE 5), ma chan doan theo phieu cham Speaking, phan thi yeu nhat; co xem truoc nhan xet tieng Viet.
+- Du lieu luu S.speaking[key] = {bands, evidence, weakPart, at} (cung noi luu voi Writing). File: viet/speaking-nhap.js, viet/speaking-nhap.css; sua nho trong cham-bai.js (go, state, renderSpeaking, reportModel) va cham-bai.html (tab, section, script).
+- Thuat ngu nhan xet duoc dich sang tieng Viet trong viet/speaking-chan-doan.js (bang GLOS); cau mau hoc sinh phai noi giu tieng Anh.
+- Chua co: bang quy doi band Speaking sang Scale (cho Elaine), nen the Speaking trang 1 ghi "Scale conversion pending" va chua tinh vao Overall.

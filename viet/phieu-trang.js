@@ -141,7 +141,7 @@
     var T0 = THEME[m.level], D = m.diagnosis;
     var gap = m.skills.map(function (sk) {
       var t = T0.skill[sk.id];
-      if (sk.empty || sk.scale == null) return '<tr><td><i style="background:' + t.ink + '"></i>' + esc(sk.name) + '</td><td><b>-</b></td><td colspan="2" style="color:#6B7280">Not graded yet</td></tr>';
+      if (sk.empty || sk.scale == null) return '<tr><td><i style="background:' + t.ink + '"></i>' + esc(sk.name) + '</td><td><b>-</b></td><td colspan="2" style="color:#6B7280">' + esc(sk.emptyNote || 'Not graded yet') + '</td></tr>';
       var nx = nextGrade(m.level, sk.scale), need = nx ? nx[0] - sk.scale : 0;
       return '<tr><td><i style="background:' + t.ink + '"></i>' + esc(sk.name) + '</td><td><b>' + sk.scale + '</b></td><td>' + gradeBadge(m.level, sk.scale) + '</td><td>' + (nx ? '<span class="pt-need" style="background:' + t.bg + ';color:' + t.ink + '">+' + need + '</span> to Grade ' + nx[1] : 'Top grade reached') + '</td></tr>';
     }).join('');

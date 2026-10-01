@@ -1,0 +1,9 @@
+.sp-form h3 { margin: 0 0 10px; } .sp-form h3 small { color: var(--muted); font-weight: 400; }
+.sp-crit { border: 1px solid #E3E7ED; border-radius: 10px; margin: 0 0 12px; padding: 10px 12px; }
+.sp-crit legend { font-weight: 600; padding: 0 6px; }
+.sp-band { margin-bottom: 8px; }
+.sp-subs { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px 12px; }
+.sp-sub { display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.sp-sub span { color: var(--muted); }
+.sp-form select { width: 100%; padding: 6px 8px; font-size: 14px; }
+.sp-prev .notice { margin-top: 6px; } .sp-prev p { margin: 4px 0; } .sp-prev ul { margin: 4px 0 4px 18px; padding: 0; }

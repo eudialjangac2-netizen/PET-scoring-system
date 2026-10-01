@@ -100,7 +100,7 @@
     document.querySelectorAll('section.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
     document.querySelectorAll('[data-go]').forEach(b => b.setAttribute('aria-current', b.dataset.go === v));
     $('#dock').hidden = v !== 'scan';
-    ({ scan: renderScan, review: renderReview, write: renderWrite, writing: renderWriting, export: renderExport })[v]?.();
+    ({ scan: renderScan, review: renderReview, write: renderWrite, writing: renderWriting, speaking: renderSpeaking, export: renderExport })[v]?.();
     window.scrollTo(0, 0);
   }
 
@@ -265,8 +265,8 @@
     if ((KEY.level || t.level) !== R.level) { alert(`Đề ${t.title} là đề ${KEY.level}, lớp này học ${R.level}.`); return; }
     lsSet('omr-last', { test: tid, cls });
     const id = `s2:${tid}:${cls}`;
-    S = (await idb.get(id)) || { id, test: tid, testTitle: t.title, level: R.level, cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {} };
-    S.comments = S.comments || {}; S.writing = S.writing || {};
+    S = (await idb.get(id)) || { id, test: tid, testTitle: t.title, level: R.level, cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {} };
+    S.comments = S.comments || {}; S.writing = S.writing || {}; S.speaking = S.speaking || {};
     document.documentElement.style.setProperty('--ruby', LV[S.level].mau);
     $('#ctx').textContent = `${t.title} · ${cls}`;
     go('scan');
@@ -758,6 +758,13 @@
     renderWritingTable();
   }
 
+  // ---------- Speaking (band, mã chẩn đoán, part yếu nhất; viet/speaking-nhap.js) ----------
+  function renderSpeaking() {
+    S.speaking = S.speaking || {};
+    window.SpeakingEntry.mount({ root: $('#spBox'), level: S.level, students: students(), data: S.speaking,
+      onSave: (key, v) => { if (v) S.speaking[key] = v; else delete S.speaking[key]; save(); } });
+  }
+
   // ---------- kết quả & xuất file ----------
   function warnings() {
     const w = [];
@@ -946,7 +953,8 @@
     if (wr) skills.push({ id: 'writing', name: 'Writing', raw: wr.total.raw, max: wr.total.raw_max, scale: wr.total.cambridge_scale ?? null, est: !!wr.total.is_estimate, d: null,
       parts: wr.parts.map(p => ({ name: 'Part ' + p.part, v: p.raw, n: p.raw_max, d: null })) });
     else skills.push({ id: 'writing', name: 'Writing', empty: true, scale: null, emptyNote: 'No score yet', emptyVi: 'Chưa có bài Writing' });
-    skills.push({ id: 'speaking', name: 'Speaking', empty: true, scale: null, emptyNote: 'Not graded yet', emptyVi: 'Chưa có điểm Speaking' });
+    const spk = (S.speaking || {})[r.s.key] || null;
+    skills.push({ id: 'speaking', name: 'Speaking', empty: true, scale: null, emptyNote: spk ? 'Scale conversion pending' : 'Not graded yet', emptyVi: spk ? 'Đã nhập band, chờ bảng quy đổi điểm' : 'Chưa có điểm Speaking' });
     const sc = skills.filter(s => s.scale != null).map(s => s.scale);
     const ov = sc.length ? Math.round(sc.reduce((a, b) => a + b, 0) / sc.length) : null;
     const s1 = {}; skills.forEach(s => { s1[s.id] = s.scale; });
@@ -995,7 +1003,8 @@
       skills, overall: { scale: ov, d: null, partial: sc.length < skills.length },
       history: [{ label: 'Mock 1', s: s1, overall: ov }],
       comment: clip(S_comment(r), LIMIT_CM), priorities: S_prior(r).map(x => clip(x, LIMIT_PR)),
-      diagnosis: { causes: causes.slice(0, 4), writingGroups, habits, wrong }
+      diagnosis: { causes: causes.slice(0, 4), writingGroups, habits, wrong },
+      speaking: spk
     };
     return m;
   }
@@ -1147,7 +1156,7 @@
   async function clearSession() {
     if (!confirm(`Xoá toàn bộ phiếu đã chụp của ${S.testTitle} – ${S.cls}? Không thể hoàn tác.`)) return;
     await idb.del(S.id);
-    S = { id: S.id, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {} };
+    S = { id: S.id, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {} };
     go('scan');
   }
 
