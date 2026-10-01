@@ -66,3 +66,11 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 - Du lieu luu S.speaking[key] = {bands, evidence, weakPart, at} (cung noi luu voi Writing). File: viet/speaking-nhap.js, viet/speaking-nhap.css; sua nho trong cham-bai.js (go, state, renderSpeaking, reportModel) va cham-bai.html (tab, section, script).
 - Thuat ngu nhan xet duoc dich sang tieng Viet trong viet/speaking-chan-doan.js (bang GLOS); cau mau hoc sinh phai noi giu tieng Anh.
 - Chua co: bang quy doi band Speaking sang Scale (cho Elaine), nen the Speaking trang 1 ghi "Scale conversion pending" va chua tinh vao Overall.
+
+## Speaking: quét phiếu chấm bằng OMR + bảng quy đổi điểm
+- Phiếu chấm Speaking (PET/KET/FCE) quét như Reading/Listening: loại trang 8/9/10 trong `omr-template.json` (pages `PET-speaking`, `KET-speaking`, `FCE-speaking`), mã học sinh 6 cột riêng từng trang.
+- `viet/speaking-quet.js` đổi kết quả tô thành band + mã chẩn đoán + part yếu; `cham-bai.js` có `recordSpeaking`. Không tìm thấy học sinh thì báo lỗi, không lưu; ô cần xem lại được gắn cờ ở bước 6.
+- `omr-engine.js` (file của Uyên) được sửa nhẹ: bán kính ô tô theo `ring_mm`, `shift_mm` và `marked_cov` riêng từng trang, dòng nhiều ô tô (multi) mượn độ lệch từ dòng đơn gần nhất. Reading/Listening không đổi (giá trị mặc định cũ).
+- `viet/speaking-quy-doi.js`: bảng quy đổi điểm thô -> Scale (KET 0-45, PET 0-30 bước 0.5, FCE 0-60); Speaking vào Overall, Excel/CSV có cột Speaking.
+- Phiếu chấm và form nhập dùng nhãn tiếng Anh; chỉ phiếu báo điểm dùng tiếng Việt.
+- Đã test trên ảnh giả lập từ PDF thật (xoay +-4.5 độ, thu nhỏ, làm mờ): 0 lỗi. Chưa test ảnh chụp điện thoại thật.

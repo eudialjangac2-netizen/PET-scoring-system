@@ -40,7 +40,7 @@
     function table() {
       var rows = o.students.map(function (s, i) {
         var d = o.data[s.key];
-        return '<tr class="' + (d ? '' : 'missing') + '"><td class="num">' + (i + 1) + '</td><td>' + esc(s.code) + '</td><td>' + esc(s.name) + '</td><td>' + (d ? (done(s) ? 'Đã nhập' : 'Nhập dở') : 'Chưa có') + '</td>'
+        return '<tr class="' + (d ? '' : 'missing') + '"><td class="num">' + (i + 1) + '</td><td>' + esc(s.code) + '</td><td>' + esc(s.name) + '</td><td>' + (d ? (done(s) ? (d.scan ? 'Đã quét' : 'Đã nhập') + (d.flags && d.flags.length ? ' - xem lại' : '') : 'Thiếu band') : 'Chưa có') + '</td>'
           + '<td><button class="btn small" data-sp="' + esc(s.key) + '">' + (d ? 'Sửa' : 'Nhập') + '</button>' + (d ? ' <button class="btn small" data-spdel="' + esc(s.key) + '">Xoá</button>' : '') + '</td></tr>';
       }).join('');
       return '<div class="tablewrap"><table><thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Speaking</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';

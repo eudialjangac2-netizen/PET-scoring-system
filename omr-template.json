@@ -49,7 +49,10 @@
    "4": "KET-listening",
    "5": "FCE-reading-1",
    "6": "FCE-reading-2",
-   "7": "FCE-listening"
+   "7": "FCE-listening",
+   "8": "PET-speaking",
+   "9": "KET-speaking",
+   "10": "FCE-speaking"
   }
  },
  "student_code": [
@@ -5564,6 +5567,3164 @@
     }
    ],
    "skill": "listening"
+  },
+  "PET-speaking": {
+   "type_id": 8,
+   "level": "PET",
+   "title": "Speaking",
+   "questions": [
+    {
+     "q": 1,
+     "part": 1,
+     "type": "mcq",
+     "code": "BAND-GV",
+     "multi": false,
+     "options": [
+      {
+       "label": "1",
+       "x": 152.0,
+       "y": 107.8
+      },
+      {
+       "label": "2",
+       "x": 158.6,
+       "y": 107.8
+      },
+      {
+       "label": "3",
+       "x": 165.2,
+       "y": 107.8
+      },
+      {
+       "label": "4",
+       "x": 171.8,
+       "y": 107.8
+      },
+      {
+       "label": "5",
+       "x": 178.4,
+       "y": 107.8
+      }
+     ]
+    },
+    {
+     "q": 2,
+     "part": 1,
+     "type": "mcq",
+     "code": "G-S",
+     "row": "G-S Simple control",
+     "multi": false,
+     "options": [
+      {
+       "label": "secure",
+       "x": 71.5,
+       "y": 114.8
+      },
+      {
+       "label": "developing",
+       "x": 111.2,
+       "y": 114.8
+      },
+      {
+       "label": "priority",
+       "x": 150.8,
+       "y": 114.8
+      }
+     ]
+    },
+    {
+     "q": 3,
+     "part": 1,
+     "type": "mcq",
+     "code": "G-C",
+     "row": "G-C Complex evidence",
+     "multi": true,
+     "options": [
+      {
+       "label": "TC",
+       "x": 71.5,
+       "y": 120.5
+      },
+      {
+       "label": "REL",
+       "x": 91.3,
+       "y": 120.5
+      },
+      {
+       "label": "COND",
+       "x": 111.2,
+       "y": 120.5
+      },
+      {
+       "label": "MOD",
+       "x": 131.0,
+       "y": 120.5
+      },
+      {
+       "label": "SUB",
+       "x": 150.8,
+       "y": 120.5
+      },
+      {
+       "label": "other",
+       "x": 170.7,
+       "y": 120.5
+      }
+     ]
+    },
+    {
+     "q": 4,
+     "part": 1,
+     "type": "mcq",
+     "code": "G-R",
+     "row": "G-R Recurring error",
+     "multi": true,
+     "options": [
+      {
+       "label": "tense",
+       "x": 71.5,
+       "y": 126.2
+      },
+      {
+       "label": "agreement",
+       "x": 91.3,
+       "y": 126.2
+      },
+      {
+       "label": "articles",
+       "x": 111.2,
+       "y": 126.2
+      },
+      {
+       "label": "prepositions",
+       "x": 131.0,
+       "y": 126.2
+      },
+      {
+       "label": "word order",
+       "x": 150.8,
+       "y": 126.2
+      },
+      {
+       "label": "other",
+       "x": 170.7,
+       "y": 126.2
+      }
+     ]
+    },
+    {
+     "q": 5,
+     "part": 1,
+     "type": "mcq",
+     "code": "V-R",
+     "row": "V-R Range",
+     "multi": false,
+     "options": [
+      {
+       "label": "strong",
+       "x": 71.5,
+       "y": 131.9
+      },
+      {
+       "label": "adequate",
+       "x": 111.2,
+       "y": 131.9
+      },
+      {
+       "label": "limited",
+       "x": 150.8,
+       "y": 131.9
+      }
+     ]
+    },
+    {
+     "q": 6,
+     "part": 1,
+     "type": "mcq",
+     "code": "V-A",
+     "row": "V-A Appropriacy",
+     "multi": false,
+     "options": [
+      {
+       "label": "appropriate",
+       "x": 71.5,
+       "y": 137.6
+      },
+      {
+       "label": "mixed/inconsistent",
+       "x": 111.2,
+       "y": 137.6
+      },
+      {
+       "label": "frequent issues",
+       "x": 150.8,
+       "y": 137.6
+      }
+     ]
+    },
+    {
+     "q": 7,
+     "part": 2,
+     "type": "mcq",
+     "code": "BAND-DM",
+     "multi": false,
+     "options": [
+      {
+       "label": "1",
+       "x": 152.0,
+       "y": 146.0
+      },
+      {
+       "label": "2",
+       "x": 158.6,
+       "y": 146.0
+      },
+      {
+       "label": "3",
+       "x": 165.2,
+       "y": 146.0
+      },
+      {
+       "label": "4",
+       "x": 171.8,
+       "y": 146.0
+      },
+      {
+       "label": "5",
+       "x": 178.4,
+       "y": 146.0
+      }
+     ]
+    },
+    {
+     "q": 8,
+     "part": 2,
+     "type": "mcq",
+     "code": "DM-E",
+     "row": "DM-E Extent",
+     "multi": false,
+     "options": [
+      {
+       "label": "sustained",
+       "x": 71.5,
+       "y": 153.0
+      },
+      {
+       "label": "developed",
+       "x": 111.2,
+       "y": 153.0
+      },
+      {
+       "label": "mostly short",
+       "x": 150.8,
+       "y": 153.0
+      }
+     ]
+    },
+    {
+     "q": 9,
+     "part": 2,
+     "type": "mcq",
+     "code": "DM-D/R",
+     "row": "DM-D/R Develop. / relevance",
+     "multi": false,
+     "options": [
+      {
+       "label": "strong",
+       "x": 71.5,
+       "y": 158.7
+      },
+      {
+       "label": "adequate",
+       "x": 111.2,
+       "y": 158.7
+      },
+      {
+       "label": "limited / repetitive",
+       "x": 150.8,
+       "y": 158.7
+      }
+     ]
+    },
+    {
+     "q": 10,
+     "part": 2,
+     "type": "mcq",
+     "code": "DM-C",
+     "row": "DM-C Cohesion",
+     "multi": false,
+     "options": [
+      {
+       "label": "varied links",
+       "x": 71.5,
+       "y": 164.4
+      },
+      {
+       "label": "basic links",
+       "x": 111.2,
+       "y": 164.4
+      },
+      {
+       "label": "weak / isolated",
+       "x": 150.8,
+       "y": 164.4
+      }
+     ]
+    },
+    {
+     "q": 11,
+     "part": 2,
+     "type": "mcq",
+     "code": "DM-H",
+     "row": "DM-H Hesitation",
+     "multi": false,
+     "options": [
+      {
+       "label": "little impact",
+       "x": 71.5,
+       "y": 170.1
+      },
+      {
+       "label": "some impact",
+       "x": 111.2,
+       "y": 170.1
+      },
+      {
+       "label": "disrupts ideas",
+       "x": 150.8,
+       "y": 170.1
+      }
+     ]
+    },
+    {
+     "q": 12,
+     "part": 3,
+     "type": "mcq",
+     "code": "BAND-P",
+     "multi": false,
+     "options": [
+      {
+       "label": "1",
+       "x": 152.0,
+       "y": 178.5
+      },
+      {
+       "label": "2",
+       "x": 158.6,
+       "y": 178.5
+      },
+      {
+       "label": "3",
+       "x": 165.2,
+       "y": 178.5
+      },
+      {
+       "label": "4",
+       "x": 171.8,
+       "y": 178.5
+      },
+      {
+       "label": "5",
+       "x": 178.4,
+       "y": 178.5
+      }
+     ]
+    },
+    {
+     "q": 13,
+     "part": 3,
+     "type": "mcq",
+     "code": "P-I",
+     "row": "P-I Intelligibility",
+     "multi": false,
+     "options": [
+      {
+       "label": "clear / easy",
+       "x": 71.5,
+       "y": 185.5
+      },
+      {
+       "label": "mostly clear",
+       "x": 111.2,
+       "y": 185.5
+      },
+      {
+       "label": "effortful",
+       "x": 150.8,
+       "y": 185.5
+      }
+     ]
+    },
+    {
+     "q": 14,
+     "part": 3,
+     "type": "mcq",
+     "code": "P-W",
+     "row": "P-W Word stress",
+     "multi": false,
+     "options": [
+      {
+       "label": "accurate",
+       "x": 71.5,
+       "y": 191.1
+      },
+      {
+       "label": "some errors",
+       "x": 111.2,
+       "y": 191.1
+      },
+      {
+       "label": "frequent errors",
+       "x": 150.8,
+       "y": 191.1
+      }
+     ]
+    },
+    {
+     "q": 15,
+     "part": 3,
+     "type": "mcq",
+     "code": "P-S/IN",
+     "row": "P-S/IN Sentence stress & intonation",
+     "multi": false,
+     "options": [
+      {
+       "label": "effective",
+       "x": 71.5,
+       "y": 196.8
+      },
+      {
+       "label": "some control",
+       "x": 111.2,
+       "y": 196.8
+      },
+      {
+       "label": "limited",
+       "x": 150.8,
+       "y": 196.8
+      }
+     ]
+    },
+    {
+     "q": 16,
+     "part": 3,
+     "type": "mcq",
+     "code": "P-SND",
+     "row": "P-SND Individual sounds",
+     "multi": false,
+     "options": [
+      {
+       "label": "generally clear",
+       "x": 71.5,
+       "y": 202.5
+      },
+      {
+       "label": "occasional issues",
+       "x": 111.2,
+       "y": 202.5
+      },
+      {
+       "label": "recurring issues",
+       "x": 150.8,
+       "y": 202.5
+      }
+     ]
+    },
+    {
+     "q": 17,
+     "part": 4,
+     "type": "mcq",
+     "code": "BAND-IC",
+     "multi": false,
+     "options": [
+      {
+       "label": "1",
+       "x": 152.0,
+       "y": 210.9
+      },
+      {
+       "label": "2",
+       "x": 158.6,
+       "y": 210.9
+      },
+      {
+       "label": "3",
+       "x": 165.2,
+       "y": 210.9
+      },
+      {
+       "label": "4",
+       "x": 171.8,
+       "y": 210.9
+      },
+      {
+       "label": "5",
+       "x": 178.4,
+       "y": 210.9
+      }
+     ]
+    },
+    {
+     "q": 18,
+     "part": 4,
+     "type": "mcq",
+     "code": "IC",
+     "row": "IC Observed",
+     "multi": true,
+     "options": [
+      {
+       "label": "I initiate",
+       "x": 71.5,
+       "y": 217.9
+      },
+      {
+       "label": "R respond",
+       "x": 95.3,
+       "y": 217.9
+      },
+      {
+       "label": "D develop",
+       "x": 119.1,
+       "y": 217.9
+      },
+      {
+       "label": "Q invite",
+       "x": 142.9,
+       "y": 217.9
+      },
+      {
+       "label": "N negotiate",
+       "x": 166.7,
+       "y": 217.9
+      }
+     ]
+    },
+    {
+     "q": 19,
+     "part": 4,
+     "type": "mcq",
+     "code": "Independence",
+     "row": "Independence",
+     "multi": false,
+     "options": [
+      {
+       "label": "independent",
+       "x": 71.5,
+       "y": 223.6
+      },
+      {
+       "label": "occasional support",
+       "x": 111.2,
+       "y": 223.6
+      },
+      {
+       "label": "frequent support",
+       "x": 150.8,
+       "y": 223.6
+      }
+     ]
+    },
+    {
+     "q": 20,
+     "part": 4,
+     "type": "mcq",
+     "code": "Interaction quality",
+     "row": "Interaction quality",
+     "multi": false,
+     "options": [
+      {
+       "label": "develops exchange",
+       "x": 71.5,
+       "y": 229.3
+      },
+      {
+       "label": "keeps it going",
+       "x": 111.2,
+       "y": 229.3
+      },
+      {
+       "label": "mostly reactive",
+       "x": 150.8,
+       "y": 229.3
+      }
+     ]
+    },
+    {
+     "q": 21,
+     "part": 5,
+     "type": "mcq",
+     "code": "BAND-GA",
+     "multi": false,
+     "options": [
+      {
+       "label": "1",
+       "x": 152.0,
+       "y": 237.7
+      },
+      {
+       "label": "2",
+       "x": 158.6,
+       "y": 237.7
+      },
+      {
+       "label": "3",
+       "x": 165.2,
+       "y": 237.7
+      },
+      {
+       "label": "4",
+       "x": 171.8,
+       "y": 237.7
+      },
+      {
+       "label": "5",
+       "x": 178.4,
+       "y": 237.7
+      }
+     ]
+    },
+    {
+     "q": 22,
+     "part": 5,
+     "type": "mcq",
+     "code": "Whole-test handling",
+     "row": "Whole-test handling",
+     "multi": false,
+     "options": [
+      {
+       "label": "independent",
+       "x": 71.5,
+       "y": 244.7
+      },
+      {
+       "label": "generally successful",
+       "x": 111.2,
+       "y": 244.7
+      },
+      {
+       "label": "inconsistent / support needed",
+       "x": 150.8,
+       "y": 244.7
+      }
+     ]
+    },
+    {
+     "q": 23,
+     "part": 5,
+     "type": "mcq",
+     "code": "Extended communication",
+     "row": "Extended communication",
+     "multi": false,
+     "options": [
+      {
+       "label": "sustained",
+       "x": 71.5,
+       "y": 250.4
+      },
+      {
+       "label": "adequate",
+       "x": 111.2,
+       "y": 250.4
+      },
+      {
+       "label": "difficult to maintain",
+       "x": 150.8,
+       "y": 250.4
+      }
+     ]
+    },
+    {
+     "q": 24,
+     "part": 5,
+     "type": "mcq",
+     "code": "Notably weak part",
+     "row": "Notably weak part",
+     "multi": true,
+     "options": [
+      {
+       "label": "P1",
+       "x": 71.5,
+       "y": 256.1
+      },
+      {
+       "label": "P2",
+       "x": 95.3,
+       "y": 256.1
+      },
+      {
+       "label": "P3",
+       "x": 119.1,
+       "y": 256.1
+      },
+      {
+       "label": "P4",
+       "x": 142.9,
+       "y": 256.1
+      },
+      {
+       "label": "none",
+       "x": 166.7,
+       "y": 256.1
+      }
+     ]
+    }
+   ],
+   "blocks": [
+    {
+     "part": 1,
+     "qs": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ]
+    },
+    {
+     "part": 2,
+     "qs": [
+      7,
+      8,
+      9,
+      10,
+      11
+     ]
+    },
+    {
+     "part": 3,
+     "qs": [
+      12,
+      13,
+      14,
+      15,
+      16
+     ]
+    },
+    {
+     "part": 4,
+     "qs": [
+      17,
+      18,
+      19,
+      20
+     ]
+    },
+    {
+     "part": 5,
+     "qs": [
+      21,
+      22,
+      23,
+      24
+     ]
+    }
+   ],
+   "student_code": [
+    [
+     [
+      136.5,
+      54.8
+     ],
+     [
+      136.5,
+      59.0
+     ],
+     [
+      136.5,
+      63.2
+     ],
+     [
+      136.5,
+      67.4
+     ],
+     [
+      136.5,
+      71.6
+     ],
+     [
+      136.5,
+      75.8
+     ],
+     [
+      136.5,
+      80.0
+     ],
+     [
+      136.5,
+      84.2
+     ],
+     [
+      136.5,
+      88.4
+     ],
+     [
+      136.5,
+      92.6
+     ]
+    ],
+    [
+     [
+      144.7,
+      54.8
+     ],
+     [
+      144.7,
+      59.0
+     ],
+     [
+      144.7,
+      63.2
+     ],
+     [
+      144.7,
+      67.4
+     ],
+     [
+      144.7,
+      71.6
+     ],
+     [
+      144.7,
+      75.8
+     ],
+     [
+      144.7,
+      80.0
+     ],
+     [
+      144.7,
+      84.2
+     ],
+     [
+      144.7,
+      88.4
+     ],
+     [
+      144.7,
+      92.6
+     ]
+    ],
+    [
+     [
+      152.9,
+      54.8
+     ],
+     [
+      152.9,
+      59.0
+     ],
+     [
+      152.9,
+      63.2
+     ],
+     [
+      152.9,
+      67.4
+     ],
+     [
+      152.9,
+      71.6
+     ],
+     [
+      152.9,
+      75.8
+     ],
+     [
+      152.9,
+      80.0
+     ],
+     [
+      152.9,
+      84.2
+     ],
+     [
+      152.9,
+      88.4
+     ],
+     [
+      152.9,
+      92.6
+     ]
+    ],
+    [
+     [
+      161.1,
+      54.8
+     ],
+     [
+      161.1,
+      59.0
+     ],
+     [
+      161.1,
+      63.2
+     ],
+     [
+      161.1,
+      67.4
+     ],
+     [
+      161.1,
+      71.6
+     ],
+     [
+      161.1,
+      75.8
+     ],
+     [
+      161.1,
+      80.0
+     ],
+     [
+      161.1,
+      84.2
+     ],
+     [
+      161.1,
+      88.4
+     ],
+     [
+      161.1,
+      92.6
+     ]
+    ],
+    [
+     [
+      169.3,
+      54.8
+     ],
+     [
+      169.3,
+      59.0
+     ],
+     [
+      169.3,
+      63.2
+     ],
+     [
+      169.3,
+      67.4
+     ],
+     [
+      169.3,
+      71.6
+     ],
+     [
+      169.3,
+      75.8
+     ],
+     [
+      169.3,
+      80.0
+     ],
+     [
+      169.3,
+      84.2
+     ],
+     [
+      169.3,
+      88.4
+     ],
+     [
+      169.3,
+      92.6
+     ]
+    ],
+    [
+     [
+      177.5,
+      54.8
+     ],
+     [
+      177.5,
+      59.0
+     ],
+     [
+      177.5,
+      63.2
+     ],
+     [
+      177.5,
+      67.4
+     ],
+     [
+      177.5,
+      71.6
+     ],
+     [
+      177.5,
+      75.8
+     ],
+     [
+      177.5,
+      80.0
+     ],
+     [
+      177.5,
+      84.2
+     ],
+     [
+      177.5,
+      88.4
+     ],
+     [
+      177.5,
+      92.6
+     ]
+    ]
+   ],
+   "code_boxes": [
+    {
+     "x": 133.3,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 141.5,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 149.7,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 157.9,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 166.1,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 174.3,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    }
+   ],
+   "ring_mm": 1.5,
+   "skill": "speaking",
+   "shift_mm": 2.5,
+   "marked_cov": 0.22
+  },
+  "KET-speaking": {
+   "type_id": 9,
+   "level": "KET",
+   "title": "Speaking",
+   "questions": [
+    {
+     "q": 1,
+     "part": 1,
+     "type": "mcq",
+     "code": "BAND-GV",
+     "multi": false,
+     "options": [
+      {
+       "label": "1",
+       "x": 152.0,
+       "y": 108.0
+      },
+      {
+       "label": "2",
+       "x": 158.6,
+       "y": 108.0
+      },
+      {
+       "label": "3",
+       "x": 165.2,
+       "y": 108.0
+      },
+      {
+       "label": "4",
+       "x": 171.8,
+       "y": 108.0
+      },
+      {
+       "label": "5",
+       "x": 178.4,
+       "y": 108.0
+      }
+     ]
+    },
+    {
+     "q": 2,
+     "part": 1,
+     "type": "mcq",
+     "code": "G-S",
+     "row": "G-S Simple control",
+     "multi": false,
+     "options": [
+      {
+       "label": "secure",
+       "x": 71.5,
+       "y": 115.4
+      },
+      {
+       "label": "developing",
+       "x": 111.2,
+       "y": 115.4
+      },
+      {
+       "label": "priority",
+       "x": 150.8,
+       "y": 115.4
+      }
+     ]
+    },
+    {
+     "q": 3,
+     "part": 1,
+     "type": "mcq",
+     "code": "G-R",
+     "row": "G-R Recurring error",
+     "multi": true,
+     "options": [
+      {
+       "label": "tense",
+       "x": 71.5,
+       "y": 123.2
+      },
+      {
+       "label": "agreement",
+       "x": 83.6,
+       "y": 123.2
+      },
+      {
+       "label": "articles",
+       "x": 102.5,
+       "y": 123.2
+      },
+      {
+       "label": "prepositions",
+       "x": 116.8,
+       "y": 123.2
+      },
+      {
+       "label": "word order",
+       "x": 137.3,
+       "y": 123.2
+      },
+      {
+       "label": "question form",
+       "x": 156.1,
+       "y": 123.2
+      },
+      {
+       "label": "other",
+       "x": 178.6,
+       "y": 123.2
+      }
+     ]
+    },
+    {
+     "q": 4,
+     "part": 1,
+     "type": "mcq",
+     "code": "V-R",
+     "row": "V-R Range",
+     "multi": false,
+     "options": [
+      {
+       "label": "strong",
+       "x": 71.5,
+       "y": 131.0
+      },
+      {
+       "label": "adequate",
+       "x": 111.2,
+       "y": 131.0
+      },
+      {
+       "label": "limited",
+       "x": 150.8,
+       "y": 131.0
+      }
+     ]
+    },
+    {
+     "q": 5,
+     "part": 1,
+     "type": "mcq",
+     "code": "V-A",
+     "row": "V-A Appropriacy",
+     "multi": false,
+     "options": [
+      {
+       "label": "appropriate",
+       "x": 71.5,
+       "y": 138.8
+      },
+      {
+       "label": "mixed / inconsistent",
+       "x": 111.2,
+       "y": 138.8
+      },
+      {
+       "label": "frequent issues",
+       "x": 150.8,
+       "y": 138.8
+      }
+     ]
+    },
+    {
+     "q": 6,
+     "part": 2,
+     "type": "mcq",
+     "code": "BAND-P",
+     "multi": false,
+     "options": [
+      {
+       "label": "1",
+       "x": 152.0,
+       "y": 147.8
+      },
+      {
+       "label": "2",
+       "x": 158.6,
+       "y": 147.8
+      },
+      {
+       "label": "3",
+       "x": 165.2,
+       "y": 147.8
+      },
+      {
+       "label": "4",
+       "x": 171.8,
+       "y": 147.8
+      },
+      {
+       "label": "5",
+       "x": 178.4,
+       "y": 147.8
+      }
+     ]
+    },
+    {
+     "q": 7,
+     "part": 2,
+     "type": "mcq",
+     "code": "P-I",
+     "row": "P-I Intelligibility",
+     "multi": false,
+     "options": [
+      {
+       "label": "clear / easy",
+       "x": 71.5,
+       "y": 155.2
+      },
+      {
+       "label": "mostly clear",
+       "x": 111.2,
+       "y": 155.2
+      },
+      {
+       "label": "effortful",
+       "x": 150.8,
+       "y": 155.2
+      }
+     ]
+    },
+    {
+     "q": 8,
+     "part": 2,
+     "type": "mcq",
+     "code": "P-W",
+     "row": "P-W Word stress",
+     "multi": false,
+     "options": [
+      {
+       "label": "mostly accurate",
+       "x": 71.5,
+       "y": 163.0
+      },
+      {
+       "label": "some errors",
+       "x": 111.2,
+       "y": 163.0
+      },
+      {
+       "label": "frequent errors",
+       "x": 150.8,
+       "y": 163.0
+      }
+     ]
+    },
+    {
+     "q": 9,
+     "part": 2,
+     "type": "mcq",
+     "code": "P-S/IN",
+     "row": "P-S/IN Stress & intonation",
+     "multi": false,
+     "options": [
+      {
+       "label": "some effective control",
+       "x": 71.5,
+       "y": 170.8
+      },
+      {
+       "label": "limited but useful",
+       "x": 111.2,
+       "y": 170.8
+      },
+      {
+       "label": "very limited",
+       "x": 150.8,
+       "y": 170.8
+      }
+     ]
+    },
+    {
+     "q": 10,
+     "part": 2,
+     "type": "mcq",
+     "code": "P-SND",
+     "row": "P-SND Individual sounds",
+     "multi": false,
+     "options": [
+      {
+       "label": "generally clear",
+       "x": 71.5,
+       "y": 178.6
+      },
+      {
+       "label": "occasional issues",
+       "x": 111.2,
+       "y": 178.6
+      },
+      {
+       "label": "recurring issues",
+       "x": 150.8,
+       "y": 178.6
+      }
+     ]
+    },
+    {
+     "q": 11,
+     "part": 3,
+     "type": "mcq",
+     "code": "BAND-IC",
+     "multi": false,
+     "options": [
+      {
+       "label": "1",
+       "x": 152.0,
+       "y": 187.6
+      },
+      {
+       "label": "2",
+       "x": 158.6,
+       "y": 187.6
+      },
+      {
+       "label": "3",
+       "x": 165.2,
+       "y": 187.6
+      },
+      {
+       "label": "4",
+       "x": 171.8,
+       "y": 187.6
+      },
+      {
+       "label": "5",
+       "x": 178.4,
+       "y": 187.6
+      }
+     ]
+    },
+    {
+     "q": 12,
+     "part": 3,
+     "type": "mcq",
+     "code": "IC",
+     "row": "IC Observed",
+     "multi": true,
+     "options": [
+      {
+       "label": "I initiate",
+       "x": 71.5,
+       "y": 195.0
+      },
+      {
+       "label": "R respond",
+       "x": 95.4,
+       "y": 195.0
+      },
+      {
+       "label": "A add",
+       "x": 121.6,
+       "y": 195.0
+      },
+      {
+       "label": "Q ask",
+       "x": 142.5,
+       "y": 195.0
+      },
+      {
+       "label": "F follow-up",
+       "x": 163.2,
+       "y": 195.0
+      }
+     ]
+    },
+    {
+     "q": 13,
+     "part": 3,
+     "type": "mcq",
+     "code": "Support / independence",
+     "row": "Support / independence",
+     "multi": false,
+     "options": [
+      {
+       "label": "very little support",
+       "x": 71.5,
+       "y": 202.8
+      },
+      {
+       "label": "some support",
+       "x": 111.2,
+       "y": 202.8
+      },
+      {
+       "label": "frequent / additional support",
+       "x": 150.8,
+       "y": 202.8
+      }
+     ]
+    },
+    {
+     "q": 14,
+     "part": 3,
+     "type": "mcq",
+     "code": "Exchange quality",
+     "row": "Exchange quality",
+     "multi": false,
+     "options": [
+      {
+       "label": "maintains naturally",
+       "x": 71.5,
+       "y": 210.6
+      },
+      {
+       "label": "keeps exchange going",
+       "x": 111.2,
+       "y": 210.6
+      },
+      {
+       "label": "mostly reactive / difficult",
+       "x": 150.8,
+       "y": 210.6
+      }
+     ]
+    },
+    {
+     "q": 15,
+     "part": 4,
+     "type": "mcq",
+     "code": "BAND-GA",
+     "multi": false,
+     "options": [
+      {
+       "label": "1",
+       "x": 152.0,
+       "y": 219.6
+      },
+      {
+       "label": "2",
+       "x": 158.6,
+       "y": 219.6
+      },
+      {
+       "label": "3",
+       "x": 165.2,
+       "y": 219.6
+      },
+      {
+       "label": "4",
+       "x": 171.8,
+       "y": 219.6
+      },
+      {
+       "label": "5",
+       "x": 178.4,
+       "y": 219.6
+      }
+     ]
+    },
+    {
+     "q": 16,
+     "part": 4,
+     "type": "mcq",
+     "code": "GA-WH",
+     "row": "GA-WH Whole-test handling",
+     "multi": false,
+     "options": [
+      {
+       "label": "effective / independent",
+       "x": 71.5,
+       "y": 227.0
+      },
+      {
+       "label": "basic but successful",
+       "x": 111.2,
+       "y": 227.0
+      },
+      {
+       "label": "inconsistent / support needed",
+       "x": 150.8,
+       "y": 227.0
+      }
+     ]
+    },
+    {
+     "q": 17,
+     "part": 4,
+     "type": "mcq",
+     "code": "GA-L",
+     "row": "GA-L Length of response",
+     "multi": false,
+     "options": [
+      {
+       "label": "longer utterances",
+       "x": 71.5,
+       "y": 234.8
+      },
+      {
+       "label": "short sentences / phrases",
+       "x": 111.2,
+       "y": 234.8
+      },
+      {
+       "label": "isolated words / phrases",
+       "x": 150.8,
+       "y": 234.8
+      }
+     ]
+    },
+    {
+     "q": 18,
+     "part": 4,
+     "type": "mcq",
+     "code": "GA-H",
+     "row": "GA-H Hesitation",
+     "multi": false,
+     "options": [
+      {
+       "label": "manageable",
+       "x": 71.5,
+       "y": 242.6
+      },
+      {
+       "label": "frequent but message continues",
+       "x": 111.2,
+       "y": 242.6
+      },
+      {
+       "label": "blocks message",
+       "x": 150.8,
+       "y": 242.6
+      }
+     ]
+    },
+    {
+     "q": 19,
+     "part": 4,
+     "type": "mcq",
+     "code": "Notably weak part",
+     "row": "Notably weak part",
+     "multi": true,
+     "options": [
+      {
+       "label": "P1",
+       "x": 71.5,
+       "y": 250.4
+      },
+      {
+       "label": "P2",
+       "x": 111.2,
+       "y": 250.4
+      },
+      {
+       "label": "none",
+       "x": 150.8,
+       "y": 250.4
+      }
+     ]
+    }
+   ],
+   "blocks": [
+    {
+     "part": 1,
+     "qs": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ]
+    },
+    {
+     "part": 2,
+     "qs": [
+      6,
+      7,
+      8,
+      9,
+      10
+     ]
+    },
+    {
+     "part": 3,
+     "qs": [
+      11,
+      12,
+      13,
+      14
+     ]
+    },
+    {
+     "part": 4,
+     "qs": [
+      15,
+      16,
+      17,
+      18,
+      19
+     ]
+    }
+   ],
+   "student_code": [
+    [
+     [
+      136.5,
+      54.8
+     ],
+     [
+      136.5,
+      59.0
+     ],
+     [
+      136.5,
+      63.2
+     ],
+     [
+      136.5,
+      67.4
+     ],
+     [
+      136.5,
+      71.6
+     ],
+     [
+      136.5,
+      75.8
+     ],
+     [
+      136.5,
+      80.0
+     ],
+     [
+      136.5,
+      84.2
+     ],
+     [
+      136.5,
+      88.4
+     ],
+     [
+      136.5,
+      92.6
+     ]
+    ],
+    [
+     [
+      144.7,
+      54.8
+     ],
+     [
+      144.7,
+      59.0
+     ],
+     [
+      144.7,
+      63.2
+     ],
+     [
+      144.7,
+      67.4
+     ],
+     [
+      144.7,
+      71.6
+     ],
+     [
+      144.7,
+      75.8
+     ],
+     [
+      144.7,
+      80.0
+     ],
+     [
+      144.7,
+      84.2
+     ],
+     [
+      144.7,
+      88.4
+     ],
+     [
+      144.7,
+      92.6
+     ]
+    ],
+    [
+     [
+      152.9,
+      54.8
+     ],
+     [
+      152.9,
+      59.0
+     ],
+     [
+      152.9,
+      63.2
+     ],
+     [
+      152.9,
+      67.4
+     ],
+     [
+      152.9,
+      71.6
+     ],
+     [
+      152.9,
+      75.8
+     ],
+     [
+      152.9,
+      80.0
+     ],
+     [
+      152.9,
+      84.2
+     ],
+     [
+      152.9,
+      88.4
+     ],
+     [
+      152.9,
+      92.6
+     ]
+    ],
+    [
+     [
+      161.1,
+      54.8
+     ],
+     [
+      161.1,
+      59.0
+     ],
+     [
+      161.1,
+      63.2
+     ],
+     [
+      161.1,
+      67.4
+     ],
+     [
+      161.1,
+      71.6
+     ],
+     [
+      161.1,
+      75.8
+     ],
+     [
+      161.1,
+      80.0
+     ],
+     [
+      161.1,
+      84.2
+     ],
+     [
+      161.1,
+      88.4
+     ],
+     [
+      161.1,
+      92.6
+     ]
+    ],
+    [
+     [
+      169.3,
+      54.8
+     ],
+     [
+      169.3,
+      59.0
+     ],
+     [
+      169.3,
+      63.2
+     ],
+     [
+      169.3,
+      67.4
+     ],
+     [
+      169.3,
+      71.6
+     ],
+     [
+      169.3,
+      75.8
+     ],
+     [
+      169.3,
+      80.0
+     ],
+     [
+      169.3,
+      84.2
+     ],
+     [
+      169.3,
+      88.4
+     ],
+     [
+      169.3,
+      92.6
+     ]
+    ],
+    [
+     [
+      177.5,
+      54.8
+     ],
+     [
+      177.5,
+      59.0
+     ],
+     [
+      177.5,
+      63.2
+     ],
+     [
+      177.5,
+      67.4
+     ],
+     [
+      177.5,
+      71.6
+     ],
+     [
+      177.5,
+      75.8
+     ],
+     [
+      177.5,
+      80.0
+     ],
+     [
+      177.5,
+      84.2
+     ],
+     [
+      177.5,
+      88.4
+     ],
+     [
+      177.5,
+      92.6
+     ]
+    ]
+   ],
+   "code_boxes": [
+    {
+     "x": 133.3,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 141.5,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 149.7,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 157.9,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 166.1,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 174.3,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    }
+   ],
+   "ring_mm": 1.5,
+   "skill": "speaking",
+   "shift_mm": 2.5,
+   "marked_cov": 0.22
+  },
+  "FCE-speaking": {
+   "type_id": 10,
+   "level": "FCE",
+   "title": "Speaking",
+   "questions": [
+    {
+     "q": 1,
+     "part": 1,
+     "type": "mcq",
+     "code": "BAND-GV",
+     "multi": false,
+     "options": [
+      {
+       "label": "1",
+       "x": 152.0,
+       "y": 107.3
+      },
+      {
+       "label": "2",
+       "x": 158.6,
+       "y": 107.3
+      },
+      {
+       "label": "3",
+       "x": 165.2,
+       "y": 107.3
+      },
+      {
+       "label": "4",
+       "x": 171.8,
+       "y": 107.3
+      },
+      {
+       "label": "5",
+       "x": 178.4,
+       "y": 107.3
+      }
+     ]
+    },
+    {
+     "q": 2,
+     "part": 1,
+     "type": "mcq",
+     "code": "G-S",
+     "row": "G-S Simple control",
+     "multi": false,
+     "options": [
+      {
+       "label": "secure",
+       "x": 71.5,
+       "y": 113.4
+      },
+      {
+       "label": "developing",
+       "x": 111.2,
+       "y": 113.4
+      },
+      {
+       "label": "priority",
+       "x": 150.8,
+       "y": 113.4
+      }
+     ]
+    },
+    {
+     "q": 3,
+     "part": 1,
+     "type": "mcq",
+     "code": "G-C",
+     "row": "G-C Complex control",
+     "multi": false,
+     "options": [
+      {
+       "label": "varied + controlled",
+       "x": 71.5,
+       "y": 118.8
+      },
+      {
+       "label": "some successful",
+       "x": 111.2,
+       "y": 118.8
+      },
+      {
+       "label": "limited / unreliable",
+       "x": 150.8,
+       "y": 118.8
+      }
+     ]
+    },
+    {
+     "q": 4,
+     "part": 1,
+     "type": "mcq",
+     "code": "Complex evidence",
+     "row": "Complex evidence",
+     "multi": true,
+     "options": [
+      {
+       "label": "TC",
+       "x": 71.5,
+       "y": 124.2
+      },
+      {
+       "label": "REL",
+       "x": 82.2,
+       "y": 124.2
+      },
+      {
+       "label": "COND",
+       "x": 98.3,
+       "y": 124.2
+      },
+      {
+       "label": "MOD",
+       "x": 110.8,
+       "y": 124.2
+      },
+      {
+       "label": "SUB",
+       "x": 128.2,
+       "y": 124.2
+      },
+      {
+       "label": "PASS",
+       "x": 144.2,
+       "y": 124.2
+      },
+      {
+       "label": "VP",
+       "x": 169.5,
+       "y": 124.2
+      },
+      {
+       "label": "other",
+       "x": 180.0,
+       "y": 124.2
+      }
+     ]
+    },
+    {
+     "q": 5,
+     "part": 1,
+     "type": "mcq",
+     "code": "G-R",
+     "row": "G-R Recurring error",
+     "multi": true,
+     "options": [
+      {
+       "label": "tense",
+       "x": 71.5,
+       "y": 129.6
+      },
+      {
+       "label": "agreement",
+       "x": 82.2,
+       "y": 129.6
+      },
+      {
+       "label": "articles",
+       "x": 98.3,
+       "y": 129.6
+      },
+      {
+       "label": "prepositions",
+       "x": 110.8,
+       "y": 129.6
+      },
+      {
+       "label": "word order",
+       "x": 128.2,
+       "y": 129.6
+      },
+      {
+       "label": "complex breakdown",
+       "x": 144.2,
+       "y": 129.6
+      },
+      {
+       "label": "other",
+       "x": 169.5,
+       "y": 129.6
+      }
+     ]
+    },
+    {
+     "q": 6,
+     "part": 1,
+     "type": "mcq",
+     "code": "V-R",
+     "row": "V-R Range",
+     "multi": false,
+     "options": [
+      {
+       "label": "broad for familiar topics",
+       "x": 71.5,
+       "y": 135.0
+      },
+      {
+       "label": "adequate B2 range",
+       "x": 111.2,
+       "y": 135.0
+      },
+      {
+       "label": "repetitive / limited",
+       "x": 150.8,
+       "y": 135.0
+      }
+     ]
+    },
+    {
+     "q": 7,
+     "part": 1,
+     "type": "mcq",
+     "code": "V-A",
+     "row": "V-A Appropriacy",
+     "multi": false,
+     "options": [
+      {
+       "label": "precise / appropriate",
+       "x": 71.5,
+       "y": 140.5
+      },
+      {
+       "label": "generally appropriate",
+       "x": 111.2,
+       "y": 140.5
+      },
+      {
+       "label": "mixed / frequent issues",
+       "x": 150.8,
+       "y": 140.5
+      }
+     ]
+    },
+    {
+     "q": 8,
+     "part": 1,
+     "type": "mcq",
+     "code": "Lexical evidence",
+     "row": "Lexical evidence",
+     "multi": true,
+     "options": [
+      {
+       "label": "paraphrases",
+       "x": 71.5,
+       "y": 145.9
+      },
+      {
+       "label": "collocations / chunks",
+       "x": 111.2,
+       "y": 145.9
+      },
+      {
+       "label": "other",
+       "x": 150.8,
+       "y": 145.9
+      }
+     ]
+    },
+    {
+     "q": 9,
+     "part": 2,
+     "type": "mcq",
+     "code": "BAND-DM",
+     "multi": false,
+     "options": [
+      {
+       "label": "1",
+       "x": 152.0,
+       "y": 152.4
+      },
+      {
+       "label": "2",
+       "x": 158.6,
+       "y": 152.4
+      },
+      {
+       "label": "3",
+       "x": 165.2,
+       "y": 152.4
+      },
+      {
+       "label": "4",
+       "x": 171.8,
+       "y": 152.4
+      },
+      {
+       "label": "5",
+       "x": 178.4,
+       "y": 152.4
+      }
+     ]
+    },
+    {
+     "q": 10,
+     "part": 2,
+     "type": "mcq",
+     "code": "DM-E",
+     "row": "DM-E Extent",
+     "multi": false,
+     "options": [
+      {
+       "label": "sustained",
+       "x": 71.5,
+       "y": 158.5
+      },
+      {
+       "label": "extended but uneven",
+       "x": 111.2,
+       "y": 158.5
+      },
+      {
+       "label": "short / restricted",
+       "x": 150.8,
+       "y": 158.5
+      }
+     ]
+    },
+    {
+     "q": 11,
+     "part": 2,
+     "type": "mcq",
+     "code": "DM-D/R",
+     "row": "DM-D/R Develop. / relevance",
+     "multi": false,
+     "options": [
+      {
+       "label": "developed + relevant",
+       "x": 71.5,
+       "y": 163.9
+      },
+      {
+       "label": "adequate",
+       "x": 111.2,
+       "y": 163.9
+      },
+      {
+       "label": "limited / repetitive",
+       "x": 150.8,
+       "y": 163.9
+      }
+     ]
+    },
+    {
+     "q": 12,
+     "part": 2,
+     "type": "mcq",
+     "code": "Development evidence",
+     "row": "Development evidence",
+     "multi": true,
+     "options": [
+      {
+       "label": "reason / detail",
+       "x": 71.5,
+       "y": 169.3
+      },
+      {
+       "label": "example",
+       "x": 92.1,
+       "y": 169.3
+      },
+      {
+       "label": "comparison",
+       "x": 107.0,
+       "y": 169.3
+      },
+      {
+       "label": "evaluation",
+       "x": 126.7,
+       "y": 169.3
+      },
+      {
+       "label": "speculation",
+       "x": 144.4,
+       "y": 169.3
+      }
+     ]
+    },
+    {
+     "q": 13,
+     "part": 2,
+     "type": "mcq",
+     "code": "DM-C",
+     "row": "DM-C Cohesion / organisation",
+     "multi": false,
+     "options": [
+      {
+       "label": "varied + clear organisation",
+       "x": 71.5,
+       "y": 174.7
+      },
+      {
+       "label": "range of links",
+       "x": 111.2,
+       "y": 174.7
+      },
+      {
+       "label": "basic / weak",
+       "x": 150.8,
+       "y": 174.7
+      }
+     ]
+    },
+    {
+     "q": 14,
+     "part": 2,
+     "type": "mcq",
+     "code": "Cohesion evidence",
+     "row": "Cohesion evidence",
+     "multi": true,
+     "options": [
+      {
+       "label": "addition",
+       "x": 71.5,
+       "y": 180.1
+      },
+      {
+       "label": "contrast",
+       "x": 92.1,
+       "y": 180.1
+      },
+      {
+       "label": "cause / result",
+       "x": 107.0,
+       "y": 180.1
+      },
+      {
+       "label": "sequencing",
+       "x": 126.7,
+       "y": 180.1
+      },
+      {
+       "label": "exemplification",
+       "x": 144.4,
+       "y": 180.1
+      },
+      {
+       "label": "discourse markers",
+       "x": 165.9,
+       "y": 180.1
+      }
+     ]
+    },
+    {
+     "q": 15,
+     "part": 2,
+     "type": "mcq",
+     "code": "DM-H",
+     "row": "DM-H Hesitation",
+     "multi": false,
+     "options": [
+      {
+       "label": "very little impact",
+       "x": 71.5,
+       "y": 185.5
+      },
+      {
+       "label": "some impact",
+       "x": 111.2,
+       "y": 185.5
+      },
+      {
+       "label": "disrupts flow",
+       "x": 150.8,
+       "y": 185.5
+      }
+     ]
+    },
+    {
+     "q": 16,
+     "part": 3,
+     "type": "mcq",
+     "code": "BAND-P",
+     "multi": false,
+     "options": [
+      {
+       "label": "1",
+       "x": 152.0,
+       "y": 192.0
+      },
+      {
+       "label": "2",
+       "x": 158.6,
+       "y": 192.0
+      },
+      {
+       "label": "3",
+       "x": 165.2,
+       "y": 192.0
+      },
+      {
+       "label": "4",
+       "x": 171.8,
+       "y": 192.0
+      },
+      {
+       "label": "5",
+       "x": 178.4,
+       "y": 192.0
+      }
+     ]
+    },
+    {
+     "q": 17,
+     "part": 3,
+     "type": "mcq",
+     "code": "P-I",
+     "row": "P-I Intelligibility",
+     "multi": false,
+     "options": [
+      {
+       "label": "clear / effortless",
+       "x": 71.5,
+       "y": 198.1
+      },
+      {
+       "label": "clear overall",
+       "x": 111.2,
+       "y": 198.1
+      },
+      {
+       "label": "listener effort",
+       "x": 150.8,
+       "y": 198.1
+      }
+     ]
+    },
+    {
+     "q": 18,
+     "part": 3,
+     "type": "mcq",
+     "code": "P-W",
+     "row": "P-W Word stress",
+     "multi": false,
+     "options": [
+      {
+       "label": "accurate",
+       "x": 71.5,
+       "y": 203.5
+      },
+      {
+       "label": "generally accurate",
+       "x": 111.2,
+       "y": 203.5
+      },
+      {
+       "label": "recurring errors",
+       "x": 150.8,
+       "y": 203.5
+      }
+     ]
+    },
+    {
+     "q": 19,
+     "part": 3,
+     "type": "mcq",
+     "code": "P-S/IN",
+     "row": "P-S/IN Stress & intonation",
+     "multi": false,
+     "options": [
+      {
+       "label": "effective / appropriate",
+       "x": 71.5,
+       "y": 208.9
+      },
+      {
+       "label": "generally controlled",
+       "x": 111.2,
+       "y": 208.9
+      },
+      {
+       "label": "limited / inconsistent",
+       "x": 150.8,
+       "y": 208.9
+      }
+     ]
+    },
+    {
+     "q": 20,
+     "part": 3,
+     "type": "mcq",
+     "code": "P-SND",
+     "row": "P-SND Individual sounds",
+     "multi": false,
+     "options": [
+      {
+       "label": "clear",
+       "x": 71.5,
+       "y": 214.3
+      },
+      {
+       "label": "generally clear",
+       "x": 111.2,
+       "y": 214.3
+      },
+      {
+       "label": "recurring issues",
+       "x": 150.8,
+       "y": 214.3
+      }
+     ]
+    },
+    {
+     "q": 21,
+     "part": 4,
+     "type": "mcq",
+     "code": "BAND-IC",
+     "multi": false,
+     "options": [
+      {
+       "label": "1",
+       "x": 152.0,
+       "y": 220.8
+      },
+      {
+       "label": "2",
+       "x": 158.6,
+       "y": 220.8
+      },
+      {
+       "label": "3",
+       "x": 165.2,
+       "y": 220.8
+      },
+      {
+       "label": "4",
+       "x": 171.8,
+       "y": 220.8
+      },
+      {
+       "label": "5",
+       "x": 178.4,
+       "y": 220.8
+      }
+     ]
+    },
+    {
+     "q": 22,
+     "part": 4,
+     "type": "mcq",
+     "code": "IC",
+     "row": "IC Observed",
+     "multi": true,
+     "options": [
+      {
+       "label": "I initiate",
+       "x": 71.5,
+       "y": 226.9
+      },
+      {
+       "label": "R respond",
+       "x": 90.7,
+       "y": 226.9
+      },
+      {
+       "label": "L link",
+       "x": 111.7,
+       "y": 226.9
+      },
+      {
+       "label": "D develop",
+       "x": 128.0,
+       "y": 226.9
+      },
+      {
+       "label": "Q invite",
+       "x": 149.1,
+       "y": 226.9
+      },
+      {
+       "label": "N negotiate",
+       "x": 167.9,
+       "y": 226.9
+      }
+     ]
+    },
+    {
+     "q": 23,
+     "part": 4,
+     "type": "mcq",
+     "code": "Independence",
+     "row": "Independence",
+     "multi": false,
+     "options": [
+      {
+       "label": "independent",
+       "x": 71.5,
+       "y": 232.4
+      },
+      {
+       "label": "very little support",
+       "x": 111.2,
+       "y": 232.4
+      },
+      {
+       "label": "needs support",
+       "x": 150.8,
+       "y": 232.4
+      }
+     ]
+    },
+    {
+     "q": 24,
+     "part": 4,
+     "type": "mcq",
+     "code": "Interaction quality",
+     "row": "Interaction quality",
+     "multi": false,
+     "options": [
+      {
+       "label": "builds collaborative exchange",
+       "x": 71.5,
+       "y": 237.8
+      },
+      {
+       "label": "maintains / develops",
+       "x": 111.2,
+       "y": 237.8
+      },
+      {
+       "label": "separate / reactive turns",
+       "x": 150.8,
+       "y": 237.8
+      }
+     ]
+    },
+    {
+     "q": 25,
+     "part": 5,
+     "type": "mcq",
+     "code": "BAND-GA",
+     "multi": false,
+     "options": [
+      {
+       "label": "1",
+       "x": 152.0,
+       "y": 244.3
+      },
+      {
+       "label": "2",
+       "x": 158.6,
+       "y": 244.3
+      },
+      {
+       "label": "3",
+       "x": 165.2,
+       "y": 244.3
+      },
+      {
+       "label": "4",
+       "x": 171.8,
+       "y": 244.3
+      },
+      {
+       "label": "5",
+       "x": 178.4,
+       "y": 244.3
+      }
+     ]
+    },
+    {
+     "q": 26,
+     "part": 5,
+     "type": "mcq",
+     "code": "GA-WH",
+     "row": "GA-WH Whole-test handling",
+     "multi": false,
+     "options": [
+      {
+       "label": "secure / independent B2",
+       "x": 71.5,
+       "y": 250.4
+      },
+      {
+       "label": "generally successful",
+       "x": 111.2,
+       "y": 250.4
+      },
+      {
+       "label": "uneven / support needed",
+       "x": 150.8,
+       "y": 250.4
+      }
+     ]
+    },
+    {
+     "q": 27,
+     "part": 5,
+     "type": "mcq",
+     "code": "GA-ED",
+     "row": "GA-ED Extended discourse",
+     "multi": false,
+     "options": [
+      {
+       "label": "coherent + sustained",
+       "x": 71.5,
+       "y": 255.8
+      },
+      {
+       "label": "organised but uneven",
+       "x": 111.2,
+       "y": 255.8
+      },
+      {
+       "label": "difficult to sustain",
+       "x": 150.8,
+       "y": 255.8
+      }
+     ]
+    },
+    {
+     "q": 28,
+     "part": 5,
+     "type": "mcq",
+     "code": "GA-LR",
+     "row": "GA-LR Linguistic resources",
+     "multi": false,
+     "options": [
+      {
+       "label": "accurate + appropriate",
+       "x": 71.5,
+       "y": 261.2
+      },
+      {
+       "label": "generally adequate",
+       "x": 111.2,
+       "y": 261.2
+      },
+      {
+       "label": "frequent limitations",
+       "x": 150.8,
+       "y": 261.2
+      }
+     ]
+    },
+    {
+     "q": 29,
+     "part": 5,
+     "type": "mcq",
+     "code": "Notably weak part",
+     "row": "Notably weak part",
+     "multi": true,
+     "options": [
+      {
+       "label": "P1",
+       "x": 71.5,
+       "y": 266.6
+      },
+      {
+       "label": "P2",
+       "x": 94.8,
+       "y": 266.6
+      },
+      {
+       "label": "P3",
+       "x": 118.1,
+       "y": 266.6
+      },
+      {
+       "label": "P4",
+       "x": 141.4,
+       "y": 266.6
+      },
+      {
+       "label": "none",
+       "x": 164.7,
+       "y": 266.6
+      }
+     ]
+    }
+   ],
+   "blocks": [
+    {
+     "part": 1,
+     "qs": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+     ]
+    },
+    {
+     "part": 2,
+     "qs": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ]
+    },
+    {
+     "part": 3,
+     "qs": [
+      16,
+      17,
+      18,
+      19,
+      20
+     ]
+    },
+    {
+     "part": 4,
+     "qs": [
+      21,
+      22,
+      23,
+      24
+     ]
+    },
+    {
+     "part": 5,
+     "qs": [
+      25,
+      26,
+      27,
+      28,
+      29
+     ]
+    }
+   ],
+   "student_code": [
+    [
+     [
+      136.5,
+      54.8
+     ],
+     [
+      136.5,
+      59.0
+     ],
+     [
+      136.5,
+      63.2
+     ],
+     [
+      136.5,
+      67.4
+     ],
+     [
+      136.5,
+      71.6
+     ],
+     [
+      136.5,
+      75.8
+     ],
+     [
+      136.5,
+      80.0
+     ],
+     [
+      136.5,
+      84.2
+     ],
+     [
+      136.5,
+      88.4
+     ],
+     [
+      136.5,
+      92.6
+     ]
+    ],
+    [
+     [
+      144.7,
+      54.8
+     ],
+     [
+      144.7,
+      59.0
+     ],
+     [
+      144.7,
+      63.2
+     ],
+     [
+      144.7,
+      67.4
+     ],
+     [
+      144.7,
+      71.6
+     ],
+     [
+      144.7,
+      75.8
+     ],
+     [
+      144.7,
+      80.0
+     ],
+     [
+      144.7,
+      84.2
+     ],
+     [
+      144.7,
+      88.4
+     ],
+     [
+      144.7,
+      92.6
+     ]
+    ],
+    [
+     [
+      152.9,
+      54.8
+     ],
+     [
+      152.9,
+      59.0
+     ],
+     [
+      152.9,
+      63.2
+     ],
+     [
+      152.9,
+      67.4
+     ],
+     [
+      152.9,
+      71.6
+     ],
+     [
+      152.9,
+      75.8
+     ],
+     [
+      152.9,
+      80.0
+     ],
+     [
+      152.9,
+      84.2
+     ],
+     [
+      152.9,
+      88.4
+     ],
+     [
+      152.9,
+      92.6
+     ]
+    ],
+    [
+     [
+      161.1,
+      54.8
+     ],
+     [
+      161.1,
+      59.0
+     ],
+     [
+      161.1,
+      63.2
+     ],
+     [
+      161.1,
+      67.4
+     ],
+     [
+      161.1,
+      71.6
+     ],
+     [
+      161.1,
+      75.8
+     ],
+     [
+      161.1,
+      80.0
+     ],
+     [
+      161.1,
+      84.2
+     ],
+     [
+      161.1,
+      88.4
+     ],
+     [
+      161.1,
+      92.6
+     ]
+    ],
+    [
+     [
+      169.3,
+      54.8
+     ],
+     [
+      169.3,
+      59.0
+     ],
+     [
+      169.3,
+      63.2
+     ],
+     [
+      169.3,
+      67.4
+     ],
+     [
+      169.3,
+      71.6
+     ],
+     [
+      169.3,
+      75.8
+     ],
+     [
+      169.3,
+      80.0
+     ],
+     [
+      169.3,
+      84.2
+     ],
+     [
+      169.3,
+      88.4
+     ],
+     [
+      169.3,
+      92.6
+     ]
+    ],
+    [
+     [
+      177.5,
+      54.8
+     ],
+     [
+      177.5,
+      59.0
+     ],
+     [
+      177.5,
+      63.2
+     ],
+     [
+      177.5,
+      67.4
+     ],
+     [
+      177.5,
+      71.6
+     ],
+     [
+      177.5,
+      75.8
+     ],
+     [
+      177.5,
+      80.0
+     ],
+     [
+      177.5,
+      84.2
+     ],
+     [
+      177.5,
+      88.4
+     ],
+     [
+      177.5,
+      92.6
+     ]
+    ]
+   ],
+   "code_boxes": [
+    {
+     "x": 133.3,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 141.5,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 149.7,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 157.9,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 166.1,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    },
+    {
+     "x": 174.3,
+     "y": 44.8,
+     "w": 6.4,
+     "h": 6.4
+    }
+   ],
+   "ring_mm": 1.5,
+   "skill": "speaking",
+   "shift_mm": 2.5,
+   "marked_cov": 0.22
   }
  }
 }

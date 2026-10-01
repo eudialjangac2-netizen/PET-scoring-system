@@ -302,6 +302,7 @@
     if (res.level !== S.level)
       return { cls: 'q-err', html: `Đây là phiếu <b>${esc(res.level)}</b> (${esc(pageName(res.page))}), lớp đang chấm là <b>${esc(S.level)}</b> — không ghi.`,
         short: `Phiếu ${res.level} — lớp đang chấm ${S.level}` };
+    if (TPL.pages[res.page].skill === 'speaking') return recordSpeaking(res, auto);
     const sheet = buildSheet(res);
     const stu = res.codeOk ? stuByKey(res.code) : null;
     if (!stu) {
@@ -311,6 +312,23 @@
       return { cls: 'q-err', html: `${esc(pageName(res.page))}: ${esc(why)} — chọn học sinh ở mục bên dưới.`, ref: { unknown: id }, short: `${pageShort(res.page)}: ${why}` };
     }
     return assign(stu.key, res.page, sheet, auto);
+  }
+  // phiếu chấm Speaking: đọc band + mã chẩn đoán + part yếu (viet/speaking-quet.js), lưu vào S.speaking
+  function recordSpeaking(res, auto) {
+    const stu = res.codeOk ? stuByKey(res.code) : null;
+    if (!stu) {
+      const why = res.codeOk ? `mã ${res.code} không có trong lớp ${S.cls}` : `mã tô chưa rõ (${res.code})`;
+      return { cls: 'q-err', html: `Phiếu Speaking: ${esc(why)}. Chụp lại hoặc nhập tay ở bước 6.`, short: `Speaking: ${why}` };
+    }
+    S.speaking = S.speaking || {};
+    if (S.speaking[stu.key] && auto) return { cls: 'q-err', dup: true, html: `Đã có Speaking của ${esc(stu.name)} — bỏ qua.`, short: `Đã có Speaking của ${stu.name} — bỏ qua` };
+    if (S.speaking[stu.key] && !confirm(`Đã có kết quả Speaking của ${stu.name}. Thay bằng phiếu mới?`)) return { cls: 'q-err', html: `Giữ kết quả Speaking cũ của ${esc(stu.name)}.` };
+    const d = window.SpeakingScan.fromResult(S.level, res, TPL);
+    const need = Object.keys(window.SpeakingScore.WEIGHT[S.level]).filter(c => !d.bands[c]);
+    S.speaking[stu.key] = { bands: d.bands, evidence: d.evidence, weakPart: d.weakPart, at: Date.now(), scan: true, flags: d.flags.map(f => f.text) };
+    const bad = d.flags.map(f => f.text);
+    const note = need.length || bad.length ? ` · cần xem lại ở bước 6: ${[...need.map(c => 'thiếu band ' + c), ...bad.filter(t => !/^Band/.test(t))].join(', ')}` : ' · đọc tốt';
+    return { cls: need.length || bad.length ? 'q-flag' : 'q-ok', ok: true, short: `✓ ${stu.name} — Speaking${note}`, html: `<b>${esc(stu.name)}</b> (${stu.code}) — Speaking${esc(note)}` };
   }
   function addQueueLine(msg) {
     const line = document.createElement('div'); line.className = msg.cls;
