@@ -144,8 +144,8 @@
     return { px: out, quality };
   }
 
-  function makeRing(cv) {
-    const r = Math.round(2.3 * S), pad = 6, sz = 2 * (r + pad) + 1;
+  function makeRing(cv, rmm) {
+    const r = Math.round((rmm || 2.3) * S), pad = 6, sz = 2 * (r + pad) + 1;
     const t = new cv.Mat(sz, sz, cv.CV_8U, new cv.Scalar(255));
     cv.circle(t, new cv.Point(sz >> 1, sz >> 1), r, new cv.Scalar(0), 3);
     return t;
@@ -264,8 +264,8 @@
   }
 
   // Đặc trưng của 1 ô: độ phủ mực + độ phủ 8 cung (để biết tô kín hay tick/X)
-  function bubbleFeat(px, x, y) {
-    const cx = x * S, cy = y * S, r1 = 1.7 * S, r2 = 1.9 * S, rin = 0.5 * S;
+  function bubbleFeat(px, x, y, k = 1) {   // k = bán kính ô tròn / 2.3 mm (phiếu Speaking có ô nhỏ hơn)
+    const cx = x * S, cy = y * S, r1 = 1.7 * k * S, r2 = 1.9 * k * S, rin = 0.5 * k * S;
     let ink = 0, n = 0; const sI = new Array(8).fill(0), sN = new Array(8).fill(0);
     for (let yy = Math.floor(cy - r2); yy <= cy + r2; yy++)
       for (let xx = Math.floor(cx - r2); xx <= cx + r2; xx++) {
@@ -350,19 +350,20 @@
     const qIssue = qualityIssue(quality);
     if (qIssue) return { ok: false, quality, qualityFail: true, error: qIssue };
     const img = new cv.Mat(PH, PW, cv.CV_8U); img.data.set(px);
-    const ring = makeRing(cv);
     const T = tpl.pages[page.key];
+    const BK = (T.ring_mm || 2.3) / 2.3, ring = makeRing(cv, T.ring_mm);   // phiếu Speaking có ô tròn nhỏ hơn (ring_mm), phiếu Reading/Listening dùng mặc định 2.3
 
     // mã học sinh: căn cả khối (hàng ô viết số phía trên làm mốc), rồi tinh chỉnh từng cột
-    const codeItems = tpl.student_code.flat().map(p => ({ ring: p })).concat((tpl.code_boxes || []).map(b => ({ box: b })));
-    const [cdx, cdy, cscore] = blockShift(cv, img, bboxOf(codeItems), codeItems);
+    const STU = T.student_code || tpl.student_code, CBOX = T.code_boxes || tpl.code_boxes || [];   // phiếu Speaking có ô mã riêng
+    const codeItems = STU.flat().map(p => ({ ring: p })).concat(CBOX.map(b => ({ box: b })));
+    const [cdx, cdy, cscore] = blockShift(cv, img, bboxOf(codeItems), codeItems, T.shift_mm || 6);
     if (globalThis.OMR_DEBUG) console.log('code shift', cdx.toFixed(2), cdy.toFixed(2));
     if (typeof process !== 'undefined' && process.env && process.env.OMR_DEBUG) console.log('code shift', cdx, cdy, cscore);
     let code = '', codeOk = true; const codeCols = [];
-    for (const col0 of tpl.student_code) {
+    for (const col0 of STU) {
       const col = snapScaled(cv, img, ring, col0.map(([x, y]) => [x + cdx, y + cdy]), 1.2, 1.2, 'y');
       const dx = 0, dy = 0;
-      const f = col.map(([x, y]) => bubbleFeat(px, x + dx, y + dy).cov);
+      const f = col.map(([x, y]) => bubbleFeat(px, x + dx, y + dy, BK).cov);
       if (globalThis.OMR_DEBUG) console.log('  col', dx.toFixed(2), dy.toFixed(2), f.map(v => v.toFixed(2)).join(' '));
       const order = f.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]);
       // ô tô rõ nhất phải đủ đậm và đậm hơn hẳn ô thứ hai (chịu được vết tẩy mờ, bóng đổ)
@@ -389,7 +390,7 @@
       const qs = blk.qs;
       const items = (blk.header ? [{ bar: blk.header }] : [])
         .concat(qs.flatMap(q => q.type === 'write' ? [{ box: q.box, cells: q.cells }] : q.options.map(o => ({ ring: [o.x, o.y] }))));
-      const [bdx, bdy] = blockShift(cv, img, bboxOf(items), items);
+      const [bdx, bdy] = blockShift(cv, img, bboxOf(items), items, T.shift_mm || 6);   // Speaking: ô sát nhau nên chỉ cho lệch nhỏ
       if (globalThis.OMR_DEBUG) console.log('block', qs[0].q + '-' + qs[qs.length - 1].q, bdx.toFixed(1), bdy.toFixed(1));
       for (const q of qs) {
         if (q.type === 'write') {
@@ -400,9 +401,20 @@
           if (globalThis.OMR_DEBUG) console.log('  w', q.q, (b.x - q.box.x).toFixed(1), (b.y - q.box.y).toFixed(1), b.w.toFixed(1), b.h.toFixed(1), ink.toFixed(4));
           continue;
         }
-        const pts = snapScaled(cv, img, ring, q.options.map(o => [o.x + bdx, o.y + bdy]), 2.5, 2.5, 'x');
-        const opts = q.options.map((o, i) => ({ label: o.label, x: pts[i][0], y: pts[i][1], ...bubbleFeat(px, pts[i][0], pts[i][1]) }));
-        const marked = opts.filter(o => o.cov >= TH.marked);
+        const base = q.options.map(o => [o.x + bdx, o.y + bdy]);
+        let pts;
+        if (!q.multi) pts = snapScaled(cv, img, ring, base, 2.5, 2.5, 'x');
+        else {   // hàng tick nhiều ô: ô đã tô đặc nên không dò vòng được; dùng độ lệch của hàng 1 lựa chọn gần nhất cùng khối
+          const idx = qs.indexOf(q); let off = [0, 0];
+          for (let d = 1; d < qs.length; d++) {
+            const o2 = [qs[idx - d], qs[idx + d]].find(r => r && r.type !== 'write' && !r.multi);
+            if (o2) { const b2 = o2.options.map(o => [o.x + bdx, o.y + bdy]), p2 = snapScaled(cv, img, ring, b2, 2.5, 2.5, 'x');
+              off = [p2.reduce((a, pt, i) => a + pt[0] - b2[i][0], 0) / p2.length, p2.reduce((a, pt, i) => a + pt[1] - b2[i][1], 0) / p2.length]; break; }
+          }
+          pts = base.map(([x, y]) => [x + off[0], y + off[1]]);
+        }
+        const opts = q.options.map((o, i) => ({ label: o.label, x: pts[i][0], y: pts[i][1], ...bubbleFeat(px, pts[i][0], pts[i][1], BK) }));
+        const marked = opts.filter(o => o.cov >= (T.marked_cov || TH.marked));
         let status, answer = '';
         if (marked.length === 0) status = 'blank';
         else if (marked.length > 1) { status = 'multi'; answer = marked.map(o => o.label).join(''); }

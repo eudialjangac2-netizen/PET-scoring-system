@@ -79,3 +79,4 @@
 
 .pt-cc { display: block; } .pt-cc svg { width: 100%; height: auto; display: block; }
 .pt-sum { margin: 2px 4px 2px; font-size: 11px; font-weight: 600; color: #2F3B52; } .pt-sum .vi { display: block; font-weight: 400; font-size: 9.5px; color: #7a8494; }
+.pt-tight { gap: 8px; } .pt-tight .pt-gap td { padding: 3px 6px; } .pt-tight .pt-ca { padding: 8px 12px; }

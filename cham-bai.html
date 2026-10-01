@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="viet/phieu-font.css">
 <link rel="stylesheet" href="viet/phieu-trang.css?v=20261001">
 <link rel="stylesheet" href="viet/writing-report.css?v=20261001">
+<link rel="stylesheet" href="viet/speaking-nhap.css?v=20261001">
 </head>
 <body>
 <header class="top"><div class="wrap">
@@ -23,7 +24,8 @@
   <button data-go="review"><b>3</b>Duyệt<span class="badge" id="bReview" hidden></span></button>
   <button data-go="write"><b>4</b>Câu viết<span class="badge" id="bWrite" hidden></span></button>
   <button data-go="writing"><b>5</b>Writing</button>
-  <button data-go="export"><b>6</b>Kết quả</button>
+  <button data-go="speaking"><b>6</b>Speaking</button>
+  <button data-go="export"><b>7</b>Kết quả</button>
 </div></nav>
 
 <main class="wrap">
@@ -102,7 +104,14 @@
     <div class="tablewrap"><table id="wrTable"></table></div>
   </section>
 
-  <!-- 6. Kết quả -->
+  <!-- 6. Speaking (band, mã chẩn đoán, part yếu nhất) -->
+  <section class="view" id="v-speaking">
+    <h2>Speaking</h2>
+    <p class="hint">Nhập kết quả Speaking cho từng học sinh: band từng tiêu chí, mã chẩn đoán trên phiếu chấm Speaking và phần thi yếu nhất. App chọn nhận xét tiếng Việt cho trang 2 của phiếu phụ huynh.</p>
+    <div id="spBox"></div>
+  </section>
+
+  <!-- 7. Kết quả -->
   <section class="view" id="v-export">
     <h2>Kết quả</h2>
     <div id="exportWarn"></div>
@@ -166,6 +175,11 @@
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="viet/ajv2020.bundle.js"></script>
 <script src="viet/kiem-tra-json.js"></script>
+<script src="viet/speaking-bank.js?v=20261001"></script>
+<script src="viet/speaking-chan-doan.js?v=20261001"></script>
+<script src="viet/speaking-quy-doi.js?v=20261001"></script>
+<script src="viet/speaking-quet.js?v=20261001"></script>
+<script src="viet/speaking-nhap.js?v=20261001"></script>
 <script src="viet/phieu-trang.js?v=20261001"></script>
 <script src="viet/writing-report.js?v=20261001"></script>
 <script src="omr-engine.js?v=20260928"></script>

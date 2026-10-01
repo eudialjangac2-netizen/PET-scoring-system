@@ -116,9 +116,12 @@
       + '<div class="pt-sc"><b>' + (sk.scale == null ? '&mdash;' : (sk.est ? '~' : '') + sk.scale) + '</b><span>Scale</span>' + delta(m.first ? null : sk.d) + '</div><div class="pt-raw">' + sk.raw + ' / ' + sk.max + ' marks</div>' + rows + '</div>';
   }
 
+  function spkOf(m) { return (m.speaking && window.SpeakingDiagnosis) ? (m._spk || (m._spk = window.SpeakingDiagnosis.pick(m.level, m.speaking))) : null; }
+
   function overview(m) {
     var o = m.overall, has = o.scale != null, nx = has ? nextGrade(m.level, o.scale) : null, g = has ? gradeOf(m.level, o.scale) : '';
     var pl = function (n) { return n + (n === 1 ? ' Scale point' : ' Scale points'); };
+    var cmt = m.comment + (spkOf(m) && spkOf(m).strength ? ' Điểm mạnh ở Speaking: ' + spkOf(m).strength.replace(/^Em /, 'em ') : '');
     var ovt = !has ? 'Scores will appear once all skills are graded.' : m.first
       ? 'First mock: this is your starting point.' + (nx ? ' Target for Mock 2: reach Grade ' + nx[1] + ' (' + nx[0] + '), ' + pl(nx[0] - o.scale) + ' away.' : '')
       : (nx ? pl(nx[0] - o.scale) + ' to reach Grade ' + nx[1] + '.' : 'Top grade reached.');
@@ -128,7 +131,7 @@
       + '<div class="pt-ovt">' + esc(ovt) + '</div></div>'
       + '<div class="pt-ch"><h3>' + ttl('Skills & Progress', 'Kỹ năng và tiến bộ') + '<span>Cambridge English Scale</span></h3><div class="pt-cc">' + combinedChart(m) + '</div>' + trendNote(m) + '</div></div>'
       + '<div class="pt-skills">' + m.skills.map(function (s) { return skillCard(m, s); }).join('') + '</div>'
-      + '<div class="pt-r3"><div class="pt-cm"><h3>' + ttl('Teacher\'s Overall Comment', 'Nhận xét tổng thể của giáo viên') + '</h3><p>' + esc(m.comment) + '</p></div>'
+      + '<div class="pt-r3"><div class="pt-cm"><h3>' + ttl('Teacher\'s Overall Comment', 'Nhận xét tổng thể của giáo viên') + '</h3><p' + (cmt.length > 330 ? ' style="font-size:' + (cmt.length > 440 ? '11px;line-height:1.45' : '11.5px;line-height:1.5') + '"' : '') + '>' + esc(cmt) + '</p></div>'
       + '<div class="pt-pr3"><h3>' + ttl('Top 3 Priorities', '3 ưu tiên tiếp theo') + '</h3><ol>' + m.priorities.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol></div></div>'
       + '</div>' + foot(m, 1) + '</div>';
   }
@@ -138,11 +141,14 @@
     var T0 = THEME[m.level], D = m.diagnosis;
     var gap = m.skills.map(function (sk) {
       var t = T0.skill[sk.id];
-      if (sk.empty || sk.scale == null) return '<tr><td><i style="background:' + t.ink + '"></i>' + esc(sk.name) + '</td><td><b>-</b></td><td colspan="2" style="color:#6B7280">Not graded yet</td></tr>';
+      if (sk.empty || sk.scale == null) return '<tr><td><i style="background:' + t.ink + '"></i>' + esc(sk.name) + '</td><td><b>-</b></td><td colspan="2" style="color:#6B7280">' + esc(sk.emptyNote || 'Not graded yet') + '</td></tr>';
       var nx = nextGrade(m.level, sk.scale), need = nx ? nx[0] - sk.scale : 0;
       return '<tr><td><i style="background:' + t.ink + '"></i>' + esc(sk.name) + '</td><td><b>' + sk.scale + '</b></td><td>' + gradeBadge(m.level, sk.scale) + '</td><td>' + (nx ? '<span class="pt-need" style="background:' + t.bg + ';color:' + t.ink + '">+' + need + '</span> to Grade ' + nx[1] : 'Top grade reached') + '</td></tr>';
     }).join('');
-    var causes = D.causes.map(function (c) {
+    var SD = spkOf(m);
+    var allCauses = D.causes.filter(function (c) { return !(SD && c.skill === 'speaking'); });
+    if (SD && SD.areas.length) allCauses.push({ skill: 'speaking', title: SD.title, body: SD.areas.map(function (x, i) { return x.text + (i === 0 && x.part ? ' Thể hiện rõ nhất ở ' + x.part + '.' : ''); }).join(' '), fix: SD.next });
+    var causes = allCauses.map(function (c) {
       var t = T0.skill[c.skill] || { bg: T0.soft, ink: T0.d };
       return '<div class="pt-ca" style="background:' + t.bg + '"><h4 style="color:' + t.ink + '">' + esc(c.title) + '</h4><p>' + esc(c.body) + '</p><div class="fx"><b>How to fix:</b> ' + esc(c.fix) + '</div></div>';
     }).join('');
@@ -151,7 +157,7 @@
       var t = T0.skill[w.skill];
       return '<div class="pt-wq"><h5 style="color:' + t.ink + '">' + esc(w.name) + '</h5>' + w.items.map(function (x) { return '<span class="chip" style="background:' + t.bg + '">' + esc(x) + '</span>'; }).join('') + '</div>';
     }).join('');
-    return '<div class="pt-page" style="' + styleVars(m) + '">' + head(m, ['Results Analysis & Improvement Plan', 'Phân tích kết quả và hướng cải thiện - Tổng quan ' + m.skills.length + ' kỹ năng']) + '<div class="pt-main">'
+    return '<div class="pt-page" style="' + styleVars(m) + '">' + head(m, ['Results Analysis & Improvement Plan', 'Phân tích kết quả và hướng cải thiện - Tổng quan ' + m.skills.length + ' kỹ năng']) + '<div class="pt-main' + (allCauses.length >= 5 ? ' pt-tight' : '') + '">'
       + '<div class="pt-sec"><h3>' + ttl('Path to the Next Grade', 'Lộ trình lên Grade tiếp theo') + '</h3><table class="pt-gap"><tr><th>Skill</th><th>Scale</th><th>Current level</th><th>Needed</th></tr>' + gap + '</table></div>'
       + '<div class="pt-sec"><h3>' + ttl('Why Points Are Being Lost', 'Vì sao em đang mất điểm') + '</h3><div class="pt-cas">' + causes + '</div></div>'
       + '<div class="pt-two"><div class="pt-sec"><h3>' + ttl('Repeated Writing Errors', 'Lỗi Writing lặp lại') + '</h3>' + wr + '</div><div class="pt-sec"><h3>' + ttl('Test-taking Habits', 'Thói quen làm bài') + '</h3><ul class="pt-hb">' + D.habits.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></div>'
