@@ -6,17 +6,16 @@
 (function () {
   'use strict';
   var CRIT = {
-    GV: 'Grammar & Vocabulary (Ngữ pháp và từ vựng)', DM: 'Discourse Management (Mạch lạc và phát triển ý)', P: 'Pronunciation (Phát âm)',
-    IC: 'Interactive Communication (Giao tiếp tương tác)', GA: 'Global Achievement (Đánh giá chung)'
+    GV: 'Grammar & Vocabulary', DM: 'Discourse Management', P: 'Pronunciation', IC: 'Interactive Communication', GA: 'Global Achievement'
   };
   var ORDER = { KET: ['GV', 'P', 'IC', 'GA'], PET: ['GV', 'DM', 'P', 'IC', 'GA'], FCE: ['GV', 'DM', 'P', 'IC', 'GA'] };
   var SUB = {
-    'G-S': 'Ngữ pháp cơ bản', 'G-C': 'Ngữ pháp phức tạp', 'G-R': 'Lỗi ngữ pháp lặp lại', 'V-R': 'Vốn từ', 'V-A': 'Dùng từ chính xác', 'Complex evidence': 'Bằng chứng cấu trúc phức tạp', 'Lexical evidence': 'Bằng chứng từ vựng',
-    'DM-E': 'Độ dài, mở rộng câu trả lời', 'DM-D/R': 'Phát triển ý, đúng trọng tâm', 'DM-C': 'Liên kết ý', 'DM-H': 'Do dự',
-    'P-I': 'Độ dễ hiểu', 'P-W': 'Trọng âm từ', 'P-S/IN': 'Trọng âm câu, ngữ điệu', 'P-SND': 'Âm riêng lẻ',
-    'I': 'Mở ý', 'R': 'Đáp lại ý của bạn', 'A': 'Bổ sung ý', 'D': 'Phát triển ý', 'Q': 'Hỏi bạn', 'N': 'Thương lượng, đi đến quyết định', 'L': 'Nối ý với bạn', 'F': 'Hỏi nối tiếp',
-    'Support': 'Mức hỗ trợ cần có', 'Independence': 'Mức độc lập', 'Exchange quality': 'Chất lượng trao đổi', 'Interaction quality': 'Chất lượng tương tác',
-    'GA-WH': 'Toàn bài', 'GA-L': 'Độ dài câu nói', 'GA-H': 'Do dự', 'GA-ED': 'Bài nói dài', 'Whole-test handling': 'Xử lý toàn bài', 'Extended communication': 'Giao tiếp kéo dài'
+    'G-S': 'Simple control', 'G-C': 'Complex evidence', 'G-R': 'Recurring error', 'V-R': 'Range', 'V-A': 'Appropriacy', 'Complex evidence': 'Complex evidence', 'Lexical evidence': 'Lexical evidence',
+    'DM-E': 'Extent', 'DM-D/R': 'Develop. / relevance', 'DM-C': 'Cohesion', 'DM-H': 'Hesitation',
+    'P-I': 'Intelligibility', 'P-W': 'Word stress', 'P-S/IN': 'Sentence stress & intonation', 'P-SND': 'Individual sounds',
+    'I': 'Initiate', 'R': 'Respond', 'A': 'Add', 'D': 'Develop', 'Q': 'Invite / ask', 'N': 'Negotiate', 'L': 'Link', 'F': 'Follow-up',
+    'Support': 'Support', 'Independence': 'Independence', 'Exchange quality': 'Exchange quality', 'Interaction quality': 'Interaction quality',
+    'GA-WH': 'Whole-test handling', 'GA-L': 'Length of utterance', 'GA-H': 'Hesitation', 'GA-ED': 'Extended discourse', 'Whole-test handling': 'Whole-test handling', 'Extended communication': 'Extended communication'
   };
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
@@ -47,7 +46,7 @@
       return '<div class="tablewrap"><table><thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Speaking</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
     }
     function bandSel(c, v) {
-      return '<select data-band="' + c + '"><option value="">Chọn band</option>' + [1, 2, 3, 4, 5].map(function (n) { return '<option value="' + n + '"' + (String(v) === String(n) ? ' selected' : '') + '>Band ' + n + '</option>'; }).join('') + '</select>';
+      return '<select data-band="' + c + '"><option value="">Band</option>' + [1, 2, 3, 4, 5].map(function (n) { return '<option value="' + n + '"' + (String(v) === String(n) ? ' selected' : '') + '>Band ' + n + '</option>'; }).join('') + '</select>';
     }
     function form(stu) {
       var d = o.data[stu.key] || { bands: {}, evidence: [], weakPart: '' }, ev = d.evidence || [];
@@ -55,13 +54,13 @@
         var subs = L[c] || {};
         var sels = Object.keys(subs).map(function (code) {
           var cur = subs[code].filter(function (k) { return ev.indexOf(k) >= 0; })[0] || '';
-          return '<label class="sp-sub"><span>' + esc(code) + ' - ' + esc(SUB[code] || code) + '</span><select data-code="' + esc(code) + '"><option value="">Không ghi nhận</option>'
+          return '<label class="sp-sub"><span>' + esc(code) + ' - ' + esc(SUB[code] || code) + '</span><select data-code="' + esc(code) + '"><option value="">Not observed</option>'
             + subs[code].map(function (k) { return '<option value="' + esc(k) + '"' + (k === cur ? ' selected' : '') + '>' + esc(k.split(' • ')[1] || k) + '</option>'; }).join('') + '</select></label>';
         }).join('');
         return '<fieldset class="sp-crit"><legend>' + esc(CRIT[c]) + '</legend><div class="sp-band">' + bandSel(c, d.bands[c]) + '</div><div class="sp-subs">' + sels + '</div></fieldset>';
       }).join('');
-      var wp = '<label class="sp-sub"><span>Phần thi yếu nhất (Notably weak part)</span><select id="spWeak"><option value="">Không có</option>' + WP.map(function (p) { return '<option value="' + p + '"' + (p === d.weakPart ? ' selected' : '') + '>' + p.replace(/^P/, 'Part ') + '</option>'; }).join('') + '</select></label>';
-      return '<div class="card sp-form"><h3>' + esc(stu.name) + ' <small>' + esc(stu.code) + '</small></h3>' + secs + '<fieldset class="sp-crit"><legend>Phần thi yếu nhất</legend>' + wp + '</fieldset>'
+      var wp = '<label class="sp-sub"><span>Notably weak part</span><select id="spWeak"><option value="">none</option>' + WP.map(function (p) { return '<option value="' + p + '"' + (p === d.weakPart ? ' selected' : '') + '>' + p.replace(/^P/, 'Part ') + '</option>'; }).join('') + '</select></label>';
+      return '<div class="card sp-form"><h3>' + esc(stu.name) + ' <small>' + esc(stu.code) + '</small></h3>' + secs + '<fieldset class="sp-crit"><legend>Notably weak part</legend>' + wp + '</fieldset>'
         + '<div class="sp-prev" id="spPrev"></div><div class="row" style="margin-top:12px"><button class="btn primary" id="spSave">Lưu</button><button class="btn ghost" id="spCancel">Đóng</button></div><div id="spMsg"></div></div>';
     }
     function collect() {

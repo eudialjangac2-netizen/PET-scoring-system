@@ -676,6 +676,11 @@
   const WR_COLS = ['Writing điểm thô', 'Writing tối đa', 'Writing thang'];
   const writingOf = s => (S.writing || {})[s.key]?.data || null;
   const hasWriting = () => Object.keys(S.writing || {}).length > 0;
+  const SP_COLS = ['Speaking điểm thô', 'Speaking tối đa', 'Speaking thang'];
+  const hasSpeaking = () => Object.keys(S.speaking || {}).length > 0;
+  function spVals(r) { const d = (S.speaking || {})[r.s.key], t = d ? window.SpeakingScore.total(S.level, d.bands) : null;
+    return t == null ? ['', '', ''] : [t, window.SpeakingScore.MAX[S.level], window.SpeakingScore.scale(S.level, t) ?? '']; }
+  function spCells(r) { const v = spVals(r); return v[0] === '' ? '<td>—</td><td>—</td>' : `<td class="num">${v[0]}/${v[1]}</td><td class="num">${v[2]}</td>`; }
   const wrScaleText = d => d.total.cambridge_scale == null ? '—' : d.total.cambridge_scale + (d.total.is_estimate ? ' (ước lượng)' : '');
   function wrVals(r) { const d = writingOf(r.s); return d ? [d.total.raw, d.total.raw_max, d.total.cambridge_scale ?? ''] : ['', '', '']; }
   function wrCells(r) { const d = writingOf(r.s); return d ? `<td class="num">${d.total.raw}/${d.total.raw_max}</td><td class="num">${esc(wrScaleText(d))}</td>` : '<td>—</td><td>—</td>'; }
@@ -784,12 +789,12 @@
     $('#exportWarn').innerHTML = w.length ? `<div class="notice warn">${w.map(esc).join('<br>')}</div>` : '';
     const rs = results();
     $('#resTable').innerHTML = `<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Lớp</th>${L.phan.map(s =>
-      `<th>${s.ten} /${secMax(S.level, s)}</th><th>Thang</th><th>CEFR</th>`).join('')}${hasWriting() ? '<th>Writing</th><th>Writing thang</th>' : ''}<th>Tô không chuẩn</th></tr></thead><tbody>` +
+      `<th>${s.ten} /${secMax(S.level, s)}</th><th>Thang</th><th>CEFR</th>`).join('')}${hasWriting() ? '<th>Writing</th><th>Writing thang</th>' : ''}${hasSpeaking() ? '<th>Speaking</th><th>Speaking thang</th>' : ''}<th>Tô không chuẩn</th></tr></thead><tbody>` +
       rs.map(r => `<tr class="${r.any ? '' : 'missing'}"><td class="num">${r.stt}</td><td>${esc(r.s.code)}</td>
         <td class="nm-cell"><div class="nm-in"><span>${esc(r.s.name)}</span>${r.any ? `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>` : ''}</div></td>
         <td>${esc(r.s.vh)}</td>${L.phan.map(s => { const g = r.secs[s.id], t = secCell(g);
           return t ? `<td colspan="3">${t}</td>` : `<td class="num">${g.raw}</td><td class="num">${scaleText(g.scale)}</td><td>${g.cefr}</td>`; }).join('')}
-        ${hasWriting() ? wrCells(r) : ''}<td class="num">${r.nonstd || ''}</td></tr>`).join('') + '</tbody>';
+        ${hasWriting() ? wrCells(r) : ''}${hasSpeaking() ? spCells(r) : ''}<td class="num">${r.nonstd || ''}</td></tr>`).join('') + '</tbody>';
     $('#resTable').querySelectorAll('[data-rp]').forEach(b => b.onclick = () => studentReport(b.dataset.rp));
   }
   function note(r) {
@@ -813,12 +818,12 @@
   function exportHeader() {
     const L = lvl(), qCols = p => Object.keys(QMAP[S.level][p]).map(Number).sort((a, b) => a - b).map(q => PAPER_SHORT[p] + q);
     const secCols = sec => [`${sec.ten} /${secMax(S.level, sec)}`, `${sec.ten} thang`, `${sec.ten} CEFR`, ...partsOf(S.level, sec).map(([p, n]) => `${sec.viet} Part ${p} (/${n})`)];
-    return { qCols, cols: ['STT', 'Mã HS', 'Họ tên', 'Lớp', ...qCols('reading'), ...qCols('listening'), ...L.phan.flatMap(secCols), ...(hasWriting() ? WR_COLS : []), 'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét'] };
+    return { qCols, cols: ['STT', 'Mã HS', 'Họ tên', 'Lớp', ...qCols('reading'), ...qCols('listening'), ...L.phan.flatMap(secCols), ...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? SP_COLS : []), 'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét'] };
   }
   function secVals(r) {
     return [...lvl().phan.flatMap(sec => { const g = r.secs[sec.id], ok = g && !g.incomplete, t = !g ? '' : g.incomplete ? 'thiếu trang' : '';
       return [ok ? g.raw : t, ok ? scaleText(g.scale) : '', ok ? g.cefr : '', ...partsOf(S.level, sec).map(([p]) => ok ? g.parts[p] : '')]; }),
-      ...(hasWriting() ? wrVals(r) : [])];
+      ...(hasWriting() ? wrVals(r) : []), ...(hasSpeaking() ? spVals(r) : [])];
   }
   async function exportXlsx() {
     if (!confirmWarn()) return;
@@ -953,8 +958,12 @@
     if (wr) skills.push({ id: 'writing', name: 'Writing', raw: wr.total.raw, max: wr.total.raw_max, scale: wr.total.cambridge_scale ?? null, est: !!wr.total.is_estimate, d: null,
       parts: wr.parts.map(p => ({ name: 'Part ' + p.part, v: p.raw, n: p.raw_max, d: null })) });
     else skills.push({ id: 'writing', name: 'Writing', empty: true, scale: null, emptyNote: 'No score yet', emptyVi: 'Chưa có bài Writing' });
-    const spk = (S.speaking || {})[r.s.key] || null;
-    skills.push({ id: 'speaking', name: 'Speaking', empty: true, scale: null, emptyNote: spk ? 'Scale conversion pending' : 'Not graded yet', emptyVi: spk ? 'Đã nhập band, chờ bảng quy đổi điểm' : 'Chưa có điểm Speaking' });
+    const spk = (S.speaking || {})[r.s.key] || null, SC = window.SpeakingScore, spRaw = spk ? SC.total(S.level, spk.bands) : null;
+    if (spRaw != null) {
+      const SPN = { GV: 'Grammar & Vocab', DM: 'Discourse', P: 'Pronunciation', IC: 'Interaction', GA: 'Global' };
+      skills.push({ id: 'speaking', name: 'Speaking', raw: spRaw, max: SC.MAX[S.level], scale: SC.scale(S.level, spRaw), d: null,
+        parts: Object.keys(SC.WEIGHT[S.level]).map(c => ({ name: SPN[c], v: spk.bands[c], n: 5, d: null })) });
+    } else skills.push({ id: 'speaking', name: 'Speaking', empty: true, scale: null, emptyNote: spk ? 'Incomplete bands' : 'Not graded yet', emptyVi: spk ? 'Chưa đủ band các tiêu chí' : 'Chưa có điểm Speaking' });
     const sc = skills.filter(s => s.scale != null).map(s => s.scale);
     const ov = sc.length ? Math.round(sc.reduce((a, b) => a + b, 0) / sc.length) : null;
     const s1 = {}; skills.forEach(s => { s1[s.id] = s.scale; });
