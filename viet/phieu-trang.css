@@ -79,3 +79,10 @@
 
 .pt-cc { display: block; } .pt-cc svg { width: 100%; height: auto; display: block; }
 .pt-sum { margin: 2px 4px 2px; font-size: 11px; font-weight: 600; color: #2F3B52; } .pt-sum .vi { display: block; font-weight: 400; font-size: 9.5px; color: #7a8494; }
+
+.pt-spk { display: grid; grid-template-columns: 1fr 1.7fr 1.2fr; gap: 12px; padding: 10px 12px; border-radius: 8px; font-size: 11.5px; line-height: 1.4; }
+.pt-spk b { display: block; font-size: 11px; font-weight: 700; margin-bottom: 3px; text-transform: uppercase; letter-spacing: .02em; }
+.pt-spk p { margin: 0; } .pt-spk ol { list-style: none; margin: 0; padding: 0; } .pt-spk li { display: flex; gap: 6px; margin-bottom: 4px; }
+.pt-spk .n { flex: none; width: 15px; height: 15px; border-radius: 50%; color: #fff; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
+.pt-spk em { font-style: normal; font-weight: 600; }
+.pt-tight { gap: 8px; } .pt-tight .pt-gap td { padding: 3px 6px; } .pt-tight .pt-ca { padding: 8px 12px; }

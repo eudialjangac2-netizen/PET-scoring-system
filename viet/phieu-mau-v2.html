@@ -1,7 +1,7 @@
 <!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Phiếu mẫu v2</title>
 <link rel="stylesheet" href="phieu-font.css"><link rel="stylesheet" href="phieu-trang.css"><link rel="stylesheet" href="writing-report.css">
 <style>@page{size:A4;margin:0}body{margin:0}.pg{width:794px;height:1123px;overflow:hidden;page-break-after:always}</style></head><body>
-<script src="phieu-trang.js"></script><script src="writing-report.js"></script>
+<script src="speaking-bank.js"></script><script src="speaking-chan-doan.js"></script><script src="phieu-trang.js"></script><script src="writing-report.js"></script>
 <script>
 const P=(name,v,n,d)=>({name,v,n,d});
 const sum=a=>a.reduce((x,p)=>x+p.v,0), sumN=a=>a.reduce((x,p)=>x+p.n,0);
@@ -29,6 +29,7 @@ const ket=model('KET','KET Mock Test 1',[
   writingGroups:[{ten:'Grammar errors',n:6,mau:grp.grammar,note:'chia động từ, thì quá khứ'}],
   habits:['Còn 1 câu Reading bỏ trống.','Tô đáp án rõ ràng, không có câu tô sai cách.'],
   wrong:[{skill:'reading',name:'Reading',items:['Q3: B, C','Q14: A, D','Q22: blank, A']},{skill:'listening',name:'Listening',items:['Q8: A, C','Q17: B, A','Q21: C, B']}]}});
+const SPK={KET:{bands:{GV:2,P:3,IC:3,GA:3},evidence:['G-S • developing','G-R • word order/question form','V-R • limited','P-I • mostly clear','Q • weak/absent','GA-L • short sentences/phrases'],weakPart:'P2'},PET:{bands:{GV:3,DM:3,P:2,IC:4,GA:3},evidence:['G-S • developing','V-R • adequate','DM-E • developed','P-I • effortful','P-W • frequent errors','P-SND • recurring issues','R • observed','Q • absent'],weakPart:'P3'},FCE:{bands:{GV:4,DM:3,P:4,IC:3,GA:3},evidence:['G-S • secure','G-C • some successful','V-R • adequate B2','DM-E • extended but uneven','P-I • clear overall','L • absent/weak','N • weak','GA-WH • generally successful'],weakPart:'P3'}};
 const pet=model('PET','PET Test 1',[
  skill('reading','Reading',[P('Part 1',5,5,1),P('Part 2',4,5,0),P('Part 3',4,5,-1),P('Part 4',4,5,1),P('Part 5',5,6,1),P('Part 6',5,6,0)],[138,142,147,149,153]),
  skill('listening','Listening',[P('Part 1',5,7,0),P('Part 2',5,6,-1),P('Part 3',5,6,1),P('Part 4',4,6,-1)],[135,140,142,146,144],'Cần thêm khoảng 2 câu đúng'),
@@ -66,6 +67,7 @@ const fce=model('FCE','FCE Test 5',[
  for(const [m,f,ten] of [[ket,'mau-ket-day-du.json','A2 KEY'],[pet,'mau-pet-day-du.json','B1 PRELIMINARY'],[fce,'mau-fce-day-du.json','B2 FIRST']]){
   const w=await (await fetch(f)).json(), T=PhieuTrang.THEME[m.level];
   const wp=[];let pg=3;w.parts.forEach((_,i)=>{const ps=WritingReport.partPages(w,i,{mau:T.a,dark:T.d,soft:T.soft,tenCapDo:ten,trang:pg});wp.push(...ps);pg+=ps.length});
+  m.speaking=SPK[m.level];
   m.totalPages=2+wp.length;
   const pages=[PhieuTrang.overview(m),PhieuTrang.diagnosis(m),...wp].map(h=>h.replace(/__TOTAL__/g,m.totalPages));
   pages.forEach(x=>document.body.insertAdjacentHTML('beforeend','<div class="pg">'+x+'</div>'));

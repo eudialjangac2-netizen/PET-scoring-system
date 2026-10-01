@@ -142,18 +142,30 @@
       var nx = nextGrade(m.level, sk.scale), need = nx ? nx[0] - sk.scale : 0;
       return '<tr><td><i style="background:' + t.ink + '"></i>' + esc(sk.name) + '</td><td><b>' + sk.scale + '</b></td><td>' + gradeBadge(m.level, sk.scale) + '</td><td>' + (nx ? '<span class="pt-need" style="background:' + t.bg + ';color:' + t.ink + '">+' + need + '</span> to Grade ' + nx[1] : 'Top grade reached') + '</td></tr>';
     }).join('');
-    var causes = D.causes.map(function (c) {
+    var SD = (m.speaking && window.SpeakingDiagnosis) ? window.SpeakingDiagnosis.pick(m.level, m.speaking) : null;
+    var causes = D.causes.filter(function (c) { return !(SD && c.skill === 'speaking'); }).map(function (c) {
       var t = T0.skill[c.skill] || { bg: T0.soft, ink: T0.d };
       return '<div class="pt-ca" style="background:' + t.bg + '"><h4 style="color:' + t.ink + '">' + esc(c.title) + '</h4><p>' + esc(c.body) + '</p><div class="fx"><b>How to fix:</b> ' + esc(c.fix) + '</div></div>';
     }).join('');
+    var spk = '';
+    if (SD) {
+      var ts = T0.skill.speaking || { bg: T0.soft, ink: T0.d };
+      var ar = SD.areas.map(function (a, i) {
+        return '<li><span class="n" style="background:' + ts.ink + '">' + (i + 1) + '</span><span>' + esc(a.text) + (a.part ? ' <em>Thể hiện rõ nhất ở ' + esc(a.part) + '.</em>' : '') + '</span></li>';
+      }).join('');
+      spk = '<div class="pt-sec"><h3>' + ttl('Speaking: Areas to Improve', 'Speaking: điểm cần cải thiện') + '</h3><div class="pt-spk" style="background:' + ts.bg + '">'
+        + (SD.strength ? '<div class="pt-spk-s"><b style="color:' + ts.ink + '">Strength</b><p>' + esc(SD.strength) + '</p></div>' : '')
+        + '<div class="pt-spk-a"><b style="color:' + ts.ink + '">Areas to improve</b><ol>' + ar + '</ol></div>'
+        + (SD.next ? '<div class="pt-spk-n"><b style="color:' + ts.ink + '">Next step</b><p>' + esc(SD.next) + '</p></div>' : '') + '</div></div>';
+    }
     var wr = D.writingGroups.map(function (g) { return '<div class="pt-wg"><span class="dot" style="background:' + g.mau + '"></span><b>' + g.n + '</b> ' + esc(g.ten) + '<small>' + esc(g.note) + '</small></div>'; }).join('');
     var wrong = D.wrong.map(function (w) {
       var t = T0.skill[w.skill];
       return '<div class="pt-wq"><h5 style="color:' + t.ink + '">' + esc(w.name) + '</h5>' + w.items.map(function (x) { return '<span class="chip" style="background:' + t.bg + '">' + esc(x) + '</span>'; }).join('') + '</div>';
     }).join('');
-    return '<div class="pt-page" style="' + styleVars(m) + '">' + head(m, ['Results Analysis & Improvement Plan', 'Phân tích kết quả và hướng cải thiện - Tổng quan ' + m.skills.length + ' kỹ năng']) + '<div class="pt-main">'
+    return '<div class="pt-page" style="' + styleVars(m) + '">' + head(m, ['Results Analysis & Improvement Plan', 'Phân tích kết quả và hướng cải thiện - Tổng quan ' + m.skills.length + ' kỹ năng']) + '<div class="pt-main' + (SD ? ' pt-tight' : '') + '">'
       + '<div class="pt-sec"><h3>' + ttl('Path to the Next Grade', 'Lộ trình lên Grade tiếp theo') + '</h3><table class="pt-gap"><tr><th>Skill</th><th>Scale</th><th>Current level</th><th>Needed</th></tr>' + gap + '</table></div>'
-      + '<div class="pt-sec"><h3>' + ttl('Why Points Are Being Lost', 'Vì sao em đang mất điểm') + '</h3><div class="pt-cas">' + causes + '</div></div>'
+      + '<div class="pt-sec"><h3>' + ttl('Why Points Are Being Lost', 'Vì sao em đang mất điểm') + '</h3><div class="pt-cas">' + causes + '</div></div>' + spk
       + '<div class="pt-two"><div class="pt-sec"><h3>' + ttl('Repeated Writing Errors', 'Lỗi Writing lặp lại') + '</h3>' + wr + '</div><div class="pt-sec"><h3>' + ttl('Test-taking Habits', 'Thói quen làm bài') + '</h3><ul class="pt-hb">' + D.habits.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></div>'
       + '<div class="pt-sec"><h3>' + ttl('Questions to Review', 'Câu cần xem lại (câu: em chọn, đáp án đúng)') + '</h3><div class="pt-wrs">' + wrong + '</div></div>'
       + '</div>' + foot(m, 2) + '</div>';
