@@ -121,7 +121,7 @@
   function overview(m) {
     var o = m.overall, has = o.scale != null, nx = has ? nextGrade(m.level, o.scale) : null, g = has ? gradeOf(m.level, o.scale) : '';
     var pl = function (n) { return n + (n === 1 ? ' Scale point' : ' Scale points'); };
-    var cmt = m.comment + (spkOf(m) && spkOf(m).strength ? ' Điểm mạnh ở Speaking: ' + spkOf(m).strength.replace(/^Em /, 'em ') : '');
+    var cmt = m.comment;
     var ovt = !has ? 'Scores will appear once all skills are graded.' : m.first
       ? 'First mock: this is your starting point.' + (nx ? ' Target for Mock 2: reach Grade ' + nx[1] + ' (' + nx[0] + '), ' + pl(nx[0] - o.scale) + ' away.' : '')
       : (nx ? pl(nx[0] - o.scale) + ' to reach Grade ' + nx[1] + '.' : 'Top grade reached.');
@@ -137,6 +137,13 @@
   }
 
   // ---- Trang 2: Learning Diagnosis (không lặp lại bảng điểm Part)
+  var SPK_SUB = {
+    GV: 'Grammar & Vocabulary đánh giá độ chính xác và sự đa dạng của ngữ pháp, từ vựng khi nói.',
+    DM: 'Discourse Management đánh giá khả năng nói dài, mạch lạc và sắp xếp ý rõ ràng.',
+    P: 'Pronunciation đánh giá phát âm, trọng âm và ngữ điệu để người nghe dễ hiểu.',
+    IC: 'Interactive Communication đánh giá khả năng phản hồi và duy trì hội thoại với bạn cùng thi.',
+    GA: 'Global Achievement đánh giá khả năng xử lý toàn bộ bài thi một cách độc lập.'
+  };
   function diagnosis(m) {
     var T0 = THEME[m.level], D = m.diagnosis;
     var gap = m.skills.map(function (sk) {
@@ -147,10 +154,14 @@
     }).join('');
     var SD = spkOf(m);
     var allCauses = D.causes.filter(function (c) { return !(SD && c.skill === 'speaking'); });
-    if (SD && SD.areas.length) allCauses.push({ skill: 'speaking', title: SD.title, body: SD.areas.map(function (x, i) { return x.text + (i === 0 && x.part ? ' Thể hiện rõ nhất ở ' + x.part + '.' : ''); }).join(' '), fix: SD.next });
+    if (SD && SD.areas.length) allCauses.push({ skill: 'speaking', title: SD.title, body: SD.areas.map(function (x, i) { return x.text + (i === 0 && x.part ? ' Thể hiện rõ nhất ở ' + x.part + '.' : ''); }).join(' '), fix: SD.next, sub: SPK_SUB[window.SpeakingDiagnosis.crit(SD.areas[0].code)] || '', strength: SD.strength });
     var causes = allCauses.map(function (c) {
       var t = T0.skill[c.skill] || { bg: T0.soft, ink: T0.d };
-      return '<div class="pt-ca" style="background:' + t.bg + '"><h4 style="color:' + t.ink + '">' + esc(c.title) + '</h4><p>' + esc(c.body) + '</p><div class="fx"><b>How to fix:</b> ' + esc(c.fix) + '</div></div>';
+      var lab = 'style="color:' + t.ink + ';font-weight:600"';
+      var inner = c.skill === 'speaking'
+        ? (c.sub ? '<div class="pt-sub">' + esc(c.sub) + '</div>' : '') + (c.strength ? '<p><span ' + lab + '>Điểm mạnh:</span> ' + esc(c.strength) + '</p>' : '') + '<p><span ' + lab + '>Cần cải thiện:</span> ' + esc(c.body) + '</p>'
+        : '<p>' + esc(c.body) + '</p>';
+      return '<div class="pt-ca" style="background:' + t.bg + '"><h4 style="color:' + t.ink + '">' + esc(c.title) + '</h4>' + inner + '<div class="fx"><b>How to fix:</b> ' + esc(c.fix) + '</div></div>';
     }).join('');
     var wr = D.writingGroups.map(function (g) { return '<div class="pt-wg"><span class="dot" style="background:' + g.mau + '"></span><b>' + g.n + '</b> ' + esc(g.ten) + '<small>' + esc(g.note) + '</small></div>'; }).join('');
     var wrong = D.wrong.map(function (w) {
