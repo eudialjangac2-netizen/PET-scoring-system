@@ -30,14 +30,15 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 
 ## Đang làm
 
-- Elaine: hoàn thiện phiếu Speaking trong phiếu báo điểm (theo bản mẫu của Uyên), sau đó làm tách Use of English.
+- Elaine: đã xong phiếu Speaking, dòng "Yêu cầu Part", bước 7 "Bài làm máy" (FCE) và trang 2 đủ các kỹ năng (PR #9, #10 đã merge). Tiếp theo: chạy thử bằng dữ liệu thật trên bản chính thức, sau đó làm tách Use of English.
 - Uyên: ghi vào mục "Uyên cập nhật" bên dưới. Đã test quét phiếu Speaking, đang làm lưu lịch sử Mock và đồng bộ Google Sheet.
 
 ## Kế hoạch
 
 1. (XONG, PR #4) Gắn phiếu 4 trang vào app.
-2. (XONG, PR #8) Speaking: nhập tay, quét phiếu chấm, bảng quy đổi, thẻ chẩn đoán.
-3. Elaine: tách Use of English thành kỹ năng riêng cho FCE (chạm `cap-do.json` và phần tính điểm Reading của Uyên, cần báo Uyên trước), làm sau khi xong phiếu Speaking.
+2. (XONG, PR #8, #9) Speaking: nhập tay, quét phiếu chấm, bảng quy đổi, thẻ chẩn đoán, thẻ trang 2 theo mẫu của Uyên.
+   (XONG, PR #10) Dòng "Yêu cầu Part", số câu trong Habits, bước 7 "Bài làm máy" cho FCE trên máy, mỗi kỹ năng 1 thẻ ở trang 2.
+3. Elaine: kiểm tra bản chính thức bằng dữ liệu FCE thật (Raw Answers, Writing, Speaking), rồi tách Use of English thành kỹ năng riêng cho FCE (chạm `cap-do.json` và phần tính điểm Reading của Uyên, cần báo Uyên trước), làm sau khi xong phiếu Speaking.
 4. Uyên: lưu lịch sử điểm theo học sinh qua 5 Mock để vẽ biểu đồ và tính tăng/giảm so với Mock trước (mã học sinh làm khóa).
 5. Uyên: đồng bộ Google Sheet có cột Writing và Speaking (Apps Script).
 6. (XONG) Skill `ruby-writing-json` cho giáo viên: hỏi JSON, Word hoặc cả hai.
@@ -53,6 +54,8 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 - PR #4 đã sửa `cham-bai.js` (thêm `reportModel`, `reportPages`, `renderReportCanvases`, viết lại `studentReport`/`classReport`; thêm `S.priorities`; giữ `reportHTML` cũ làm phương án dự phòng), `cham-bai.html` (modal nhiều trang, ô 3 ưu tiên, nạp font/CSS/JS trong `viet/`), `cham-bai.css` (vài dòng). Uyên cần `git pull` (hoặc tải main mới) trước khi sửa tiếp các file này.
 
 - PR #8 đã sửa `omr-engine.js` (bán kính ô tô theo `ring_mm`, `shift_mm` và `marked_cov` riêng từng trang, dòng nhiều ô tô mượn độ lệch từ dòng đơn gần nhất; mặc định giữ nguyên nên Reading/Listening không đổi), `omr-template.json` (thêm 3 page Speaking, page_id types 8/9/10), `cham-bai.js` (`recordSpeaking`, `S.speaking`, cột Speaking, quy đổi điểm), `cham-bai.html` (bước 6 Speaking). Uyên cần `git pull` main trước khi sửa tiếp.
+
+- PR #10 đã sửa `cham-bai.js` (hàm `results()` đọc thêm `S.online` cho bài FCE làm trên máy, `onlineFromFiles`/`applyOnline`/`renderOnline`, bước `online` trong `go()`; hàm chẩn đoán trang 2 chọn 1 Part yếu nhất mỗi kỹ năng và giới hạn số câu trong Questions to Review), `cham-bai.html` (bước 7 "Bài làm máy", Kết quả thành bước 8, nạp `viet/nhap-may.js` và `viet/yeu-cau-part.js`), `de-thi/` (thêm `fce_practice_test05.json`, `fce_practice_test06.json`, sửa `manifest.json`). Uyên cần `git pull` main trước khi sửa tiếp.
 
 ## Uyên cập nhật (Uyên tự ghi, mới nhất ở trên)
 
