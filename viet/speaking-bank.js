@@ -171,6 +171,11 @@ window.SPEAKING_BANK = {
 "",
 "Tiếp tục giữ nhịp exchange mà không cần nói quá dài."
 ],
+"Exchange quality • keeps exchange going": [
+"Em giữ được cuộc trao đổi đơn giản trong nhiều lượt nói.",
+"Nhịp trao đổi đôi lúc chưa đều, em cần thêm thời gian hoặc gợi ý để tiếp tục.",
+"Luyện nhịp \"nghe - trả lời - thêm một ý\" trong mini-dialogues 3-4 lượt."
+],
 "Exchange quality • mostly reactive/difficult": [
 "Em vẫn phản hồi được một số lượt nói.",
 "Interaction chủ yếu mang tính phản ứng hoặc khó duy trì.",

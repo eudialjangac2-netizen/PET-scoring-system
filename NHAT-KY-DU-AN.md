@@ -16,6 +16,10 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 
 | Ngày | Nhánh / PR | Nội dung | File thay đổi |
 |---|---|---|---|
+| 2026-10-02 | `viet-yeu-cau-part` (chồng lên PR #9) | Thẻ Reading/Listening trang 2 có dòng "Yêu cầu Part x" (bảng 1 câu cho từng Part của KET/PET/FCE, sửa chữ ở `viet/yeu-cau-part.js`) và liệt kê tối đa 3 số câu cần xem lại. Test-taking Habits ghi số câu bỏ trống và tô chưa đúng cách (R22, L8...). Speaking KET: thêm nhận xét cho ô "keeps exchange going" và nhận xét dự phòng cho band 1. Sửa nhỏ `cham-bai.js` (hàm chẩn đoán) và `cham-bai.html` (nạp script). | `viet/yeu-cau-part.js`, `viet/speaking-*.js`, `viet/phieu-trang.*`, `cham-bai.js`, `cham-bai.html` (CHUNG) |
+| 2026-10-02 | `viet-yeu-cau-part` | Bước mới 7 "Bài làm máy" (Kết quả thành bước 8): app đọc bài FCE làm trên máy từ Google Sheet "FCE RUBY MOCK TESTS RESULTS" (tab Raw Answers + FCE Results; hoặc tải file .xlsx lên nếu sheet chưa mở chia sẻ). Điểm lấy từ cột POINTS của sheet, giữ bài mới nhất của mỗi học sinh/kỹ năng, ghép học sinh theo mã (STUDENT ID = mã lớp hoặc 6 số cuối). TIMESTAMP chỉ là giờ nộp bài nên chưa có thời gian từng Part. Số lần vi phạm chỉ hiện ở phần cảnh báo cho giáo viên. Thêm đề `fce_practice_test05`, `fce_practice_test06` vào `de-thi/` (đáp án lấy từ repo ruby-fce-mock-tests, nguồn fce-ebook). Sửa `results()` trong `cham-bai.js` (Uyên cần xem). | `viet/nhap-may.js`, `de-thi/fce_practice_test05-06.json` + `manifest.json`, `cham-bai.js`, `cham-bai.html` (CHUNG) |
+| 2026-10-02 | `viet-speaking-the-3-phan` | Thẻ Speaking trang 2 theo bản mẫu của Uyên: dòng mô tả tiêu chí, Điểm mạnh, Cần cải thiện, How to fix (Strength không còn nằm ở Teacher's Overall Comment trang 1). Đã chạy thử trong app: ảnh phiếu chấm Speaking PET giả lập tải lên bước quét, ra đúng band và mã chẩn đoán, bước 6 hiện "Đã quét". | `viet/phieu-trang.js`, `viet/phieu-trang.css` |
+| 2026-10-01 | PR #8 `viet-speaking-diem-yeu` (đã merge) | Speaking trọn bộ: (1) thẻ Speaking trong "Why Points Are Being Lost" chọn điểm yếu theo 3 tầng của Elaine, nhận xét tiếng Việt từ ngân hàng `speaking-bank.js`; (2) bước 6 "Speaking" nhập tay band, mã chẩn đoán, part yếu (nhãn tiếng Anh như phiếu giấy); (3) quét phiếu chấm Speaking PET/KET/FCE như Reading/Listening (loại trang 8/9/10, mã học sinh 6 cột riêng từng trang), ô thiếu hoặc tô trùng gắn cờ xem lại; (4) bảng quy đổi điểm thô -> Scale (KET 0-45, PET 0-30, FCE 0-60), Speaking vào Overall và cột Excel/CSV. Đã test trên ảnh giả lập từ PDF thật. | `viet/speaking-*.js`, `viet/speaking-nhap.css`, `viet/phieu-trang.*`, `cham-bai.*` (CHUNG), `omr-engine.js`, `omr-template.json` (của Uyên) |
 | 2026-10-01 | `viet-bieu-do-chung-truc` | Trang 1: gộp hai biểu đồ thành một khung dùng chung trục điểm (theo đề xuất của Uyên, Elaine duyệt). Cột điểm từng kỹ năng bên trái, đường Overall qua các Mock bên phải, mỗi chấm ghi tên Mock và điểm; thêm câu tóm tắt song ngữ dưới biểu đồ. Không đụng file chung. | `viet/phieu-trang.js`, `viet/phieu-trang.css` |
 | 2026-10-01 | `viet-phieu-writing-2-trang` (chờ merge) | Bước 4: phiếu Writing đầy đủ hơn. Bỏ giới hạn 6 lỗi, thêm bài mẫu `improved`, nhận xét chi tiết, Key takeaway. KET gọn 1 trang mỗi Part; PET và FCE 2 trang mỗi Part (A: bài làm và điểm tiêu chí, B: lỗi, bài mẫu, nhận xét, checklist), nhiều lỗi thì tự tràn sang trang kế. Tổng số trang phiếu tính tự động. Skill mới `ruby-writing-json` (trong tài khoản Elaine, không nằm trong repo) hỏi JSON/Word/cả hai, mặc định JSON. Sửa `cham-bai.js` ở hàm `reportPages` (khoảng 12 dòng). | `viet/writing-report.js`, `viet/HOP-DONG-JSON.md`, `viet/mau-pet-day-du.json`, `viet/mau-fce-day-du.json`, `viet/phieu-mau-v2.html`, `cham-bai.js` (CHUNG, chỉ `reportPages`) |
 | 2026-10-01 | PR #4 `viet-gan-phieu` (đã merge) | Bước 1: gắn phiếu 4 trang vào app. Mỗi học sinh ra 2 trang (Performance Overview, Results Analysis) + 1 trang cho mỗi Part Writing; chưa có Writing thì chỉ 2 trang. Xem trước nhiều trang, tải JPG từng trang, PDF nhiều trang, phiếu cả lớp. Ô nhận xét (tối đa 700 ký tự) và 3 ưu tiên (mỗi ý 140 ký tự) do app gợi ý, giáo viên sửa. Speaking và Use of English tạm hiện "Not graded yet"; chưa có lịch sử Mock nên chưa có mũi tên tăng/giảm; Overall ghi "Provisional" khi thiếu kỹ năng. Đã thử với dữ liệu giả KET, PET, FCE. | `cham-bai.js`, `cham-bai.html`, `cham-bai.css` (CHUNG), `viet/phieu-trang.*`, `viet/writing-report.*`, `viet/phieu-font.css`, `viet/fonts/` |
@@ -26,51 +30,32 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 
 ## Đang làm
 
-- Elaine: chuẩn bị bước 2 (Speaking, tách Use of English), chờ phiếu chấm Speaking và thống nhất với Uyên.
-- Uyên: ghi vào mục "Uyên cập nhật" bên dưới.
+- Elaine: hoàn thiện phiếu Speaking trong phiếu báo điểm (theo bản mẫu của Uyên), sau đó làm tách Use of English.
+- Uyên: ghi vào mục "Uyên cập nhật" bên dưới. Đã test quét phiếu Speaking, đang làm lưu lịch sử Mock và đồng bộ Google Sheet.
 
 ## Kế hoạch
 
-1. (XONG, đã merge PR #4) Gắn phiếu 4 trang vào app.
-2. Tách Use of English thành kỹ năng riêng cho FCE (chạm `cap-do.json` và phần tính điểm Reading của bạn code).
-3. Speaking: phiếu chấm Speaking làm cùng kiểu Reading/Listening (Elaine đang làm phiếu). App nhận điểm 4 tiêu chí, mỗi tiêu chí 0-5.
-4. Lưu lịch sử điểm theo học sinh qua 5 Mock để vẽ biểu đồ và tính tăng/giảm so với Mock trước (cần thống nhất chỗ lưu, xem "Cần thống nhất").
-5. Skill/prompt cho giáo viên: AI hỏi giáo viên cần JSON, bản Word hay cả hai.
-6. Đồng bộ Google Sheet có cột Writing (cần bạn code viết Apps Script).
+1. (XONG, PR #4) Gắn phiếu 4 trang vào app.
+2. (XONG, PR #8) Speaking: nhập tay, quét phiếu chấm, bảng quy đổi, thẻ chẩn đoán.
+3. Elaine: tách Use of English thành kỹ năng riêng cho FCE (chạm `cap-do.json` và phần tính điểm Reading của Uyên, cần báo Uyên trước), làm sau khi xong phiếu Speaking.
+4. Uyên: lưu lịch sử điểm theo học sinh qua 5 Mock để vẽ biểu đồ và tính tăng/giảm so với Mock trước (mã học sinh làm khóa).
+5. Uyên: đồng bộ Google Sheet có cột Writing và Speaking (Apps Script).
+6. (XONG) Skill `ruby-writing-json` cho giáo viên: hỏi JSON, Word hoặc cả hai.
 
 ## Cần thống nhất giữa hai người
 
-- Chỗ lưu lịch sử 5 Mock của mỗi học sinh (mã học sinh làm khóa).
-- Grade A/B/C: đang dùng mốc Cambridge English Scale chung cho từng kỹ năng và Overall: KET A 140, B 133, C 120; PET A 160, B 153, C 140; FCE A 180, B 173, C 160. Cần Elaine xác nhận.
+- Chỗ lưu lịch sử 5 Mock của mỗi học sinh (mã học sinh làm khóa): Uyên làm, ghi lại quyết định ở đây khi chốt.
+- Grade A/B/C: đang dùng mốc Cambridge English Scale chung cho từng kỹ năng và Overall: KET A 140, B 133, C 120; PET A 160, B 153, C 140; FCE A 180, B 173, C 160. Elaine đã xác nhận (02/10/2026).
 - Nhận xét tổng thể và 3 ưu tiên: app gợi ý, giáo viên sửa, giới hạn 700 ký tự và 3 ý (mỗi ý khoảng 140 ký tự).
 
 ## Thay đổi file CHUNG đã merge (Uyên cần kéo main mới về)
 
 - PR #4 đã sửa `cham-bai.js` (thêm `reportModel`, `reportPages`, `renderReportCanvases`, viết lại `studentReport`/`classReport`; thêm `S.priorities`; giữ `reportHTML` cũ làm phương án dự phòng), `cham-bai.html` (modal nhiều trang, ô 3 ưu tiên, nạp font/CSS/JS trong `viet/`), `cham-bai.css` (vài dòng). Uyên cần `git pull` (hoặc tải main mới) trước khi sửa tiếp các file này.
 
+- PR #8 đã sửa `omr-engine.js` (bán kính ô tô theo `ring_mm`, `shift_mm` và `marked_cov` riêng từng trang, dòng nhiều ô tô mượn độ lệch từ dòng đơn gần nhất; mặc định giữ nguyên nên Reading/Listening không đổi), `omr-template.json` (thêm 3 page Speaking, page_id types 8/9/10), `cham-bai.js` (`recordSpeaking`, `S.speaking`, cột Speaking, quy đổi điểm), `cham-bai.html` (bước 6 Speaking). Uyên cần `git pull` main trước khi sửa tiếp.
+
 ## Uyên cập nhật (Uyên tự ghi, mới nhất ở trên)
 
 | Ngày | Đang làm / đã làm | File đụng tới | Cần Elaine biết gì |
 |---|---|---|---|
 | | | | |
-
-## 01/10/2026 - Speaking: diem can cai thien tren trang 2 (ban xem truoc, nhanh viet-speaking-diem-yeu)
-- Speaking thanh 1 the trong luoi "Why Points Are Being Lost" (tieu de tieng Viet, noi dung toi da 2 diem + How to fix = Next Step), cung khung voi cac ky nang khac. Strength dua vao Teacher's Overall Comment o trang 1. Thuat ngu Anh duoc dich sang tieng Viet (bang GLOS trong speaking-chan-doan.js).
-- Chon theo 3 tang cua Elaine: G/V hoac P duoi band 3 -> lay tieu chi do truoc (hoa: G/V truoc); bang chung nang nhat theo thu tu noi bo; ca hai tu band 3 -> bang 4 muc uu tien cua Uyen.
-- "Weak part" hien thanh "The hien ro nhat o Part x" trong Area to Improve.
-- File moi: viet/speaking-bank.js (ngan hang nhan xet KET/PET/FCE), viet/speaking-chan-doan.js (logic chon). Du lieu vao: m.speaking = {bands, evidence, weakPart} (dang la du lieu gia trong phieu-mau-v2.html).
-- Chua noi voi cham-bai.js: can Uyen dua ma chan doan Speaking tu phieu diem chi tiet vao reportModel.
-
-## 01/10/2026 - Tab Speaking trong app cham bai (nhanh viet-speaking-diem-yeu)
-- Them buoc 6 "Speaking" (Ket qua thanh buoc 7): nhap cho tung hoc sinh band tung tieu chi (KET 4 tieu chi, PET/FCE 5), ma chan doan theo phieu cham Speaking, phan thi yeu nhat; co xem truoc nhan xet tieng Viet.
-- Du lieu luu S.speaking[key] = {bands, evidence, weakPart, at} (cung noi luu voi Writing). File: viet/speaking-nhap.js, viet/speaking-nhap.css; sua nho trong cham-bai.js (go, state, renderSpeaking, reportModel) va cham-bai.html (tab, section, script).
-- Thuat ngu nhan xet duoc dich sang tieng Viet trong viet/speaking-chan-doan.js (bang GLOS); cau mau hoc sinh phai noi giu tieng Anh.
-- Chua co: bang quy doi band Speaking sang Scale (cho Elaine), nen the Speaking trang 1 ghi "Scale conversion pending" va chua tinh vao Overall.
-
-## Speaking: quét phiếu chấm bằng OMR + bảng quy đổi điểm
-- Phiếu chấm Speaking (PET/KET/FCE) quét như Reading/Listening: loại trang 8/9/10 trong `omr-template.json` (pages `PET-speaking`, `KET-speaking`, `FCE-speaking`), mã học sinh 6 cột riêng từng trang.
-- `viet/speaking-quet.js` đổi kết quả tô thành band + mã chẩn đoán + part yếu; `cham-bai.js` có `recordSpeaking`. Không tìm thấy học sinh thì báo lỗi, không lưu; ô cần xem lại được gắn cờ ở bước 6.
-- `omr-engine.js` (file của Uyên) được sửa nhẹ: bán kính ô tô theo `ring_mm`, `shift_mm` và `marked_cov` riêng từng trang, dòng nhiều ô tô (multi) mượn độ lệch từ dòng đơn gần nhất. Reading/Listening không đổi (giá trị mặc định cũ).
-- `viet/speaking-quy-doi.js`: bảng quy đổi điểm thô -> Scale (KET 0-45, PET 0-30 bước 0.5, FCE 0-60); Speaking vào Overall, Excel/CSV có cột Speaking.
-- Phiếu chấm và form nhập dùng nhãn tiếng Anh; chỉ phiếu báo điểm dùng tiếng Việt.
-- Đã test trên ảnh giả lập từ PDF thật (xoay +-4.5 độ, thu nhỏ, làm mờ): 0 lỗi. Chưa test ảnh chụp điện thoại thật.

@@ -56,7 +56,7 @@
       return seg;
     }).join('');
   }
-  var TITLES = [[/^G-S/, 'Ngữ pháp cơ bản chưa ổn định'], [/^(G-C|Complex)/, 'Ngữ pháp phức tạp còn hạn chế'], [/^G-R/, 'Lỗi ngữ pháp lặp lại'], [/^V-R/, 'Vốn từ còn hạn chế'], [/^(V-A|Lexical)/, 'Chọn từ chưa chính xác'],
+  var TITLES = [[/^Exchange quality/, 'Giữ nhịp trao đổi chưa đều'], [/^G-S/, 'Ngữ pháp cơ bản chưa ổn định'], [/^(G-C|Complex)/, 'Ngữ pháp phức tạp còn hạn chế'], [/^G-R/, 'Lỗi ngữ pháp lặp lại'], [/^V-R/, 'Vốn từ còn hạn chế'], [/^(V-A|Lexical)/, 'Chọn từ chưa chính xác'],
     [/^DM-E/, 'Câu trả lời còn ngắn'], [/^DM-D\/R/, 'Ý chưa được phát triển'], [/^DM-C/, 'Liên kết ý còn đơn giản'], [/^DM-H/, 'Ngập ngừng làm đứt mạch nói'],
     [/^P-I/, 'Phát âm chưa rõ'], [/^P-W/, 'Trọng âm từ chưa chính xác'], [/^P-S\/IN/, 'Trọng âm câu và ngữ điệu còn hạn chế'], [/^P-SND/, 'Lỗi phát âm lặp lại'],
     [/^GA-L/, 'Câu nói còn quá ngắn'], [/^GA-H/, 'Ngập ngừng nhiều'], [/^(GA-|Whole-test|Extended)/, 'Chưa ổn định giữa các phần thi']];
@@ -65,12 +65,24 @@
     return 'Tương tác chưa chủ động';
   }
 
+  // Band 1 (KET): nhan xet du phong khi giao vien chua tich bang chung nao cho tieu chi do
+  var BAND1 = {
+    GV: ['Em đã cố gắng dùng từ và cụm từ quen thuộc để trả lời.', 'Em mới dùng được từ hoặc cụm đơn lẻ, ngữ pháp cơ bản còn rất hạn chế.', 'Học 10 câu mẫu về bản thân, gia đình, sở thích rồi nói thành câu đầy đủ.', 'Vốn từ và ngữ pháp còn rất hạn chế'],
+    P: ['Em vẫn nói được một số từ quen thuộc nghe rõ.', 'Phát âm và trọng âm còn rất hạn chế nên người nghe thường khó hiểu.', 'Nghe mẫu rồi nhại lại từng cụm 3-4 từ, chú ý trọng âm.', 'Phát âm còn rất hạn chế'],
+    IC: ['Em phản hồi được khi được hỏi trực tiếp.', 'Tương tác còn rất hạn chế, em chưa duy trì được cả những lượt trao đổi đơn giản.', 'Luyện cặp hỏi - đáp 2 lượt với 3 câu hỏi quen thuộc.', 'Tương tác còn rất hạn chế'],
+    GA: ['Em truyền đạt được một số thông tin rất đơn giản.', 'Em chủ yếu dùng từ hoặc cụm đơn lẻ và dừng nhiều nên ý chưa trọn vẹn.', 'Dùng khung "I like... because..." để nói thành câu hoàn chỉnh.', 'Mới nói được từ hoặc cụm đơn lẻ']
+  };
   function pick(level, sp) {
     var B = ((typeof window !== 'undefined' && window.SPEAKING_BANK) || globalThis.SPEAKING_BANK || {})[level] || {};
     if (!sp || !sp.evidence) return null;
     var items = sp.evidence.filter(function (k) { return B[k]; }).map(function (k) { return { k: k, c: crit(k), a: B[k][1], s: B[k][0], n: B[k][2], t: tier(k) }; });
-    var weak = items.filter(function (x) { return x.a && x.c !== 'WP'; });
     var b = sp.bands || {}, areas = [];
+    if (level === 'KET') ['GV', 'P', 'IC', 'GA'].forEach(function (c) {
+      if (b[c] != null && b[c] <= 1 && !items.some(function (x) { return x.c === c && x.a; })) {
+        var t = BAND1[c]; items.push({ k: 'BAND1-' + c, c: c, a: t[1], s: t[0], n: t[2], t: 1, band1: t[3] });
+      }
+    });
+    var weak = items.filter(function (x) { return x.a && x.c !== 'WP'; });
     var gv = b.GV, p = b.P, gate = [];
     if (gv != null && gv < 3) gate.push('GV');
     if (p != null && p < 3) gate.push('P');
@@ -104,7 +116,7 @@
       .sort(function (x, y) { return (b[y.c] == null ? 0 : b[y.c]) - (b[x.c] == null ? 0 : b[x.c]); })[0]
       || items.filter(function (x) { return x.s && x.c !== 'WP'; }).sort(function (x, y) { return (b[y.c] == null ? 0 : b[y.c]) - (b[x.c] == null ? 0 : b[x.c]); })[0];
     var vs = function (x) { return x ? vi(x) : x; };
-    var out = { rule: tierBranch, title: areas[0] ? 'Speaking: ' + titleOf(areas[0].k).replace(/^./, function (c) { return c.toLowerCase(); }) : '', gate: gate, strength: str ? vs(str.s) : '', areas: areas.map(function (x) { return { code: x.k, text: vs(x.a), tier: x.t }; }), next: vs(areas[0] ? areas[0].n : (str ? str.n : '')) };
+    var out = { rule: tierBranch, title: areas[0] ? 'Speaking: ' + (areas[0].band1 || titleOf(areas[0].k)).replace(/^./, function (c) { return c.toLowerCase(); }) : '', gate: gate, strength: str ? vs(str.s) : '', areas: areas.map(function (x) { return { code: x.k, text: vs(x.a), tier: x.t }; }), next: vs(areas[0] ? areas[0].n : (str ? str.n : '')) };
     if (sp.weakPart && out.areas[0]) out.areas[0].part = sp.weakPart.replace(/^P/, 'Part ');
     return out;
   }

@@ -22,5 +22,17 @@
   "level": "FCE",
   "title": "FCE Test 1",
   "file": "fce-test1.json"
+ },
+ {
+  "id": "fce_practice_test05",
+  "level": "FCE",
+  "title": "FCE Practice Test 5",
+  "file": "fce_practice_test05.json"
+ },
+ {
+  "id": "fce_practice_test06",
+  "level": "FCE",
+  "title": "FCE Practice Test 6",
+  "file": "fce_practice_test06.json"
  }
 ]
