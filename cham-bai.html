@@ -25,7 +25,8 @@
   <button data-go="write"><b>4</b>Câu viết<span class="badge" id="bWrite" hidden></span></button>
   <button data-go="writing"><b>5</b>Writing</button>
   <button data-go="speaking"><b>6</b>Speaking</button>
-  <button data-go="export"><b>7</b>Kết quả</button>
+  <button data-go="online"><b>7</b>Bài làm máy</button>
+  <button data-go="export"><b>8</b>Kết quả</button>
 </div></nav>
 
 <main class="wrap">
@@ -111,7 +112,14 @@
     <div id="spBox"></div>
   </section>
 
-  <!-- 7. Kết quả -->
+  <!-- 7. Bài làm trên máy (FCE) -->
+  <section class="view" id="v-online">
+    <h2>Bài làm trên máy (FCE)</h2>
+    <p class="hint">Dành cho FCE Reading, Use of English và Listening làm trên máy: lấy kết quả từng câu từ Google Sheet, thay cho quét phiếu giấy. Nhập xong, điểm tự vào các bước sau.</p>
+    <div id="onBox"></div>
+  </section>
+
+  <!-- 8. Kết quả -->
   <section class="view" id="v-export">
     <h2>Kết quả</h2>
     <div id="exportWarn"></div>
@@ -181,6 +189,7 @@
 <script src="viet/speaking-quet.js?v=20261001"></script>
 <script src="viet/speaking-nhap.js?v=20261001"></script>
 <script src="viet/yeu-cau-part.js?v=20261002"></script>
+<script src="viet/nhap-may.js?v=20261002"></script>
 <script src="viet/phieu-trang.js?v=20261002"></script>
 <script src="viet/writing-report.js?v=20261001"></script>
 <script src="omr-engine.js?v=20260928"></script>
