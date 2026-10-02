@@ -6,6 +6,12 @@
   "file": "pet-test1.json"
  },
  {
+  "id": "pet-test2",
+  "level": "PET",
+  "title": "PET Test 2",
+  "file": "pet-test2.json"
+ },
+ {
   "id": "ket-test1",
   "level": "KET",
   "title": "KET Test 1",
