@@ -132,21 +132,22 @@
   }
   const isDaily = () => !!S && S.mode === 'daily';
   const sheetTab = () => (isDaily() ? 'Hằng ngày ' : 'Kết quả ') + S.level;
-  const MODE_HINT = { mock: 'Mock test: tính điểm theo thang Cambridge, có phiếu báo điểm cho phụ huynh, lưu vào tab "Kết quả" của Google Sheet để theo dõi tiến bộ.',
+  const MODE_HINT = { mock: 'Mock test: tính điểm theo thang Cambridge, có phiếu báo điểm cho phụ huynh, chọn đợt Mock (1–5); lưu vào tab "Kết quả" của Google Sheet, tự đánh dấu là Mock để theo dõi tiến bộ.',
     daily: 'Bài hàng ngày: chấm nhanh trong lớp, chỉ có điểm thô và % đúng; không có Grade, Overall hay phiếu báo điểm; lưu vào tab "Hằng ngày" riêng (không lẫn vào tiến bộ Mock). Speaking và Writing có thể có hoặc không.' };
   function setMode(m) {
     MODE = m === 'daily' ? 'daily' : 'mock'; lsSet('omr-mode', MODE);
     document.querySelectorAll('[data-mode]').forEach(b => { const on = b.dataset.mode === MODE; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
-    $('#modeHint').textContent = MODE_HINT[MODE]; $('#dailyLabelBox').hidden = MODE !== 'daily';
+    $('#modeHint').textContent = MODE_HINT[MODE]; $('#dailyLabelBox').hidden = MODE !== 'daily'; $('#dotBox').hidden = MODE !== 'mock';
     fillTests();
   }
   function fillTests() {
     const c = rosters()[$('#selClass').value], lv = c?.level;
-    const list = TESTS.filter(t => (!lv || t.level === lv) && (MODE === 'daily' || (t.loai || 'mock') === 'mock'));   // Mock chỉ hiện đề có nhãn mock; Hằng ngày hiện mọi đề
-    $('#selTest').innerHTML = list.length ? list.map(t => `<option value="${esc(t.id)}">${esc(t.title)}${MODE === 'daily' && (t.loai || 'mock') === 'mock' ? ' (mock)' : ''}</option>`).join('')
-      : `<option value="">Chưa có đề ${MODE === 'mock' ? 'mock ' : ''}${lv || ''}</option>`;
+    const list = TESTS.filter(t => !lv || t.level === lv);   // mọi đề đúng cấp độ; loại buổi (Mock / Hằng ngày) do giáo viên chọn ở bước 1
+    $('#selTest').innerHTML = list.length ? list.map(t => `<option value="${esc(t.id)}">${esc(t.title)}</option>`).join('')
+      : `<option value="">Chưa có đề ${lv || ''}</option>`;
     const last = lsGet('omr-last', {}); if (last.test && list.some(t => t.id === last.test)) $('#selTest').value = last.test;
     $('#selTestL').innerHTML = $('#selTest').innerHTML;   // ô "đề cho Listening" dùng chung danh sách
+    $('#selDot').value = String(lsGet('omr-dot', {})[$('#selClass').value] || 1);   // nhớ đợt Mock lần trước của lớp này
     if (last.testL && list.some(t => t.id === last.testL)) $('#selTestL').value = last.testL;
   }
   function setMix() {   // bật/tắt chọn hai đề khác nhau cho Reading và Listening
@@ -236,12 +237,12 @@
     clearTimeout(syncTimer); syncTimer = setTimeout(() => pushResults(false), 6000);
   }
   function sheetRows() {
-    const L = lvl(), header = ['Loại', 'Đề', 'Lớp Cambridge', 'Mã HS', 'Họ tên', 'Lớp'];
+    const L = lvl(), header = ['Loại', ...(isDaily() ? [] : ['Đợt Mock']), 'Đề', 'Lớp Cambridge', 'Mã HS', 'Họ tên', 'Lớp'];
     for (const sec of L.phan) header.push(`${sec.ten} /${secMax(S.level, sec)}`, ...(isDaily() ? [`${sec.ten} %`] : [`${sec.ten} thang`, `${sec.ten} CEFR`]),
       ...partsOf(S.level, sec).map(([p, n]) => `${sec.viet} Part ${p} (/${n})`));
     header.push(...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), 'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét', ...PAPERS.map(p => `Chi tiết ${p === 'reading' ? 'Reading' : 'Listening'}`));
     const rows = results().filter(r => r.any).map(r => {
-      const o = { 'Khoá': `${S.test}|${S.cls}|${r.s.code}${isDaily() ? '|' + S.label : ''}`, 'Loại': isDaily() ? 'Hằng ngày' + (S.label ? ' · ' + S.label : '') : 'Mock', 'Đề': S.testTitle, 'Lớp Cambridge': S.cls, 'Mã HS': r.s.code, 'Họ tên': r.s.name, 'Lớp': r.s.vh };
+      const o = { 'Khoá': `${S.test}|${S.cls}|${r.s.code}${isDaily() ? '|' + S.label : ''}`, 'Loại': isDaily() ? 'Hằng ngày' + (S.label ? ' · ' + S.label : '') : 'Mock', ...(isDaily() ? {} : { 'Đợt Mock': S.dot }), 'Đề': S.testTitle, 'Lớp Cambridge': S.cls, 'Mã HS': r.s.code, 'Họ tên': r.s.name, 'Lớp': r.s.vh };
       for (const sec of L.phan) {
         const g = r.secs[sec.id], ok = g && !g.incomplete;
         o[`${sec.ten} /${secMax(S.level, sec)}`] = ok ? g.raw : (g ? 'thiếu trang' : '');
@@ -265,18 +266,22 @@
   function loadHistory() {
     HIST = {}; HIST_ERR = '';
     const code = lsGet('omr-tcode', '');
-    if (!S || isDaily() || !CFG.on || !code || !dotOf(TESTS.find(t => t.id === S.test))) return (histP = Promise.resolve());
-    const lv = S.level, cur = S.test, byId = Object.fromEntries(TESTS.map(t => [t.id, t]));
+    if (!S || isDaily() || !CFG.on || !code || !S.dot) return (histP = Promise.resolve());
+    const lv = S.level, byId = Object.fromEntries(TESTS.map(t => [t.id, t]));
     return (histP = fetch(CFG.sheetUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'history', code, level: lv, codes: students().map(x => x.code) }) }).then(x => x.json()).then(r => {
       if (!r.ok) throw new Error(r.error || 'Google Sheet từ chối');
-      const H = r.header, iK = H.indexOf('Khoá'), iC = H.indexOf('Mã HS'), cols = histCols().map(([id, name]) => [id, H.indexOf(name)]), out = {};
+      const H = r.header, iK = H.indexOf('Khoá'), iC = H.indexOf('Mã HS'), iD = H.indexOf('Đợt Mock'), cols = histCols().map(([id, name]) => [id, H.indexOf(name)]), out = {};
       for (const row of r.rows) {
-        const tid = String(row[iK]).split('|')[0], t = byId[tid];
-        if (tid === cur || !t || t.level !== lv || (t.loai || 'mock') !== 'mock' || dotOf(t) == null) continue;
+        const [tid, cls] = String(row[iK]).split('|');
+        if (tid === S.test && cls === S.cls) continue;   // chính phiên đang chấm
+        // đợt Mock: cột "Đợt Mock"; dòng cũ chưa có cột này thì lấy theo số cuối của mã đề (pet-test1 → 1)
+        const d = iD >= 0 && Number.isFinite(+row[iD]) && row[iD] !== '' ? +row[iD] : dotOf(byId[tid]);
+        if (d == null) continue;
         const code6 = String(row[iC]).toUpperCase().replace(/\s/g, ''), sc = {};
         cols.forEach(([id, i]) => { sc[id] = i < 0 ? null : sheetScale(row[i]); });
-        (out[code6] ||= []).push({ id: tid, dot: dotOf(t), s: sc });
+        const arr = (out[code6] ||= []), k = arr.findIndex(x => x.dot === d);
+        if (k >= 0) arr[k] = { id: tid, dot: d, s: sc }; else arr.push({ id: tid, dot: d, s: sc });
       }
       Object.values(out).forEach(a => a.sort((x, y) => x.dot - y.dot));
       HIST = out;
@@ -286,10 +291,10 @@
   const idsOf = map => Object.keys(map).filter(k => map[k] != null).sort().join('+');
   // đợt Mock trước của học sinh: { prev, hist } — Overall chỉ so được khi hai đợt có cùng bộ kỹ năng có điểm
   function histFor(code, skills) {
-    const cur = dotOf(TESTS.find(t => t.id === S.test)), list = (HIST[String(code).toUpperCase()] || []).filter(h => cur != null && h.dot < cur);
+    const cur = S.dot, list = (HIST[String(code).toUpperCase()] || []).filter(h => cur != null && h.dot < cur);
     if (!list.length) return null;
     const now = {}; skills.forEach(k => { now[k.id] = k.scale; }); const set = idsOf(now);
-    const hist = list.map((h, i) => ({ label: 'Mock ' + (i + 1), s: h.s, overall: idsOf(h.s) === set ? avgOf(h.s, Object.keys(h.s)) : null }));
+    const hist = list.map(h => ({ label: 'Mock ' + h.dot, s: h.s, overall: idsOf(h.s) === set ? avgOf(h.s, Object.keys(h.s)) : null }));
     return { prev: list[list.length - 1], hist, comparable: idsOf(list[list.length - 1].s) === set };
   }
   async function pushResults(loud) {
@@ -335,12 +340,15 @@
     KEY = mixed ? { ...KR, listening: KL.listening } : KR;
     const sid = mixed ? `${tid}+${tidL}` : tid, title = mixed ? `${t.title} (R) + ${tL.title} (L)` : t.title;
     lsSet('omr-last', { test: tid, testL: mixed ? tidL : '', cls });
-    const label = MODE === 'daily' ? ($('#dayLabel').value.trim() || new Date().toLocaleDateString('vi-VN')) : '';
+    const label = MODE === 'daily' ? ($('#dayLabel').value.trim() || new Date().toLocaleDateString('vi-VN')) : '', dot = MODE === 'mock' ? +$('#selDot').value : null;
     const id = MODE === 'daily' ? `d2:${sid}:${cls}:${label}` : `s2:${sid}:${cls}`;   // phiên Mock giữ nguyên khoá cũ
-    S = (await idb.get(id)) || { id, mode: MODE, label, test: sid, testTitle: title, mixed, level: R.level, cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {}, online: {} };
-    S.comments = S.comments || {}; S.writing = S.writing || {}; S.speaking = S.speaking || {}; S.mode = S.mode || 'mock'; S.label = S.label || '';
+    const found = await idb.get(id);
+    if (found && dot && found.dot && found.dot !== dot && !confirm(`Phiên này đang được lưu là Mock ${found.dot}. Đổi thành Mock ${dot}?`)) return;
+    if (dot) lsSet('omr-dot', { ...lsGet('omr-dot', {}), [cls]: dot });
+    S = found || { id, mode: MODE, label, dot, test: sid, testTitle: title, mixed, level: R.level, cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {}, online: {} };
+    S.comments = S.comments || {}; S.writing = S.writing || {}; S.speaking = S.speaking || {}; S.mode = S.mode || 'mock'; S.label = S.label || ''; S.dot = dot;
     document.documentElement.style.setProperty('--ruby', LV[S.level].mau);
-    $('#ctx').textContent = `${S.testTitle}${isDaily() ? ' · Hằng ngày' + (S.label ? ` (${S.label})` : '') : ''} · ${cls}`;
+    $('#ctx').textContent = `${S.testTitle}${isDaily() ? ' · Hằng ngày' + (S.label ? ` (${S.label})` : '') : ` · Mock ${S.dot}`} · ${cls}`;
     loadHistory();
     go('scan');
   }
@@ -1231,7 +1239,7 @@
       first: !hp, level: S.level, exam: S.testTitle, date: day,
       student: { name: r.s.name, id: r.s.code, cls: r.s.vh },
       skills, overall: { scale: ov, d: od, partial: sc.length < skills.length || sel.size < allSkillIds().length },
-      history: [...(hp ? hp.hist : []), { label: 'Mock ' + (hp ? hp.hist.length + 1 : 1), s: s1, overall: ov }],
+      history: [...(hp ? hp.hist : []), { label: 'Mock ' + (S.dot || (hp ? hp.hist.length + 1 : 1)), s: s1, overall: ov }],
       comment: clip(S_comment(r, sel), LIMIT_CM), priorities: S_prior(r, sel).map(x => clip(x, LIMIT_PR)),
       diagnosis: { causes: causes.slice(0, 4), writingGroups, habits, wrong },
       speaking: sel.has('speaking') ? spk : null
@@ -1390,7 +1398,7 @@
   async function clearSession() {
     if (!confirm(`Xoá toàn bộ phiếu đã chụp của ${S.testTitle} – ${S.cls}? Không thể hoàn tác.`)) return;
     await idb.del(S.id);
-    S = { id: S.id, mode: S.mode, label: S.label, mixed: S.mixed, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {}, online: {} };
+    S = { id: S.id, mode: S.mode, label: S.label, dot: S.dot, mixed: S.mixed, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {}, online: {} };
     go('scan');
   }
 
