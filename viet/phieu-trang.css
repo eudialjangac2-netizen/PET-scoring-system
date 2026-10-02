@@ -82,3 +82,5 @@
 .pt-tight { gap: 8px; } .pt-tight .pt-gap td { padding: 3px 6px; } .pt-tight .pt-ca { padding: 8px 12px; }
 
 .pt-ca .pt-sub { font-size: 10.5px; font-style: italic; opacity: .8; margin: 0 0 4px; }
+
+.pt-ca .pt-req { font-size: 10.5px; background: #0000000a; border-radius: 7px; padding: 3px 8px; margin: 0 0 5px; }

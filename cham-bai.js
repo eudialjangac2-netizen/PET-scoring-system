@@ -994,7 +994,11 @@
         const v = g.parts[pt]; if (!n || v >= n) continue;
         const bad = g.items.filter(i => i.part === pt && !i.ok).length;
         const adv = NX?.loiKhuyen?.[S.level]?.[sec.id]?.[pt];
-        cand.push({ f: v / n, c: { skill: sec.id, title: `Mất điểm ở ${sec.ten} Part ${pt}`, body: `Em được ${v}/${n} điểm ở Part này, có ${bad} câu cần xem lại.`, fix: cap1(adv || 'xem lại các câu sai và đối chiếu đáp án') + '.' } });
+        const yc = window.YEU_CAU_PART?.[S.level]?.[sec.id]?.[pt];
+        const pre = sec.id === 'listening' ? 'L' : 'R';
+        const nums = g.items.filter(i => i.part === pt && !i.ok).map(i => i.q);
+        const numTxt = nums.length ? ` Các câu cần xem lại: ${nums.slice(0, 3).map(q => pre + q).join(', ')}${nums.length > 3 ? ` và ${nums.length - 3} câu khác` : ''}.` : '';
+        cand.push({ f: v / n, c: { skill: sec.id, req: yc ? `Yêu cầu Part ${pt}: ${yc}` : '', title: `Mất điểm ở ${sec.ten} Part ${pt}`, body: `Em được ${v}/${n} điểm ở Part này.${numTxt}`, fix: cap1(adv || 'xem lại các câu sai và đối chiếu đáp án') + '.' } });
       }
     }
     cand.sort((a, b) => a.f - b.f).slice(0, 2).forEach(x => causes.push(x.c));
@@ -1009,10 +1013,11 @@
       : [{ ten: wr ? 'No errors listed' : 'No Writing result yet', n: '', mau: '#E3E7ED', note: wr ? 'Không có lỗi được liệt kê' : 'Chưa có bài Writing' }];
     const habits = [];
     for (const p of PAPERS) {
-      const nb = r.items[p].filter(i => i && !i.bad && i.marks === 0 && (i.type === 'write' ? i.shown === '' : !i.chosen)).length;
-      if (nb) habits.push(`Có ${nb} câu ${cap1(p)} bỏ trống.`);
+      const blanks = r.items[p].filter(i => i && !i.bad && i.marks === 0 && (i.type === 'write' ? i.shown === '' : !i.chosen)).map(i => (p === 'listening' ? 'L' : 'R') + i.q);
+      if (blanks.length) habits.push(`Có ${blanks.length} câu ${cap1(p)} bỏ trống (${blanks.slice(0, 6).join(', ')}${blanks.length > 6 ? ', ...' : ''}).`);
     }
-    if (r.nonstd) habits.push(`Có ${r.nonstd} câu tô chưa đúng cách.`); else habits.push('Tô đáp án rõ ràng, không có câu tô sai cách.');
+    const badQ = PAPERS.flatMap(p => r.items[p].filter(i => i && i.bad).map(i => (p === 'listening' ? 'L' : 'R') + i.q));
+    if (badQ.length) habits.push(`Có ${badQ.length} câu tô chưa đúng cách (${badQ.slice(0, 6).join(', ')}${badQ.length > 6 ? ', ...' : ''}). Hãy tô kín một ô tròn.`); else habits.push('Tô đáp án rõ ràng, không có câu tô sai cách.');
     const wrong = [];
     for (const sec of L.phan) {
       const g = r.secs[sec.id]; if (!g || g.incomplete) continue;
