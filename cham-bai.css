@@ -215,3 +215,20 @@ td.nm-cell .nm-in { display: flex; gap: 8px; align-items: center; justify-conten
 .wcell { padding: 6px; }
 .wcell .wtog { display: block; width: 100%; border: 0; background: transparent; padding: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
 .wcell .wreason { width: 100%; margin-top: 6px; font-size: 13px; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
+
+/* ---- 2026-10-03: con mắt ở ô mã giáo viên, chọn kỹ năng trong phiếu kết quả ---- */
+.pw { position: relative; flex: 1; min-width: 160px; }
+.pw-in { width: 100%; padding: 11px 46px 11px 12px; border: 1px solid var(--line); border-radius: var(--r); background: #fff; }
+.pw-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+.pw-eye:hover { background: var(--paper); color: var(--ink); }
+.pw-eye:focus-visible { outline: 2px solid var(--ruby); outline-offset: 1px; }
+.pw-eye .eye-off { display: none; }
+.pw-eye.on .eye-on { display: none; } .pw-eye.on .eye-off { display: block; } .pw-eye.on { color: var(--ruby); }
+.modal-pick { padding: 10px 14px; border-bottom: 1px solid var(--line); background: #fff; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.modal-pick > b { font-size: 14px; width: 100%; }
+.modal-pick .pk { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; min-height: 32px; }
+.modal-pick .pk input { width: 18px; height: 18px; accent-color: var(--ruby); }
+.modal-pick .pk small { color: var(--muted); font-size: 11.5px; }
+.modal-pick .pk-none { color: var(--muted); }
+.modal-pick .pk-all { padding-right: 10px; border-right: 1px solid var(--line); font-weight: 600; }
+.modal-pick .hint { width: 100%; margin: 0; font-size: 12px; }
