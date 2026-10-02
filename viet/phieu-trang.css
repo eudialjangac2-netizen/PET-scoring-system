@@ -84,3 +84,9 @@
 .pt-ca .pt-sub { font-size: 10.5px; font-style: italic; opacity: .8; margin: 0 0 4px; }
 
 .pt-ca .pt-req { font-size: 10.5px; background: #0000000a; border-radius: 7px; padding: 3px 8px; margin: 0 0 5px; }
+
+/* 5-6 the: gon lai de vua mot trang */
+.pt-tight .pt-cas > .pt-ca:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.pt-tight .pt-ca .pt-sub { display: none; }
+.pt-tight .pt-ca p { margin: 0 0 3px; } .pt-tight .pt-ca h4 { margin: 0 0 2px; }
+.pt-tight .pt-wrs { gap: 4px 8px; } .pt-tight .pt-wq .chip { font-size: 10px; padding: 0 7px; margin: 0 3px 3px 0; }

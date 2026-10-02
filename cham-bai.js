@@ -1202,8 +1202,8 @@
       }
       if (worst) cand.push({ f: worst.f, c: skillCause(sec, g, worst.pt, worst.v, worst.n) });
     }
-    const extraN = (wr ? 1 : 0) + (sel.has('speaking') && S.speaking?.[r.s.key] ? 1 : 0);   // Writing và Speaking luôn có chỗ trong 4 ô
-    cand.sort((a, b) => a.f - b.f).slice(0, Math.max(1, 4 - extraN)).forEach(x => causes.push(x.c));
+    // mỗi kỹ năng còn mất điểm đã có 1 thẻ (Part yếu nhất của kỹ năng đó): giữ đủ, theo thứ tự kỹ năng
+    cand.forEach(x => causes.push(x.c));
     if (wr) {
       const crit = wr.parts.flatMap(p => p.criteria.map(c => ({ c, p }))).sort((a, b) => a.c.band / a.c.max - b.c.band / b.c.max)[0];
       if (crit && crit.c.band < crit.c.max) causes.push({ skill: 'writing', title: `Writing: cần cải thiện ${CRIT_VI[crit.c.id] || crit.c.id}`, body: clip(crit.c.comment, 160), fix: clip(crit.c.to_move_up || crit.c.key_takeaway, 120) });
@@ -1229,7 +1229,8 @@
         const what = i.type === 'write' ? (i.shown === '' ? 'blank' : i.marks > 0 ? `${i.marks}/${i.maxMarks}` : (i.reason || 'incorrect')) : (i.bad && !i.chosen ? 'mark unclear' : (i.chosen || 'blank'));
         return `Q${i.q}: ${what}, ${key}`;
       });
-      const shown = items.slice(0, 18); if (items.length > 18) shown.push(`+${items.length - 18} more`);
+      const nCards = causes.length + (sel.has('speaking') && (S.speaking || {})[r.s.key] ? 1 : 0), cap = nCards >= 5 ? 4 : nCards >= 4 ? 10 : 16;
+      const shown = items.slice(0, cap); if (items.length > cap) shown.push(`+${items.length - cap} more`);
       wrong.push({ skill: sec.id, name: sec.ten, items: shown.length ? shown : ['No wrong answers'] });
     }
     const hp = isDaily() ? null : histFor(r.s.code, skills);   // đợt Mock trước (nếu có) → mũi tên ▲▼ và biểu đồ tiến bộ
@@ -1241,7 +1242,7 @@
       skills, overall: { scale: ov, d: od, partial: sc.length < skills.length || sel.size < allSkillIds().length },
       history: [...(hp ? hp.hist : []), { label: 'Mock ' + (S.dot || (hp ? hp.hist.length + 1 : 1)), s: s1, overall: ov }],
       comment: clip(S_comment(r, sel), LIMIT_CM), priorities: S_prior(r, sel).map(x => clip(x, LIMIT_PR)),
-      diagnosis: { causes: causes.slice(0, 4), writingGroups, habits, wrong },
+      diagnosis: { causes: causes.slice(0, 6), writingGroups, habits, wrong },
       speaking: sel.has('speaking') ? spk : null
     };
     return m;

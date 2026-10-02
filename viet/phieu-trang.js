@@ -172,7 +172,7 @@
       + '<div class="pt-sec"><h3>' + ttl('Path to the Next Grade', 'Lộ trình lên Grade tiếp theo') + '</h3><table class="pt-gap"><tr><th>Skill</th><th>Scale</th><th>Current level</th><th>Needed</th></tr>' + gap + '</table></div>'
       + '<div class="pt-sec"><h3>' + ttl('Why Points Are Being Lost', 'Vì sao em đang mất điểm') + '</h3><div class="pt-cas">' + causes + '</div></div>'
       + '<div class="pt-two"><div class="pt-sec"><h3>' + ttl('Repeated Writing Errors', 'Lỗi Writing lặp lại') + '</h3>' + wr + '</div><div class="pt-sec"><h3>' + ttl('Test-taking Habits', 'Thói quen làm bài') + '</h3><ul class="pt-hb">' + D.habits.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></div>'
-      + '<div class="pt-sec"><h3>' + ttl('Questions to Review', 'Câu cần xem lại (câu: em chọn, đáp án đúng)') + '</h3><div class="pt-wrs">' + wrong + '</div></div>'
+      + '<div class="pt-sec"><h3>' + ttl('Questions to Review', 'Câu cần xem lại (câu: em chọn, đáp án đúng)') + '</h3><div class="pt-wrs" style="grid-template-columns:repeat(' + Math.max(2, D.wrong.length) + ',1fr)">' + wrong + '</div></div>'
       + '</div>' + foot(m, 2) + '</div>';
   }
   return { THEME: THEME, GRADES: GRADES, gradeOf: gradeOf, nextGrade: nextGrade, overview: overview, diagnosis: diagnosis };
