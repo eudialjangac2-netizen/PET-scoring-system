@@ -1071,7 +1071,10 @@
         cand.push({ f: v / n, c: { skill: sec.id, req: yc ? `Yêu cầu Part ${pt}: ${yc}` : '', title: `Mất điểm ở ${sec.ten} Part ${pt}`, body: `Em được ${v}/${n} điểm ở Part này.${numTxt}`, fix: cap1(adv || 'xem lại các câu sai và đối chiếu đáp án') + '.' } });
       }
     }
-    cand.sort((a, b) => a.f - b.f).slice(0, 2).forEach(x => causes.push(x.c));
+    // mỗi kỹ năng còn mất điểm có 1 thẻ: lấy Part yếu nhất của kỹ năng đó
+    const worst = {};
+    for (const x of cand) if (!worst[x.c.skill] || x.f < worst[x.c.skill].f) worst[x.c.skill] = x;
+    L.phan.forEach(sec => { if (worst[sec.id]) causes.push(worst[sec.id].c); });
     if (wr) {
       const crit = wr.parts.flatMap(p => p.criteria.map(c => ({ c, p }))).sort((a, b) => a.c.band / a.c.max - b.c.band / b.c.max)[0];
       if (crit && crit.c.band < crit.c.max) causes.push({ skill: 'writing', title: `Writing: cần cải thiện ${CRIT_VI[crit.c.id] || crit.c.id}`, body: clip(crit.c.comment, 160), fix: clip(crit.c.to_move_up || crit.c.key_takeaway, 120) });
@@ -1096,7 +1099,8 @@
         const what = i.type === 'write' ? (i.shown === '' ? 'blank' : i.marks > 0 ? `${i.marks}/${i.maxMarks}` : 'incorrect') : (i.bad && !i.chosen ? 'mark unclear' : (i.chosen || 'blank'));
         return `Q${i.q}: ${what}, ${key}`;
       });
-      const shown = items.slice(0, 18); if (items.length > 18) shown.push(`+${items.length - 18} more`);
+      const nCards = causes.length + (((S.speaking || {})[r.s.key]) ? 1 : 0), cap = nCards >= 5 ? 4 : nCards >= 4 ? 10 : 16;
+      const shown = items.slice(0, cap); if (items.length > cap) shown.push(`+${items.length - cap} more`);
       wrong.push({ skill: sec.id, name: sec.ten, items: shown.length ? shown : ['No wrong answers'] });
     }
     const m = {
@@ -1105,7 +1109,7 @@
       skills, overall: { scale: ov, d: null, partial: sc.length < skills.length },
       history: [{ label: 'Mock 1', s: s1, overall: ov }],
       comment: clip(S_comment(r), LIMIT_CM), priorities: S_prior(r).map(x => clip(x, LIMIT_PR)),
-      diagnosis: { causes: causes.slice(0, 4), writingGroups, habits, wrong },
+      diagnosis: { causes: causes.slice(0, 6), writingGroups, habits, wrong },
       speaking: spk
     };
     return m;
