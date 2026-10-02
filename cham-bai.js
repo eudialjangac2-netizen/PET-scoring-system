@@ -100,7 +100,7 @@
     document.querySelectorAll('section.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
     document.querySelectorAll('[data-go]').forEach(b => b.setAttribute('aria-current', b.dataset.go === v));
     $('#dock').hidden = v !== 'scan';
-    ({ scan: renderScan, review: renderReview, write: renderWrite, writing: renderWriting, speaking: renderSpeaking, export: renderExport })[v]?.();
+    ({ scan: renderScan, review: renderReview, write: renderWrite, writing: renderWriting, speaking: renderSpeaking, online: renderOnline, export: renderExport })[v]?.();
     window.scrollTo(0, 0);
   }
 
@@ -265,7 +265,7 @@
     if ((KEY.level || t.level) !== R.level) { alert(`Đề ${t.title} là đề ${KEY.level}, lớp này học ${R.level}.`); return; }
     lsSet('omr-last', { test: tid, cls });
     const id = `s2:${tid}:${cls}`;
-    S = (await idb.get(id)) || { id, test: tid, testTitle: t.title, level: R.level, cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {} };
+    S = (await idb.get(id)) || { id, test: tid, testTitle: t.title, level: R.level, cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {}, online: {} };
     S.comments = S.comments || {}; S.writing = S.writing || {}; S.speaking = S.speaking || {};
     document.documentElement.style.setProperty('--ruby', LV[S.level].mau);
     $('#ctx').textContent = `${t.title} · ${cls}`;
@@ -665,6 +665,13 @@
     const ok = chosen === k;
     return { q, part: info.part, type: 'mcq', shown: bad && !o?.accept ? m.answer + '*' : chosen, chosen, marks: ok ? w8 : 0, maxMarks: w8, ok, flag: bad && !o, bad };
   }
+  // một câu từ bài làm trên máy: điểm lấy từ cột POINTS của sheet (nền tảng đã chấm), không chấm lại
+  function onlineItem(p, q, rec) {
+    const row = rec.items.find(x => x[0] === q); if (!row) return null;
+    const info = QMAP[S.level][p][q], sec = secOfQ(S.level, p, q), w8 = weightOf(sec, info.part);
+    const given = row[2], earned = Math.max(0, Math.min(row[4], w8)), wr = info.type === 'write';
+    return { q, part: info.part, type: wr ? 'write' : 'mcq', shown: wr ? (given === '' ? '' : `${earned}/${w8}`) : given, chosen: wr ? '' : given, given, key: row[3], marks: earned, maxMarks: w8, ok: earned >= w8, flag: false, bad: false };
+  }
   function results() {
     const L = lvl();
     return students().map((s, i) => {
@@ -672,6 +679,11 @@
       for (const p of PAPERS) {
         const qs = Object.keys(QMAP[S.level][p]).map(Number).sort((a, b) => a - b);
         for (const q of qs) { const sh = st[QMAP[S.level][p][q].page]; r.items[p].push(sh ? gradeQ(p, q, sh) : null); }
+      }
+      const on = (S.online || {})[s.key];
+      if (on) {
+        r.any = true; r.violations = on.violations || 0;
+        for (const p of PAPERS) if (on[p]) r.items[p] = Object.keys(QMAP[S.level][p]).map(Number).sort((a, b) => a - b).map(q => onlineItem(p, q, on[p]));
       }
       for (const sec of L.phan) {
         const qs = secQs(S.level, sec), its = qs.map(q => r.items[sec.giay].find(x => x && x.q === q) || null);
@@ -788,6 +800,62 @@
       onSave: (key, v) => { if (v) S.speaking[key] = v; else delete S.speaking[key]; save(); } });
   }
 
+  // ---------- bài làm trên máy (FCE) ----------
+  async function onlineFromFiles(files) {
+    let raw = null, res = [];
+    for (const f of files) {
+      if (/\.csv$/i.test(f.name)) { const t = await f.text(); raw = window.OnlineImport.parseCSV(t); continue; }
+      const wb = new ExcelJS.Workbook(); await wb.xlsx.load(await f.arrayBuffer());
+      const tab = n => { const ws = wb.worksheets.find(w => w.name.trim().toLowerCase() === n); if (!ws) return null; const rows = []; ws.eachRow(r => rows.push(r.values.slice(1).map(v => String(v?.text ?? v?.result ?? v ?? '').trim()))); return rows; };
+      raw = tab('raw answers') || raw; res = tab('fce results') || res;
+    }
+    if (!raw) throw new Error('Không thấy tab "Raw Answers" trong file.');
+    return { raw, res };
+  }
+  function applyOnline(sheets) {
+    const recs = window.OnlineImport.build(sheets), stu = students(), miss = new Set(); let n = 0;
+    S.online = S.online || {};
+    for (const r of recs) {
+      const k6 = keyOf(r.id), s = stu.find(x => x.code.toUpperCase() === r.id || (k6.length === 6 && x.key === k6));
+      if (!s) { miss.add(`${r.id} (${r.name})`); continue; }
+      const o = S.online[s.key] = S.online[s.key] || {};
+      o[r.skill] = { testId: r.testId, ts: r.ts, items: r.items };
+      o.violations = Math.max(o.violations || 0, r.violations || 0); n++;
+    }
+    save(); return { n, miss: [...miss] };
+  }
+  function renderOnline() {
+    const box = $('#onBox'); S.online = S.online || {};
+    if (S.level !== 'FCE') { box.innerHTML = `<div class="empty">Bước này chỉ dùng cho FCE làm trên máy. Lớp hiện tại là ${esc(S.level)}.</div>`; return; }
+    box.innerHTML = `<div class="row"><input id="onUrl" style="flex:1;min-width:240px" placeholder="Dán link Google Sheet kết quả" value="${esc(lsGet('omr-online-url', ''))}">
+        <button class="btn primary" id="onFetch">Lấy từ Google Sheet</button></div>
+      <div class="row" style="margin-top:8px"><label class="btn">Hoặc chọn file .xlsx / .csv<input type="file" id="onFile" accept=".xlsx,.csv" hidden multiple></label></div>
+      <div id="onMsg" class="notice info" hidden></div><div id="onTbl"></div>`;
+    const msg = (t, bad) => { const m = $('#onMsg'); m.hidden = !t; m.className = 'notice ' + (bad ? 'warn' : 'info'); m.textContent = t || ''; };
+    const done = sheets => {
+      const { n, miss } = applyOnline(sheets);
+      msg(`Đã nhập ${n} bài làm.` + (miss.length ? ` Không khớp học sinh trong lớp: ${miss.join(', ')}.` : ''), miss.length && !n);
+      table();
+    };
+    $('#onFetch').onclick = async () => {
+      const u = $('#onUrl').value.trim(); if (!u) return msg('Hãy dán link Google Sheet.', true);
+      lsSet('omr-online-url', u); msg('Đang lấy dữ liệu...');
+      try { done(await window.OnlineImport.fetchSheet(u)); }
+      catch (e) { msg('Không đọc được Google Sheet (' + e.message + '). Kiểm tra sheet đã mở quyền "Anyone with the link can view", hoặc tải file .xlsx về rồi chọn file.', true); }
+    };
+    $('#onFile').onchange = async e => { try { msg('Đang đọc file...'); done(await onlineFromFiles([...e.target.files])); } catch (err) { msg(err.message, true); } e.target.value = ''; };
+    function table() {
+      const row = s => {
+        const o = S.online[s.key] || {}, c = p => o[p] ? `${esc(o[p].testId)}<br><small>nộp ${esc(o[p].ts)}</small>` : '—';
+        return `<tr><td>${esc(s.code)}</td><td>${esc(s.name)}</td><td>${c('reading')}</td><td>${c('listening')}</td><td class="num">${o.violations || ''}</td>
+          <td>${o.reading || o.listening ? `<button class="btn sm" data-del="${esc(s.key)}">Xoá</button>` : ''}</td></tr>`;
+      };
+      $('#onTbl').innerHTML = `<div class="tablewrap"><table style="margin-top:12px"><thead><tr><th>Mã</th><th>Họ tên</th><th>Reading + UoE</th><th>Listening</th><th>Vi phạm</th><th></th></tr></thead><tbody>${students().map(row).join('')}</tbody></table></div>`;
+      $('#onTbl').querySelectorAll('[data-del]').forEach(b => b.onclick = () => { delete S.online[b.dataset.del]; save(); table(); });
+    }
+    table();
+  }
+
   // ---------- kết quả & xuất file ----------
   function warnings() {
     const w = [];
@@ -795,6 +863,8 @@
     if (nf) w.push(`${nf} câu tô không chuẩn chưa duyệt (đang tính sai).`);
     const nw = writeQs().filter(k => !S.writeDone[k] && writeItems(k).length);
     if (nw.length) w.push(`Câu viết chưa xác nhận: ${nw.map(k => PAPER_SHORT[k.split('-')[0]] + k.split('-')[1]).join(', ')} (đang dùng mặc định).`);
+    const vio = results().filter(r => r.violations > 0).length;
+    if (vio) w.push(`${vio} học sinh có ghi vi phạm khi làm bài trên máy (xem bước 7).`);
     if (S.unknown.length) w.push(`${S.unknown.length} phiếu chưa xác định học sinh — chưa tính vào kết quả.`);
     const inc = results().filter(r => Object.values(r.secs).some(g => g && g.incomplete)).length;
     if (inc) w.push(`${inc} học sinh còn thiếu trang phiếu (phần điểm liên quan để trống).`);
@@ -994,7 +1064,11 @@
         const v = g.parts[pt]; if (!n || v >= n) continue;
         const bad = g.items.filter(i => i.part === pt && !i.ok).length;
         const adv = NX?.loiKhuyen?.[S.level]?.[sec.id]?.[pt];
-        cand.push({ f: v / n, c: { skill: sec.id, title: `Mất điểm ở ${sec.ten} Part ${pt}`, body: `Em được ${v}/${n} điểm ở Part này, có ${bad} câu cần xem lại.`, fix: cap1(adv || 'xem lại các câu sai và đối chiếu đáp án') + '.' } });
+        const yc = window.YEU_CAU_PART?.[S.level]?.[sec.id]?.[pt];
+        const pre = sec.id === 'listening' ? 'L' : 'R';
+        const nums = g.items.filter(i => i.part === pt && !i.ok).map(i => i.q);
+        const numTxt = nums.length ? ` Các câu cần xem lại: ${nums.slice(0, 3).map(q => pre + q).join(', ')}${nums.length > 3 ? ` và ${nums.length - 3} câu khác` : ''}.` : '';
+        cand.push({ f: v / n, c: { skill: sec.id, req: yc ? `Yêu cầu Part ${pt}: ${yc}` : '', title: `Mất điểm ở ${sec.ten} Part ${pt}`, body: `Em được ${v}/${n} điểm ở Part này.${numTxt}`, fix: cap1(adv || 'xem lại các câu sai và đối chiếu đáp án') + '.' } });
       }
     }
     cand.sort((a, b) => a.f - b.f).slice(0, 2).forEach(x => causes.push(x.c));
@@ -1009,15 +1083,16 @@
       : [{ ten: wr ? 'No errors listed' : 'No Writing result yet', n: '', mau: '#E3E7ED', note: wr ? 'Không có lỗi được liệt kê' : 'Chưa có bài Writing' }];
     const habits = [];
     for (const p of PAPERS) {
-      const nb = r.items[p].filter(i => i && !i.bad && i.marks === 0 && (i.type === 'write' ? i.shown === '' : !i.chosen)).length;
-      if (nb) habits.push(`Có ${nb} câu ${cap1(p)} bỏ trống.`);
+      const blanks = r.items[p].filter(i => i && !i.bad && i.marks === 0 && (i.type === 'write' ? i.shown === '' : !i.chosen)).map(i => (p === 'listening' ? 'L' : 'R') + i.q);
+      if (blanks.length) habits.push(`Có ${blanks.length} câu ${cap1(p)} bỏ trống (${blanks.slice(0, 6).join(', ')}${blanks.length > 6 ? ', ...' : ''}).`);
     }
-    if (r.nonstd) habits.push(`Có ${r.nonstd} câu tô chưa đúng cách.`); else habits.push('Tô đáp án rõ ràng, không có câu tô sai cách.');
+    const badQ = PAPERS.flatMap(p => r.items[p].filter(i => i && i.bad).map(i => (p === 'listening' ? 'L' : 'R') + i.q));
+    if (badQ.length) habits.push(`Có ${badQ.length} câu tô chưa đúng cách (${badQ.slice(0, 6).join(', ')}${badQ.length > 6 ? ', ...' : ''}). Hãy tô kín một ô tròn.`); else habits.push('Tô đáp án rõ ràng, không có câu tô sai cách.');
     const wrong = [];
     for (const sec of L.phan) {
       const g = r.secs[sec.id]; if (!g || g.incomplete) continue;
       const items = g.items.filter(i => !i.ok).map(i => {
-        const key = [].concat(KEY[sec.giay][i.q]).join(' / ');
+        const key = i.key ?? [].concat(KEY[sec.giay][i.q]).join(' / ');
         const what = i.type === 'write' ? (i.shown === '' ? 'blank' : i.marks > 0 ? `${i.marks}/${i.maxMarks}` : 'incorrect') : (i.bad && !i.chosen ? 'mark unclear' : (i.chosen || 'blank'));
         return `Q${i.q}: ${what}, ${key}`;
       });
@@ -1092,7 +1167,7 @@
       if (!bad.length) return `<div><h3>${sec.ten}</h3><ul><li>Không sai câu nào 🎉</li></ul></div>`;
       for (const i of bad) {
         if (i.part !== last) { out += `<li class="pt">PART ${i.part}</li>`; last = i.part; }
-        const key = [].concat(KEY[sec.giay][i.q]).join(' / ');
+        const key = i.key ?? [].concat(KEY[sec.giay][i.q]).join(' / ');
         const what = i.type === 'write' ? (i.shown === '' ? 'bỏ trống' : i.marks > 0 ? `được ${i.marks}/${i.maxMarks} điểm` : 'chưa đúng')
           : i.bad && !i.chosen ? `tô ô ${esc(i.shown.replace('*', ''))} chưa đúng cách` : i.chosen ? `em chọn ${i.chosen}` : 'bỏ trống';
         out += `<li><b>${i.q}.</b> ${what} → đáp án <b>${esc(key)}</b></li>`;
@@ -1183,7 +1258,7 @@
   async function clearSession() {
     if (!confirm(`Xoá toàn bộ phiếu đã chụp của ${S.testTitle} – ${S.cls}? Không thể hoàn tác.`)) return;
     await idb.del(S.id);
-    S = { id: S.id, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {} };
+    S = { id: S.id, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {}, online: {} };
     go('scan');
   }
 

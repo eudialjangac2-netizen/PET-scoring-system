@@ -160,7 +160,7 @@
       var lab = 'style="color:' + t.ink + ';font-weight:600"';
       var inner = c.skill === 'speaking'
         ? (c.sub ? '<div class="pt-sub">' + esc(c.sub) + '</div>' : '') + (c.strength ? '<p><span ' + lab + '>Điểm mạnh:</span> ' + esc(c.strength) + '</p>' : '') + '<p><span ' + lab + '>Cần cải thiện:</span> ' + esc(c.body) + '</p>'
-        : '<p>' + esc(c.body) + '</p>';
+        : (c.req ? '<div class="pt-req">' + esc(c.req) + '</div>' : '') + '<p>' + esc(c.body) + '</p>';
       return '<div class="pt-ca" style="background:' + t.bg + '"><h4 style="color:' + t.ink + '">' + esc(c.title) + '</h4>' + inner + '<div class="fx"><b>How to fix:</b> ' + esc(c.fix) + '</div></div>';
     }).join('');
     var wr = D.writingGroups.map(function (g) { return '<div class="pt-wg"><span class="dot" style="background:' + g.mau + '"></span><b>' + g.n + '</b> ' + esc(g.ten) + '<small>' + esc(g.note) + '</small></div>'; }).join('');
