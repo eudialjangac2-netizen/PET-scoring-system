@@ -30,7 +30,7 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 
 ## Đang làm
 
-- Elaine: đã xong phiếu Speaking, dòng "Yêu cầu Part", bước 7 "Bài làm máy" (FCE) và trang 2 đủ các kỹ năng (PR #9, #10 đã merge). Tiếp theo: chạy thử bằng dữ liệu thật trên bản chính thức, sau đó làm tách Use of English.
+- Elaine: đã xong phiếu Speaking, dòng "Yêu cầu Part", bước 7 "Bài làm máy" (FCE) và trang 2 đủ các kỹ năng (PR #9, #10 đã merge). Tiếp theo: chạy thử bằng dữ liệu thật trên bản chính thức. Use of English đã là kỹ năng riêng sẵn (xem Kế hoạch mục 3).
 - Uyên: ghi vào mục "Uyên cập nhật" bên dưới. Đã test quét phiếu Speaking, đang làm lưu lịch sử Mock và đồng bộ Google Sheet.
 
 ## Kế hoạch
@@ -38,7 +38,7 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 1. (XONG, PR #4) Gắn phiếu 4 trang vào app.
 2. (XONG, PR #8, #9) Speaking: nhập tay, quét phiếu chấm, bảng quy đổi, thẻ chẩn đoán, thẻ trang 2 theo mẫu của Uyên.
    (XONG, PR #10) Dòng "Yêu cầu Part", số câu trong Habits, bước 7 "Bài làm máy" cho FCE trên máy, mỗi kỹ năng 1 thẻ ở trang 2.
-3. Elaine: kiểm tra bản chính thức bằng dữ liệu FCE thật (Raw Answers, Writing, Speaking), rồi tách Use of English thành kỹ năng riêng cho FCE (chạm `cap-do.json` và phần tính điểm Reading của Uyên, cần báo Uyên trước), làm sau khi xong phiếu Speaking.
+3. (ĐÃ CÓ SẴN) Use of English là kỹ năng riêng cho FCE: `cap-do.json` có section `uoe` (Part 2, 3, 4, bảng quy đổi riêng), điểm, phiếu 5 kỹ năng và Excel đều tách riêng. Elaine: kiểm tra bản chính thức bằng dữ liệu FCE thật (Raw Answers, Writing, Speaking).
 4. Uyên: lưu lịch sử điểm theo học sinh qua 5 Mock để vẽ biểu đồ và tính tăng/giảm so với Mock trước (mã học sinh làm khóa).
 5. Uyên: đồng bộ Google Sheet có cột Writing và Speaking (Apps Script).
 6. (XONG) Skill `ruby-writing-json` cho giáo viên: hỏi JSON, Word hoặc cả hai.
