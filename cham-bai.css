@@ -205,3 +205,13 @@ td.nm-cell .nm-in { display: flex; gap: 8px; align-items: center; justify-conten
 /* xem trước phiếu nhiều trang */
 .modal-body img + img { margin-top: 10px; }
 .modal-comment .hint#reportCmCount, .modal-comment .hint#reportPrCount { float: right; }
+
+/* ---- 2026-10-02: chế độ Mock / Hằng ngày, lý do câu điền sai ---- */
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.seg-b { text-align: left; border: 2px solid var(--line); background: var(--card); border-radius: var(--r); padding: 10px 12px; cursor: pointer; font: inherit; color: var(--ink); }
+.seg-b b { display: block; font-size: 15px; }
+.seg-b small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.seg-b.on { border-color: var(--ruby); background: var(--paper); box-shadow: inset 0 0 0 1px var(--ruby); }
+.wcell { padding: 6px; }
+.wcell .wtog { display: block; width: 100%; border: 0; background: transparent; padding: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.wcell .wreason { width: 100%; margin-top: 6px; font-size: 13px; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--ink); }

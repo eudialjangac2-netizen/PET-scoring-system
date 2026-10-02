@@ -6,7 +6,7 @@
 <title>Chấm phiếu Cambridge — Ruby School</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="cham-bai.css?v=20260930">
+<link rel="stylesheet" href="cham-bai.css?v=20261002">
 <link rel="stylesheet" href="viet/phieu-font.css">
 <link rel="stylesheet" href="viet/phieu-trang.css?v=20261001">
 <link rel="stylesheet" href="viet/writing-report.css?v=20261001">
@@ -43,8 +43,21 @@
       </div>
       <p class="hint" id="syncInfo" style="margin:8px 0 0"></p>
     </div>
+    <div class="field" id="modeBox">
+      <label id="modeLbl">Loại buổi chấm</label>
+      <div class="seg" role="group" aria-labelledby="modeLbl">
+        <button type="button" class="seg-b on" data-mode="mock" aria-pressed="true"><b>Mock test</b><small>phiếu báo điểm · tiến bộ qua các lần thi</small></button>
+        <button type="button" class="seg-b" data-mode="daily" aria-pressed="false"><b>Bài hàng ngày</b><small>chấm nhanh · chỉ điểm thô</small></button>
+      </div>
+      <p class="hint" id="modeHint" style="margin:8px 0 0"></p>
+      <div id="dailyLabelBox" hidden style="margin-top:10px"><label for="dayLabel">Tên buổi <span class="hint" style="font-weight:400">(tuỳ chọn, vd: Unit 5 – 02/10; để trống thì dùng ngày hôm nay)</span></label>
+        <input type="text" id="dayLabel" maxlength="40" autocomplete="off"></div>
+    </div>
     <div class="field"><label for="selClass">Lớp Cambridge</label><select id="selClass"></select></div>
-    <div class="field"><label for="selTest">Đề thi <span class="hint" style="font-weight:400">(chỉ hiện đề đúng cấp độ của lớp)</span></label><select id="selTest"></select></div>
+    <div class="field"><label for="selTest" id="lblTest">Đề thi <span class="hint" style="font-weight:400">(chỉ hiện đề đúng cấp độ của lớp)</span></label><select id="selTest"></select>
+      <label class="chk" style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-weight:400"><input type="checkbox" id="mixOn" style="margin-top:3px"><span>Reading và Listening lấy từ <b>hai đề khác nhau</b> <span class="hint">(vd Reading Test 1, Listening Test 2). Phiếu giấy vẫn dùng chung, app chỉ ghép đáp án của hai đề.</span></span></label>
+      <div id="mixSel" hidden style="margin-top:8px"><label for="selTestL">Đề dùng cho <b>Listening</b></label><select id="selTestL"></select></div>
+    </div>
     <details class="fallback" id="fileBox">
       <summary>Dự phòng: tải danh sách lớp từ file</summary>
       <p class="hint">Chỉ dùng khi không lấy được danh sách từ Google Sheet. Dùng file xuất từ tab DANH SÁCH (có các cột STUDENT ID, FULL NAME, CLASS, LEVEL, BATCH, TEACHER), app tự chia lớp như Google Sheet.</p>
@@ -129,7 +142,7 @@
       <button class="btn" id="btnCsv">Tải file CSV</button>
       <button class="btn" id="btnClassReport">Phiếu kết quả cả lớp (PDF)</button>
     </div>
-    <p class="hint">Bấm <b>Phiếu</b> ở từng dòng để xem, tải hoặc gửi phiếu kết quả của một học sinh.</p>
+    <p class="hint" id="rpHint">Bấm <b>Phiếu</b> ở từng dòng để xem, tải hoặc gửi phiếu kết quả của một học sinh.</p>
     <div class="tablewrap"><table id="resTable"></table></div>
     <button class="btn ghost" id="btnClear">Xoá toàn bộ kết quả của đề + lớp này</button>
   </section>
@@ -186,14 +199,14 @@
 <script src="viet/speaking-bank.js?v=20261001"></script>
 <script src="viet/speaking-chan-doan.js?v=20261001"></script>
 <script src="viet/speaking-quy-doi.js?v=20261001"></script>
-<script src="viet/speaking-quet.js?v=20261001"></script>
+<script src="viet/speaking-quet.js?v=20261002"></script>
 <script src="viet/speaking-nhap.js?v=20261001"></script>
 <script src="viet/yeu-cau-part.js?v=20261002"></script>
 <script src="viet/nhap-may.js?v=20261002"></script>
 <script src="viet/phieu-trang.js?v=20261002"></script>
 <script src="viet/writing-report.js?v=20261001"></script>
-<script src="omr-engine.js?v=20260928"></script>
-<script src="cham-bai.js?v=20261001"></script>
+<script src="omr-engine.js?v=20261002"></script>
+<script src="cham-bai.js?v=20261002"></script>
 <script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"></script>
 </body>
 </html>

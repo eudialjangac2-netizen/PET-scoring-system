@@ -1,13 +1,14 @@
 /* cham-bai.js — app chấm phiếu Cambridge KET / PET / FCE (Ruby School) */
 (function () {
   'use strict';
-  const APP_VERSION = '28/09/2026 — KET · PET · FCE, mã học sinh 6 số, mỗi giáo viên một mã';
+  const APP_VERSION = '02/10/2026 — thêm Speaking (KET · PET · FCE), chế độ Mock / Bài hàng ngày, lý do câu điền sai';
   const $ = s => document.querySelector(s);
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const PAPERS = ['reading', 'listening'];
   const PAPER_SHORT = { reading: 'R', listening: 'L' };
 
-  let TPL, LV, NX = null, CFG = {}, TESTS = [], KEY = null, cvReady = false;
+  let TPL, LV, NX = null, FILLR = null, CFG = {}, TESTS = [], KEY = null, cvReady = false;
+  let MODE = 'mock';   // 'mock' = Mock test (có phiếu báo điểm, tab Kết quả) · 'daily' = bài hàng ngày (điểm thô, tab Hằng ngày)
   let S = null, curWrite = null;
   const QMAP = {};   // QMAP[level][paper][q] = { page, part, type }
 
@@ -67,14 +68,18 @@
     delete LV._ghi_chu;
     buildQmap();
     NX = await fetch('nhan-xet-mau.json').then(r => r.ok ? r.json() : null).catch(() => null);
+    FILLR = await fetch('ly-do-cau-dien.json').then(r => r.ok ? r.json() : null).catch(() => null);   // lời khuyên theo lý do câu điền sai
     CFG = await fetch('cau-hinh.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
     CFG.on = /^https:\/\/script\.google\.com\//.test(CFG.sheetUrl || '');
     $('#sheetBox').hidden = !CFG.on; $('#fileBox').open = !CFG.on;
     $('#tCode').value = lsGet('omr-tcode', '');
     $('#btnSync').onclick = () => fetchRosters(true);
-    $('#selClass').onchange = fillTests;
+    $('#selClass').onchange = fillTests; $('#mixOn').onchange = setMix;
     const last = lsGet('omr-last', {});
+    MODE = lsGet('omr-mode', 'mock') === 'daily' ? 'daily' : 'mock';
     fillClasses(last.cls); if (last.test) $('#selTest').value = last.test;
+    document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+    setMode(MODE);
     if (CFG.on && $('#tCode').value) fetchRosters(false);
     else if (CFG.on) $('#syncInfo').textContent = 'Nhập mã giáo viên rồi bấm "Cập nhật danh sách lớp".';
     document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
@@ -120,12 +125,29 @@
     $('#rosterList').querySelectorAll('[data-delcls]').forEach(b => b.onclick = () => deleteRoster(ids[+b.dataset.delcls]));
     fillTests();
   }
+  const isDaily = () => !!S && S.mode === 'daily';
+  const sheetTab = () => (isDaily() ? 'Hằng ngày ' : 'Kết quả ') + S.level;
+  const MODE_HINT = { mock: 'Mock test: tính điểm theo thang Cambridge, có phiếu báo điểm cho phụ huynh, lưu vào tab "Kết quả" của Google Sheet để theo dõi tiến bộ.',
+    daily: 'Bài hàng ngày: chấm nhanh trong lớp, chỉ có điểm thô và % đúng; không có Grade, Overall hay phiếu báo điểm; lưu vào tab "Hằng ngày" riêng (không lẫn vào tiến bộ Mock). Speaking và Writing có thể có hoặc không.' };
+  function setMode(m) {
+    MODE = m === 'daily' ? 'daily' : 'mock'; lsSet('omr-mode', MODE);
+    document.querySelectorAll('[data-mode]').forEach(b => { const on = b.dataset.mode === MODE; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    $('#modeHint').textContent = MODE_HINT[MODE]; $('#dailyLabelBox').hidden = MODE !== 'daily';
+    fillTests();
+  }
   function fillTests() {
     const c = rosters()[$('#selClass').value], lv = c?.level;
-    const list = TESTS.filter(t => !lv || t.level === lv);
-    $('#selTest').innerHTML = list.length ? list.map(t => `<option value="${esc(t.id)}">${esc(t.title)}</option>`).join('')
-      : `<option value="">Chưa có đề ${lv || ''}</option>`;
+    const list = TESTS.filter(t => (!lv || t.level === lv) && (MODE === 'daily' || (t.loai || 'mock') === 'mock'));   // Mock chỉ hiện đề có nhãn mock; Hằng ngày hiện mọi đề
+    $('#selTest').innerHTML = list.length ? list.map(t => `<option value="${esc(t.id)}">${esc(t.title)}${MODE === 'daily' && (t.loai || 'mock') === 'mock' ? ' (mock)' : ''}</option>`).join('')
+      : `<option value="">Chưa có đề ${MODE === 'mock' ? 'mock ' : ''}${lv || ''}</option>`;
     const last = lsGet('omr-last', {}); if (last.test && list.some(t => t.id === last.test)) $('#selTest').value = last.test;
+    $('#selTestL').innerHTML = $('#selTest').innerHTML;   // ô "đề cho Listening" dùng chung danh sách
+    if (last.testL && list.some(t => t.id === last.testL)) $('#selTestL').value = last.testL;
+  }
+  function setMix() {   // bật/tắt chọn hai đề khác nhau cho Reading và Listening
+    const on = $('#mixOn').checked; $('#mixSel').hidden = !on;
+    $('#lblTest').innerHTML = on ? 'Đề dùng cho <b>Reading</b> <span class="hint" style="font-weight:400">(FCE: Reading và Use of English)</span>'
+      : 'Đề thi <span class="hint" style="font-weight:400">(chỉ hiện đề đúng cấp độ của lớp)</span>';
   }
   function deleteRoster(c) {
     const all = rosters();
@@ -209,23 +231,61 @@
     clearTimeout(syncTimer); syncTimer = setTimeout(() => pushResults(false), 6000);
   }
   function sheetRows() {
-    const L = lvl(), header = ['Đề', 'Lớp Cambridge', 'Mã HS', 'Họ tên', 'Lớp'];
-    for (const sec of L.phan) header.push(`${sec.ten} /${secMax(S.level, sec)}`, `${sec.ten} thang`, `${sec.ten} CEFR`,
+    const L = lvl(), header = ['Loại', 'Đề', 'Lớp Cambridge', 'Mã HS', 'Họ tên', 'Lớp'];
+    for (const sec of L.phan) header.push(`${sec.ten} /${secMax(S.level, sec)}`, ...(isDaily() ? [`${sec.ten} %`] : [`${sec.ten} thang`, `${sec.ten} CEFR`]),
       ...partsOf(S.level, sec).map(([p, n]) => `${sec.viet} Part ${p} (/${n})`));
-    header.push('Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét', ...PAPERS.map(p => `Chi tiết ${p === 'reading' ? 'Reading' : 'Listening'}`));
+    header.push(...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), 'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét', ...PAPERS.map(p => `Chi tiết ${p === 'reading' ? 'Reading' : 'Listening'}`));
     const rows = results().filter(r => r.any).map(r => {
-      const o = { 'Khoá': `${S.test}|${S.cls}|${r.s.code}`, 'Đề': S.testTitle, 'Lớp Cambridge': S.cls, 'Mã HS': r.s.code, 'Họ tên': r.s.name, 'Lớp': r.s.vh };
+      const o = { 'Khoá': `${S.test}|${S.cls}|${r.s.code}${isDaily() ? '|' + S.label : ''}`, 'Loại': isDaily() ? 'Hằng ngày' + (S.label ? ' · ' + S.label : '') : 'Mock', 'Đề': S.testTitle, 'Lớp Cambridge': S.cls, 'Mã HS': r.s.code, 'Họ tên': r.s.name, 'Lớp': r.s.vh };
       for (const sec of L.phan) {
         const g = r.secs[sec.id], ok = g && !g.incomplete;
         o[`${sec.ten} /${secMax(S.level, sec)}`] = ok ? g.raw : (g ? 'thiếu trang' : '');
-        o[`${sec.ten} thang`] = ok ? scaleText(g.scale) : ''; o[`${sec.ten} CEFR`] = ok ? g.cefr : '';
+        if (isDaily()) o[`${sec.ten} %`] = ok ? pctTxt(g.raw, g.max) : ''; else { o[`${sec.ten} thang`] = ok ? scaleText(g.scale) : ''; o[`${sec.ten} CEFR`] = ok ? g.cefr : ''; }
         partsOf(S.level, sec).forEach(([p, n]) => o[`${sec.viet} Part ${p} (/${n})`] = ok ? g.parts[p] : '');
       }
-      for (const p of PAPERS) o[`Chi tiết ${p === 'reading' ? 'Reading' : 'Listening'}`] = r.items[p].map(i => `${i.q}${i.type === 'write' ? '' : (i.chosen || '-')}${i.marks === i.maxMarks ? '✓' : i.marks > 0 ? '½' : '✗'}`).join(' ');
+      for (const p of PAPERS) o[`Chi tiết ${p === 'reading' ? 'Reading' : 'Listening'}`] = r.items[p].filter(Boolean).map(i => `${i.q}${i.type === 'write' ? '' : (i.chosen || '-')}${i.marks === i.maxMarks ? '✓' : i.marks > 0 ? '½' : '✗'}`).join(' ');
+      if (hasWriting()) WR_COLS.forEach((c, k) => { o[c] = wrVals(r)[k]; });
+      if (hasSpeaking()) spColsOf().forEach((c, k) => { o[c] = spVals(r)[k]; });
       o['Số câu tô không chuẩn'] = r.nonstd; o['Ghi chú'] = note(r); o['Nhận xét'] = S_comment(r);
       return o;
     });
     return { header, rows };
+  }
+  // ---------- lịch sử các đợt Mock (đọc từ Google Sheet) → ▲▼ so với đợt trước và biểu đồ tiến bộ ----------
+  // Thứ tự đợt: trường "dot" trong de-thi/manifest.json; nếu không có thì lấy số cuối của id đề (pet-test2 → 2).
+  let HIST = {}, histP = null, HIST_ERR = '';
+  const dotOf = t => { if (!t) return null; if (t.dot != null && t.dot !== '' && Number.isFinite(+t.dot)) return +t.dot; const m = String(t.id).match(/(\d+)$/); return m ? +m[1] : null; };
+  const sheetScale = v => { const m = String(v ?? '').trim().match(/^~?(\d+)$/); return m ? +m[1] : null; };   // "143", 143, "~143" → 143; "-", "Dưới 120", "thiếu trang" → null
+  const histCols = () => [...lvl().phan.map(s => [s.id, `${s.ten} thang`]), ['writing', 'Writing thang'], ['speaking', 'Speaking thang']];
+  function loadHistory() {
+    HIST = {}; HIST_ERR = '';
+    const code = lsGet('omr-tcode', '');
+    if (!S || isDaily() || !CFG.on || !code || !dotOf(TESTS.find(t => t.id === S.test))) return (histP = Promise.resolve());
+    const lv = S.level, cur = S.test, byId = Object.fromEntries(TESTS.map(t => [t.id, t]));
+    return (histP = fetch(CFG.sheetUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'history', code, level: lv, codes: students().map(x => x.code) }) }).then(x => x.json()).then(r => {
+      if (!r.ok) throw new Error(r.error || 'Google Sheet từ chối');
+      const H = r.header, iK = H.indexOf('Khoá'), iC = H.indexOf('Mã HS'), cols = histCols().map(([id, name]) => [id, H.indexOf(name)]), out = {};
+      for (const row of r.rows) {
+        const tid = String(row[iK]).split('|')[0], t = byId[tid];
+        if (tid === cur || !t || t.level !== lv || (t.loai || 'mock') !== 'mock' || dotOf(t) == null) continue;
+        const code6 = String(row[iC]).toUpperCase().replace(/\s/g, ''), sc = {};
+        cols.forEach(([id, i]) => { sc[id] = i < 0 ? null : sheetScale(row[i]); });
+        (out[code6] ||= []).push({ id: tid, dot: dotOf(t), s: sc });
+      }
+      Object.values(out).forEach(a => a.sort((x, y) => x.dot - y.dot));
+      HIST = out;
+    }).catch(e => { HIST = {}; HIST_ERR = String(e.message || e); }));
+  }
+  const avgOf = (map, ids) => { const v = ids.map(k => map[k]).filter(x => x != null); return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null; };
+  const idsOf = map => Object.keys(map).filter(k => map[k] != null).sort().join('+');
+  // đợt Mock trước của học sinh: { prev, hist } — Overall chỉ so được khi hai đợt có cùng bộ kỹ năng có điểm
+  function histFor(code, skills) {
+    const cur = dotOf(TESTS.find(t => t.id === S.test)), list = (HIST[String(code).toUpperCase()] || []).filter(h => cur != null && h.dot < cur);
+    if (!list.length) return null;
+    const now = {}; skills.forEach(k => { now[k.id] = k.scale; }); const set = idsOf(now);
+    const hist = list.map((h, i) => ({ label: 'Mock ' + (i + 1), s: h.s, overall: idsOf(h.s) === set ? avgOf(h.s, Object.keys(h.s)) : null }));
+    return { prev: list[list.length - 1], hist, comparable: idsOf(list[list.length - 1].s) === set };
   }
   async function pushResults(loud) {
     if (!CFG.on || syncing || !S) return;
@@ -236,7 +296,7 @@
     syncing = true; renderSync('Đang sao lưu…');
     try {
       const r = await fetch(CFG.sheetUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'results', code, sheet: 'Kết quả ' + S.level, header, rows }) }).then(x => x.json());
+        body: JSON.stringify({ action: 'results', code, sheet: sheetTab(), header, rows }) }).then(x => x.json());
       if (!r.ok) throw new Error(r.error || 'Google Sheet từ chối');
       S.dirty = false; S.syncedAt = new Date().toISOString(); S.syncError = ''; save(false);
     } catch (e) {
@@ -249,7 +309,7 @@
     if (!CFG.on || !S) { el.hidden = true; return; }
     el.hidden = false;
     const txt = msg || (!lsGet('omr-tcode', '') ? 'Chưa nhập mã giáo viên — kết quả chỉ lưu trên máy này.'
-      : !S.dirty && S.syncedAt ? `☁️ Đã sao lưu lên Google Sheet (tab "Kết quả ${S.level}") lúc ${hhmm(new Date(S.syncedAt))}.`
+      : !S.dirty && S.syncedAt ? `☁️ Đã sao lưu lên Google Sheet (tab "${sheetTab()}") lúc ${hhmm(new Date(S.syncedAt))}.`
       : S.syncedAt ? `Có thay đổi chưa sao lưu (lần trước: ${hhmm(new Date(S.syncedAt))}).` : 'Chưa sao lưu lên Google Sheet.');
     el.innerHTML = `<span>${esc(txt)}</span>${msg ? '' : '<button class="btn small" id="btnPush">Sao lưu ngay</button>'}`;
     const b = $('#btnPush'); if (b) b.onclick = () => pushResults(true);
@@ -261,14 +321,22 @@
     if (!R) { alert('Hãy chọn lớp (cập nhật danh sách lớp trước).'); return; }
     const t = TESTS.find(x => x.id === tid);
     if (!t) { alert(`Chưa có đề ${R.level} nào trong kho đề.`); return; }
-    KEY = await fetch('de-thi/' + t.file).then(r => r.json());
-    if ((KEY.level || t.level) !== R.level) { alert(`Đề ${t.title} là đề ${KEY.level}, lớp này học ${R.level}.`); return; }
-    lsSet('omr-last', { test: tid, cls });
-    const id = `s2:${tid}:${cls}`;
-    S = (await idb.get(id)) || { id, test: tid, testTitle: t.title, level: R.level, cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {}, online: {} };
-    S.comments = S.comments || {}; S.writing = S.writing || {}; S.speaking = S.speaking || {};
+    // Reading lấy từ đề tid, Listening có thể lấy từ đề khác (tidL). Phiếu giấy dùng chung, chỉ đáp án được ghép.
+    const tidL = $('#mixOn').checked ? $('#selTestL').value : tid, tL = TESTS.find(x => x.id === tidL), mixed = tidL !== tid;
+    if (!tL) { alert('Hãy chọn đề cho Listening.'); return; }
+    const loadKey = tt => fetch('de-thi/' + tt.file).then(r => r.json());
+    const KR = await loadKey(t), KL = mixed ? await loadKey(tL) : KR;
+    for (const [tt, kk] of [[t, KR], [tL, KL]]) if ((kk.level || tt.level) !== R.level) { alert(`Đề ${tt.title} là đề ${kk.level || tt.level}, lớp này học ${R.level}.`); return; }
+    KEY = mixed ? { ...KR, listening: KL.listening } : KR;
+    const sid = mixed ? `${tid}+${tidL}` : tid, title = mixed ? `${t.title} (R) + ${tL.title} (L)` : t.title;
+    lsSet('omr-last', { test: tid, testL: mixed ? tidL : '', cls });
+    const label = MODE === 'daily' ? ($('#dayLabel').value.trim() || new Date().toLocaleDateString('vi-VN')) : '';
+    const id = MODE === 'daily' ? `d2:${sid}:${cls}:${label}` : `s2:${sid}:${cls}`;   // phiên Mock giữ nguyên khoá cũ
+    S = (await idb.get(id)) || { id, mode: MODE, label, test: sid, testTitle: title, mixed, level: R.level, cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {}, online: {} };
+    S.comments = S.comments || {}; S.writing = S.writing || {}; S.speaking = S.speaking || {}; S.mode = S.mode || 'mock'; S.label = S.label || '';
     document.documentElement.style.setProperty('--ruby', LV[S.level].mau);
-    $('#ctx').textContent = `${t.title} · ${cls}`;
+    $('#ctx').textContent = `${S.testTitle}${isDaily() ? ' · Hằng ngày' + (S.label ? ` (${S.label})` : '') : ''} · ${cls}`;
+    loadHistory();
     go('scan');
   }
   const students = () => rosters()[S.cls]?.students || [];
@@ -607,6 +675,9 @@
     const [p, q] = k.split('-'), pk = QMAP[S.level][p][q]?.page;
     return students().filter(s => S.sheets[s.key]?.[pk]?.write[q]).map(s => ({ s, w: S.sheets[s.key][pk].write[q] }));
   }
+  // lý do câu điền sai (giáo viên duyệt; mặc định: ô trống → "Bỏ trống")
+  const WRITE_REASONS = ['Sai chính tả', 'Sai dạng từ', 'Sai thông tin', 'Thiếu từ', 'Thừa từ', 'Sai số / giờ', 'Bỏ trống', 'Chữ khó đọc, cần xem lại'];
+  const effReason = w => w.reason || (w.blank ? 'Bỏ trống' : '');
   const partialQ = (p, q) => { const sec = secOfQ(S.level, p, q); return sec && isPartial(sec, QMAP[S.level][p][q].part); };
   // điểm của một câu viết: câu thường = đúng/sai; câu chấm từng phần (FCE Part 4) = 0/1/2
   function writeMarks(p, q, w) {
@@ -627,15 +698,18 @@
     const cls = (w) => { const m = writeMarks(p, q, w); return part ? (m === 2 ? '' : m === 1 ? 'mid' : 'no') : (m ? '' : 'no'); };
     $('#wBody').innerHTML = `<div class="keyline">${p === 'reading' ? 'Reading' : 'Listening'} câu ${q} — đáp án: <b>${KEY[p][q].map(esc).join(' / ')}</b>
         ${part ? '<br><small>Câu chấm 0 / 1 / 2 điểm — chạm để đổi: 2 → 1 → 0</small>' : ''}</div>
-      <div class="wgrid">${items.map((it, i) => `<button class="wcell ${cls(it.w)}" data-i="${i}">
+      <div class="wgrid">${items.map((it, i) => { const wrong = writeMarks(p, q, it.w) < weightOf(secOfQ(S.level, p, q), QMAP[S.level][p][q].part);
+        return `<div class="wcell ${cls(it.w)}"><button type="button" class="wtog" data-i="${i}">
         <div class="who"><span>${esc(it.s.name)}</span><span>${label(it.w)}${it.w.blank ? ' · bỏ trống' : ''}</span></div>
-        <img src="${it.w.img}" alt="Câu trả lời của ${esc(it.s.name)}"></button>`).join('')}</div>
+        <img src="${it.w.img}" alt="Câu trả lời của ${esc(it.s.name)}"></button>
+        ${wrong ? `<select class="wreason" data-i="${i}" aria-label="Lý do sai"><option value="">Lý do: điền chưa đúng</option>${WRITE_REASONS.map(r => `<option${effReason(it.w) === r ? ' selected' : ''}>${r}</option>`).join('')}</select>` : ''}</div>`; }).join('')}</div>
       <div class="row" style="margin-top:14px"><button class="btn primary" id="wDone">${S.writeDone[curWrite] ? 'Đã xong ✓ — sang câu tiếp' : 'Xong câu này'}</button></div>`;
-    $('#wBody').querySelectorAll('.wcell').forEach(b => b.onclick = () => {
+    $('#wBody').querySelectorAll('.wtog').forEach(b => b.onclick = () => {
       const w = items[+b.dataset.i].w, m = writeMarks(p, q, w);
       w.verdict = part ? (m === 2 ? 1 : m === 1 ? 0 : 2) : !m;
       save(); renderWrite();
     });
+    $('#wBody').querySelectorAll('.wreason').forEach(sel => sel.onchange = () => { items[+sel.dataset.i].w.reason = sel.value; save(); });
     $('#wDone').onclick = () => {
       S.writeDone[curWrite] = true; save(); updateBadges();
       const next = qs.find(k => !S.writeDone[k] && writeItems(k).length); if (next) curWrite = next; renderWrite();
@@ -658,7 +732,7 @@
     const info = QMAP[S.level][p][q], sec = secOfQ(S.level, p, q), w8 = weightOf(sec, info.part), k = KEY[p][q];
     if (info.type === 'write') {
       const w = sh.write[q], marks = writeMarks(p, q, w);
-      return { q, part: info.part, type: 'write', shown: w.blank ? '' : `${marks}/${w8}`, chosen: '', marks, maxMarks: w8, ok: marks === w8, flag: false, bad: false };
+      return { q, part: info.part, type: 'write', shown: w.blank ? '' : `${marks}/${w8}`, chosen: '', marks, maxMarks: w8, ok: marks === w8, flag: false, bad: false, reason: marks < w8 ? effReason(w) : '' };
     }
     const m = sh.mcq[q], o = sh.over[q], bad = isFlag(m);
     const chosen = o ? (o.accept || '') : (m.status === 'ok' ? m.answer : '');
@@ -702,14 +776,18 @@
     });
   }
 
+
   // ---------- Writing (JSON từ skill chấm Writing; kiểm tra bằng viet/kiem-tra-json.js) ----------
   const WR_COLS = ['Writing điểm thô', 'Writing tối đa', 'Writing thang'];
   const writingOf = s => (S.writing || {})[s.key]?.data || null;
   const hasWriting = () => Object.keys(S.writing || {}).length > 0;
   const SP_COLS = ['Speaking điểm thô', 'Speaking tối đa', 'Speaking thang'];
+  const spColsOf = () => isDaily() ? ['Speaking điểm thô', 'Speaking tối đa', 'Speaking %'] : SP_COLS;   // bài hàng ngày: % thay cho thang
   const hasSpeaking = () => Object.keys(S.speaking || {}).length > 0;
   function spVals(r) { const d = (S.speaking || {})[r.s.key], t = d ? window.SpeakingScore.total(S.level, d.bands) : null;
-    return t == null ? ['', '', ''] : [t, window.SpeakingScore.MAX[S.level], window.SpeakingScore.scale(S.level, t) ?? '']; }
+    if (t == null) return ['', '', ''];
+    const mx = window.SpeakingScore.MAX[S.level];
+    return [t, mx, isDaily() ? pctTxt(t, mx) : (window.SpeakingScore.scale(S.level, t) ?? '')]; }
   function spCells(r) { const v = spVals(r); return v[0] === '' ? '<td>—</td><td>—</td>' : `<td class="num">${v[0]}/${v[1]}</td><td class="num">${v[2]}</td>`; }
   const wrScaleText = d => d.total.cambridge_scale == null ? '—' : d.total.cambridge_scale + (d.total.is_estimate ? ' (ước lượng)' : '');
   function wrVals(r) { const d = writingOf(r.s); return d ? [d.total.raw, d.total.raw_max, d.total.cambridge_scale ?? ''] : ['', '', '']; }
@@ -743,7 +821,7 @@
     const d = r.data;
     if (d.level !== S.level) return { ok: false, html: wrBox('err', `${pre}JSON là bài ${esc(d.level)}, nhưng lớp này chấm ${esc(S.level)}.`) };
     const warn = r.canhBao.length ? '<br>Cảnh báo số liệu: ' + r.canhBao.map(esc).join(' ') : '';
-    if (d.test && d.test.id && d.test.id !== S.test && !confirm(`${label || 'JSON'}: test.id là "${d.test.id}" nhưng đề đang chấm là "${S.test}". Vẫn lưu?`))
+    if (d.test && d.test.id && !String(S.test).split('+').includes(d.test.id) && !confirm(`${label || 'JSON'}: test.id là "${d.test.id}" nhưng đề đang chấm là "${S.test}". Vẫn lưu?`))
       return { ok: false, html: wrBox('warn', pre + 'Đã huỷ vì khác mã đề.') };
     const stu = wrFindStudent(d.student && d.student.id);
     if (!stu) {
@@ -871,18 +949,22 @@
     return w;
   }
   const secCell = g => !g ? '—' : g.incomplete ? 'thiếu trang' : null;
+  const pctTxt = (a, b) => b ? Math.round(100 * a / b) + '%' : '';
   function renderExport() {
     renderSync();
-    const w = warnings(), L = lvl();
-    $('#exportWarn').innerHTML = w.length ? `<div class="notice warn">${w.map(esc).join('<br>')}</div>` : '';
+    const w = warnings(), L = lvl(), daily = isDaily(), sp = hasSpeaking();
+    $('#exportWarn').innerHTML = (w.length ? `<div class="notice warn">${w.map(esc).join('<br>')}</div>` : '')
+      + (HIST_ERR && !daily ? `<div class="notice info">Chưa đọc được điểm các đợt Mock trước (${esc(HIST_ERR)}). Phiếu báo điểm hiện như đợt đầu, chưa có mũi tên tăng giảm.</div>` : '');
+    $('#btnClassReport').hidden = daily; $('#rpHint').hidden = daily;   // bài hàng ngày: không có phiếu báo điểm
     const rs = results();
-    $('#resTable').innerHTML = `<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Lớp</th>${L.phan.map(s =>
-      `<th>${s.ten} /${secMax(S.level, s)}</th><th>Thang</th><th>CEFR</th>`).join('')}${hasWriting() ? '<th>Writing</th><th>Writing thang</th>' : ''}${hasSpeaking() ? '<th>Speaking</th><th>Speaking thang</th>' : ''}<th>Tô không chuẩn</th></tr></thead><tbody>` +
+    $('#resTable').innerHTML = `<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Lớp</th>${L.phan.map(s => daily
+      ? `<th>${s.ten} /${secMax(S.level, s)}</th><th>%</th>` : `<th>${s.ten} /${secMax(S.level, s)}</th><th>Thang</th><th>CEFR</th>`).join('')}${hasWriting() ? '<th>Writing</th><th>Writing thang</th>' : ''}${sp ? (daily ? '<th>Speaking</th><th>%</th>' : '<th>Speaking</th><th>Speaking thang</th>') : ''}<th>Tô không chuẩn</th></tr></thead><tbody>` +
       rs.map(r => `<tr class="${r.any ? '' : 'missing'}"><td class="num">${r.stt}</td><td>${esc(r.s.code)}</td>
-        <td class="nm-cell"><div class="nm-in"><span>${esc(r.s.name)}</span>${r.any ? `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>` : ''}</div></td>
+        <td class="nm-cell"><div class="nm-in"><span>${esc(r.s.name)}</span>${r.any && !daily ? `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>` : ''}</div></td>
         <td>${esc(r.s.vh)}</td>${L.phan.map(s => { const g = r.secs[s.id], t = secCell(g);
-          return t ? `<td colspan="3">${t}</td>` : `<td class="num">${g.raw}</td><td class="num">${scaleText(g.scale)}</td><td>${g.cefr}</td>`; }).join('')}
-        ${hasWriting() ? wrCells(r) : ''}${hasSpeaking() ? spCells(r) : ''}<td class="num">${r.nonstd || ''}</td></tr>`).join('') + '</tbody>';
+          if (t) return `<td colspan="${daily ? 2 : 3}">${t}</td>`;
+          return daily ? `<td class="num">${g.raw}</td><td class="num">${pctTxt(g.raw, g.max)}</td>` : `<td class="num">${g.raw}</td><td class="num">${scaleText(g.scale)}</td><td>${g.cefr}</td>`; }).join('')}
+        ${hasWriting() ? wrCells(r) : ''}${sp ? spCells(r) : ''}<td class="num">${r.nonstd || ''}</td></tr>`).join('') + '</tbody>';
     $('#resTable').querySelectorAll('[data-rp]').forEach(b => b.onclick = () => studentReport(b.dataset.rp));
   }
   function note(r) {
@@ -905,12 +987,12 @@
   // tiêu đề cột chung cho Excel / CSV
   function exportHeader() {
     const L = lvl(), qCols = p => Object.keys(QMAP[S.level][p]).map(Number).sort((a, b) => a - b).map(q => PAPER_SHORT[p] + q);
-    const secCols = sec => [`${sec.ten} /${secMax(S.level, sec)}`, `${sec.ten} thang`, `${sec.ten} CEFR`, ...partsOf(S.level, sec).map(([p, n]) => `${sec.viet} Part ${p} (/${n})`)];
-    return { qCols, cols: ['STT', 'Mã HS', 'Họ tên', 'Lớp', ...qCols('reading'), ...qCols('listening'), ...L.phan.flatMap(secCols), ...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? SP_COLS : []), 'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét'] };
+    const secCols = sec => [`${sec.ten} /${secMax(S.level, sec)}`, ...(isDaily() ? [`${sec.ten} %`] : [`${sec.ten} thang`, `${sec.ten} CEFR`]), ...partsOf(S.level, sec).map(([p, n]) => `${sec.viet} Part ${p} (/${n})`)];
+    return { qCols, cols: ['STT', 'Mã HS', 'Họ tên', 'Lớp', ...qCols('reading'), ...qCols('listening'), ...L.phan.flatMap(secCols), ...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), 'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét'] };
   }
   function secVals(r) {
     return [...lvl().phan.flatMap(sec => { const g = r.secs[sec.id], ok = g && !g.incomplete, t = !g ? '' : g.incomplete ? 'thiếu trang' : '';
-      return [ok ? g.raw : t, ok ? scaleText(g.scale) : '', ok ? g.cefr : '', ...partsOf(S.level, sec).map(([p]) => ok ? g.parts[p] : '')]; }),
+      return [ok ? g.raw : t, ...(isDaily() ? [ok ? pctTxt(g.raw, g.max) : ''] : [ok ? scaleText(g.scale) : '', ok ? g.cefr : '']), ...partsOf(S.level, sec).map(([p]) => ok ? g.parts[p] : '')]; }),
       ...(hasWriting() ? wrVals(r) : []), ...(hasSpeaking() ? spVals(r) : [])];
   }
   async function exportXlsx() {
@@ -996,7 +1078,7 @@
     if (items.some(i => !i.bad && i.marks === 0 && (i.type === 'write' ? i.shown === '' : !i.chosen))) out.push(NX.boTrong);
     return out.filter(Boolean).join(' ').replace(/^./, c => c.toUpperCase());
   }
-  const S_comment = r => { const c = S.comments?.[r.s.key]; return c === undefined ? suggestComment(r) : c; };
+  const S_comment = r => { if (isDaily()) return ''; const c = S.comments?.[r.s.key]; return c === undefined ? suggestComment(r) : c; };   // bài hàng ngày: không có nhận xét tổng thể
 
   // ---------- phiếu 4 trang cho phụ huynh (viet/phieu-trang.js + viet/writing-report.js) ----------
   const LIMIT_CM = 700, LIMIT_PR = 140;   // số ký tự tối đa: nhận xét tổng thể, mỗi ý ưu tiên
@@ -1056,22 +1138,39 @@
     const ov = sc.length ? Math.round(sc.reduce((a, b) => a + b, 0) / sc.length) : null;
     const s1 = {}; skills.forEach(s => { s1[s.id] = s.scale; });
     // chẩn đoán: lấy từ dữ liệu có sẵn, không bịa
+    // Reading / Use of English / Listening: MỖI KỸ NĂNG MỘT Ô (Part yếu nhất). Dòng "Yêu cầu Part" và danh sách câu (R5, L9…) là của Elaine
+    // (viet/yeu-cau-part.js); em thêm lý do giáo viên chọn ở câu điền (ly-do-cau-dien.json).
     const causes = [];
     const cand = [];
+    const skillCause = (sec, g, pt, v, n) => {
+      const items = g.items.filter(i => i.part === pt && !i.ok), RS = FILLR?.dien || {};
+      const adv = NX?.loiKhuyen?.[S.level]?.[sec.id]?.[pt];
+      const yc = window.YEU_CAU_PART?.[S.level]?.[sec.id]?.[pt];
+      const pre = sec.id === 'listening' ? 'L' : 'R';
+      const nums = items.map(i => i.q);
+      const numTxt = nums.length ? ` Các câu cần xem lại: ${nums.slice(0, 3).map(q => pre + q).join(', ')}${nums.length > 3 ? ` và ${nums.length - 3} câu khác` : ''}.` : '';
+      const wr = items.filter(i => i.type === 'write'), cnt = {};
+      const rs0 = i => i.reason || (i.shown === '' ? 'Bỏ trống' : '');
+      wr.forEach(i => { const rs = rs0(i); if (rs) cnt[rs] = (cnt[rs] || 0) + 1; });
+      const topR = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0];
+      const detail = wr.filter(i => rs0(i)).map(i => `${pre}${i.q}: ${(RS[rs0(i)]?.why) || rs0(i).toLowerCase()}`);
+      const allFill = wr.length === items.length && topR && RS[topR[0]];
+      return { skill: sec.id, req: yc ? `Yêu cầu Part ${pt}: ${yc}` : '',
+        title: allFill ? `Câu điền: ${RS[topR[0]].why}` : `Mất điểm ở ${sec.ten} Part ${pt}`,
+        body: `Em được ${v}/${n} điểm ở Part này.${numTxt}` + (detail.length ? ` Lý do: ${detail.slice(0, 4).join('; ')}.` : ''),
+        fix: cap1((allFill && RS[topR[0]].fix) || adv || 'xem lại các câu sai và đối chiếu đáp án').replace(/\.?$/, '.') };
+    };
     for (const sec of L.phan) {
       const g = r.secs[sec.id]; if (!g || g.incomplete) continue;
+      let worst = null;
       for (const [pt, n] of partsOf(S.level, sec)) {
         const v = g.parts[pt]; if (!n || v >= n) continue;
-        const bad = g.items.filter(i => i.part === pt && !i.ok).length;
-        const adv = NX?.loiKhuyen?.[S.level]?.[sec.id]?.[pt];
-        const yc = window.YEU_CAU_PART?.[S.level]?.[sec.id]?.[pt];
-        const pre = sec.id === 'listening' ? 'L' : 'R';
-        const nums = g.items.filter(i => i.part === pt && !i.ok).map(i => i.q);
-        const numTxt = nums.length ? ` Các câu cần xem lại: ${nums.slice(0, 3).map(q => pre + q).join(', ')}${nums.length > 3 ? ` và ${nums.length - 3} câu khác` : ''}.` : '';
-        cand.push({ f: v / n, c: { skill: sec.id, req: yc ? `Yêu cầu Part ${pt}: ${yc}` : '', title: `Mất điểm ở ${sec.ten} Part ${pt}`, body: `Em được ${v}/${n} điểm ở Part này.${numTxt}`, fix: cap1(adv || 'xem lại các câu sai và đối chiếu đáp án') + '.' } });
+        if (!worst || v / n < worst.f) worst = { pt, v, n, f: v / n };
       }
+      if (worst) cand.push({ f: worst.f, c: skillCause(sec, g, worst.pt, worst.v, worst.n) });
     }
-    cand.sort((a, b) => a.f - b.f).slice(0, 2).forEach(x => causes.push(x.c));
+    const extraN = (wr ? 1 : 0) + (S.speaking?.[r.s.key] ? 1 : 0);   // Writing và Speaking luôn có chỗ trong 4 ô
+    cand.sort((a, b) => a.f - b.f).slice(0, Math.max(1, 4 - extraN)).forEach(x => causes.push(x.c));
     if (wr) {
       const crit = wr.parts.flatMap(p => p.criteria.map(c => ({ c, p }))).sort((a, b) => a.c.band / a.c.max - b.c.band / b.c.max)[0];
       if (crit && crit.c.band < crit.c.max) causes.push({ skill: 'writing', title: `Writing: cần cải thiện ${CRIT_VI[crit.c.id] || crit.c.id}`, body: clip(crit.c.comment, 160), fix: clip(crit.c.to_move_up || crit.c.key_takeaway, 120) });
@@ -1093,17 +1192,20 @@
       const g = r.secs[sec.id]; if (!g || g.incomplete) continue;
       const items = g.items.filter(i => !i.ok).map(i => {
         const key = i.key ?? [].concat(KEY[sec.giay][i.q]).join(' / ');
-        const what = i.type === 'write' ? (i.shown === '' ? 'blank' : i.marks > 0 ? `${i.marks}/${i.maxMarks}` : 'incorrect') : (i.bad && !i.chosen ? 'mark unclear' : (i.chosen || 'blank'));
+        const what = i.type === 'write' ? (i.shown === '' ? 'blank' : i.marks > 0 ? `${i.marks}/${i.maxMarks}` : (i.reason || 'incorrect')) : (i.bad && !i.chosen ? 'mark unclear' : (i.chosen || 'blank'));
         return `Q${i.q}: ${what}, ${key}`;
       });
       const shown = items.slice(0, 18); if (items.length > 18) shown.push(`+${items.length - 18} more`);
       wrong.push({ skill: sec.id, name: sec.ten, items: shown.length ? shown : ['No wrong answers'] });
     }
+    const hp = isDaily() ? null : histFor(r.s.code, skills);   // đợt Mock trước (nếu có) → mũi tên ▲▼ và biểu đồ tiến bộ
+    if (hp) skills.forEach(k => { k.d = k.scale != null && hp.prev.s[k.id] != null ? k.scale - hp.prev.s[k.id] : null; });
+    const od = hp && hp.comparable && ov != null ? ov - avgOf(hp.prev.s, Object.keys(hp.prev.s)) : null;
     const m = {
-      first: true, level: S.level, exam: S.testTitle, date: day,
+      first: !hp, level: S.level, exam: S.testTitle, date: day,
       student: { name: r.s.name, id: r.s.code, cls: r.s.vh },
-      skills, overall: { scale: ov, d: null, partial: sc.length < skills.length },
-      history: [{ label: 'Mock 1', s: s1, overall: ov }],
+      skills, overall: { scale: ov, d: od, partial: sc.length < skills.length },
+      history: [...(hp ? hp.hist : []), { label: 'Mock ' + (hp ? hp.hist.length + 1 : 1), s: s1, overall: ov }],
       comment: clip(S_comment(r), LIMIT_CM), priorities: S_prior(r).map(x => clip(x, LIMIT_PR)),
       diagnosis: { causes: causes.slice(0, 4), writingGroups, habits, wrong },
       speaking: spk
@@ -1209,8 +1311,10 @@
     pe.textContent = over ? `${over} ý vượt ${LIMIT_PR} ký tự, phiếu sẽ cắt bớt` : `tối đa 3 ý, mỗi ý ${LIMIT_PR} ký tự`; pe.style.color = over ? '#B42318' : '';
   }
   async function studentReport(key, again) {
+    if (isDaily()) return;   // bài hàng ngày không có phiếu báo điểm
     if (!again && !confirmWarn()) return;
     const r = results().find(x => x.s.key === key); if (!r) return;
+    if (histP) await histP;   // lịch sử các đợt Mock trước
     $('#reportComment').value = S_comment(r);
     $('#reportPriorities').value = S_prior(r).join('\n');
     $('#reportComment').oninput = $('#reportPriorities').oninput = updateCounts; updateCounts();
@@ -1236,9 +1340,11 @@
     finally { busy(''); $('#reportStage').innerHTML = ''; }
   }
   async function classReport() {
+    if (isDaily()) return;
     const rs = results().filter(r => r.any);
     if (!rs.length) { alert('Chưa có phiếu nào để tạo phiếu kết quả.'); return; }
     if (!confirmWarn()) return;
+    if (histP) await histP;
     busy('Đang chuẩn bị…');
     try {
       await ensureLibs();
@@ -1258,10 +1364,10 @@
   async function clearSession() {
     if (!confirm(`Xoá toàn bộ phiếu đã chụp của ${S.testTitle} – ${S.cls}? Không thể hoàn tác.`)) return;
     await idb.del(S.id);
-    S = { id: S.id, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {}, online: {} };
+    S = { id: S.id, mode: S.mode, label: S.label, mixed: S.mixed, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {}, online: {} };
     go('scan');
   }
 
-  window.__PET = { get S() { return S; }, results };
+  window.__PET = { get S() { return S; }, results, reportModel };
   boot().catch(e => { $('#loading').hidden = true; alert('Không tải được cấu hình app: ' + e.message); });
 })();
