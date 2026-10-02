@@ -73,6 +73,11 @@
     CFG.on = /^https:\/\/script\.google\.com\//.test(CFG.sheetUrl || '');
     $('#sheetBox').hidden = !CFG.on; $('#fileBox').open = !CFG.on;
     $('#tCode').value = lsGet('omr-tcode', '');
+    $('#tCodeEye').onclick = () => {   // hiện / ẩn mã giáo viên
+      const show = $('#tCode').type === 'password'; $('#tCode').type = show ? 'text' : 'password';
+      $('#tCodeEye').classList.toggle('on', show); $('#tCodeEye').setAttribute('aria-pressed', show);
+      $('#tCodeEye').setAttribute('aria-label', show ? 'Ẩn mã giáo viên' : 'Hiện mã giáo viên');
+    };
     $('#btnSync').onclick = () => fetchRosters(true);
     $('#selClass').onchange = fillTests; $('#mixOn').onchange = setMix;
     const last = lsGet('omr-last', {});
@@ -91,7 +96,7 @@
     $('#btnClear').onclick = clearSession;
     $('#btnScan').onclick = startScanner; $('#scanStop').onclick = stopScanner;
     document.addEventListener('visibilitychange', () => { if (document.hidden && cam.running) stopScanner(); });
-    $('#btnClassReport').onclick = classReport; $('#reportClose').onclick = () => $('#reportModal').hidden = true;
+    $('#reportClose').onclick = () => $('#reportModal').hidden = true;
     $('#appVersion').textContent = 'Phiên bản app: ' + APP_VERSION;
     go('setup');
     waitCv();
@@ -772,6 +777,7 @@
         r.secs[sec.id] = { raw, max: secMax(S.level, sec), scale, cefr: cefrOf(scale), parts, items: its };
       }
       r.nonstd = PAPERS.flatMap(p => r.items[p]).filter(x => x && x.bad).length;
+      if (!r.any && (writingOf(s) || spokenOk(s))) r.any = true;   // chỉ có Writing hoặc Speaking (nhập JSON / nhập tay) vẫn là có dữ liệu
       return r;
     });
   }
@@ -955,12 +961,12 @@
     const w = warnings(), L = lvl(), daily = isDaily(), sp = hasSpeaking();
     $('#exportWarn').innerHTML = (w.length ? `<div class="notice warn">${w.map(esc).join('<br>')}</div>` : '')
       + (HIST_ERR && !daily ? `<div class="notice info">Chưa đọc được điểm các đợt Mock trước (${esc(HIST_ERR)}). Phiếu báo điểm hiện như đợt đầu, chưa có mũi tên tăng giảm.</div>` : '');
-    $('#btnClassReport').hidden = daily; $('#rpHint').hidden = daily;   // bài hàng ngày: không có phiếu báo điểm
+    $('#rpHint').hidden = daily;   // bài hàng ngày: không có phiếu báo điểm
     const rs = results();
     $('#resTable').innerHTML = `<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Lớp</th>${L.phan.map(s => daily
       ? `<th>${s.ten} /${secMax(S.level, s)}</th><th>%</th>` : `<th>${s.ten} /${secMax(S.level, s)}</th><th>Thang</th><th>CEFR</th>`).join('')}${hasWriting() ? '<th>Writing</th><th>Writing thang</th>' : ''}${sp ? (daily ? '<th>Speaking</th><th>%</th>' : '<th>Speaking</th><th>Speaking thang</th>') : ''}<th>Tô không chuẩn</th></tr></thead><tbody>` +
       rs.map(r => `<tr class="${r.any ? '' : 'missing'}"><td class="num">${r.stt}</td><td>${esc(r.s.code)}</td>
-        <td class="nm-cell"><div class="nm-in"><span>${esc(r.s.name)}</span>${r.any && !daily ? `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>` : ''}</div></td>
+        <td class="nm-cell"><div class="nm-in"><span>${esc(r.s.name)}</span>${canReport(r) ? `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>` : ''}</div></td>
         <td>${esc(r.s.vh)}</td>${L.phan.map(s => { const g = r.secs[s.id], t = secCell(g);
           if (t) return `<td colspan="${daily ? 2 : 3}">${t}</td>`;
           return daily ? `<td class="num">${g.raw}</td><td class="num">${pctTxt(g.raw, g.max)}</td>` : `<td class="num">${g.raw}</td><td class="num">${scaleText(g.scale)}</td><td>${g.cefr}</td>`; }).join('')}
@@ -1048,17 +1054,35 @@
     download(new Blob(['\uFEFF' + lines.map(l => l.map(q).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }), fname('csv'));
   }
 
+  // ---------- kỹ năng đưa vào phiếu kết quả ----------
+  const spokenOk = s => { const sp = (S.speaking || {})[s.key]; return !!(sp && window.SpeakingScore && window.SpeakingScore.total(S.level, sp.bands) != null); };
+  const allSkillIds = () => [...lvl().phan.map(x => x.id), 'writing', 'speaking'];
+  const skillName = id => id === 'writing' ? 'Writing' : id === 'speaking' ? 'Speaking' : lvl().phan.find(x => x.id === id)?.ten || id;
+  function scoredIds(r) {   // kỹ năng ĐÃ CÓ ĐIỂM của học sinh này
+    const out = lvl().phan.filter(sec => { const g = r.secs[sec.id]; return g && !g.incomplete; }).map(x => x.id);
+    if (writingOf(r.s)) out.push('writing');
+    if (spokenOk(r.s)) out.push('speaking');
+    return out;
+  }
+  const canReport = r => !isDaily() && scoredIds(r).length > 0;   // phiếu xuất được khi có điểm ít nhất 1 kỹ năng
+  function pickOf(r) {   // kỹ năng đang được chọn (mặc định: tất cả; kỹ năng chưa có điểm hiện ô "chưa có bài")
+    const all = allSkillIds(), sc = scoredIds(r), saved = (S.pick || {})[r.s.key];
+    const sel = saved && saved.length ? saved.filter(id => all.includes(id)) : all;
+    return sel.some(id => sc.includes(id)) ? sel : all;
+  }
+  const papersOf = sel => PAPERS.filter(p => lvl().phan.some(sec => sec.giay === p && sel.has(sec.id)));
+
   // ---------- nhận xét gợi ý ----------
   const fillT = (t, o) => String(t || '').replace(/\{(\w+)\}/g, (_, k) => o[k] ?? '');
   const joinList = a => a.length <= 1 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' và ' + a[a.length - 1];
   const RANK = ['Dưới', 'A1', 'A2', 'B1', 'B2', 'C1'];
   const rank = c => RANK.indexOf(c.startsWith('Dưới') ? 'Dưới' : c);
-  function suggestComment(r) {
+  function suggestComment(r, sel) {   // sel: tập kỹ năng đưa vào phiếu (không truyền = tất cả)
     if (!NX) return '';
     const L = lvl(), out = [], strong = [], weak = [], lv = {}, below = [];
     const target = NX.mucTieu?.[S.level];
     for (const sec of L.phan) {
-      const g = r.secs[sec.id]; if (!g || g.incomplete) continue;
+      const g = r.secs[sec.id]; if (!g || g.incomplete || (sel && !sel.has(sec.id))) continue;
       const band = g.cefr.startsWith('Dưới') ? 'Dưới' : g.cefr;
       (lv[band] = lv[band] || []).push(sec.ten);
       if (target && rank(g.cefr) < rank(target)) below.push(sec.ten);
@@ -1073,12 +1097,12 @@
     const best = strong.sort((a, b) => b.f - a.f).slice(0, NX.toiDaDiemManh || 3).map(x => x.t);
     if (best.length) out.push(fillT(NX.diemManh, { list: joinList(best) }));
     out.push(weak.length ? fillT(NX.canCaiThien, { list: weak.join('; ') }) : NX.khongYeu);
-    const items = PAPERS.flatMap(p => r.items[p]).filter(Boolean);
+    const items = (sel ? papersOf(sel) : PAPERS).flatMap(p => r.items[p]).filter(Boolean);
     if (items.some(i => i.bad)) out.push(NX.toBai);
     if (items.some(i => !i.bad && i.marks === 0 && (i.type === 'write' ? i.shown === '' : !i.chosen))) out.push(NX.boTrong);
     return out.filter(Boolean).join(' ').replace(/^./, c => c.toUpperCase());
   }
-  const S_comment = r => { if (isDaily()) return ''; const c = S.comments?.[r.s.key]; return c === undefined ? suggestComment(r) : c; };   // bài hàng ngày: không có nhận xét tổng thể
+  const S_comment = (r, sel) => { if (isDaily()) return ''; const c = S.comments?.[r.s.key]; return c === undefined ? suggestComment(r, sel) : c; };   // bài hàng ngày: không có nhận xét tổng thể
 
   // ---------- phiếu 4 trang cho phụ huynh (viet/phieu-trang.js + viet/writing-report.js) ----------
   const LIMIT_CM = 700, LIMIT_PR = 140;   // số ký tự tối đa: nhận xét tổng thể, mỗi ý ưu tiên
@@ -1090,17 +1114,17 @@
     return c.slice(0, k > n * 0.6 ? k : n - 1).replace(/[,;:\s]+$/, '') + '…';
   };
   const cap1 = t => String(t || '').replace(/^./, c => c.toUpperCase());
-  function suggestPriorities(r) {
+  function suggestPriorities(r, sel) {
     const L = lvl(), cand = [];
     for (const sec of L.phan) {
-      const g = r.secs[sec.id]; if (!g || g.incomplete) continue;
+      const g = r.secs[sec.id]; if (!g || g.incomplete || (sel && !sel.has(sec.id))) continue;
       for (const [pt, n] of partsOf(S.level, sec)) {
         const v = g.parts[pt], f = n ? v / n : 1; if (f >= 1) continue;
         const adv = NX?.loiKhuyen?.[S.level]?.[sec.id]?.[pt] || 'luyện lại dạng câu này và xem lại các câu sai';
         cand.push({ f, skill: sec.id, text: `${sec.ten} Part ${pt}: ${adv}.` });
       }
     }
-    const wr = writingOf(r.s);
+    const wr = !sel || sel.has('writing') ? writingOf(r.s) : null;
     if (wr) {
       const p = wr.parts.slice().sort((a, b) => a.raw / a.raw_max - b.raw / b.raw_max)[0];
       const tip = (p.issues && p.issues[0]) || (p.criteria.filter(c => c.to_move_up).sort((a, b) => a.band / a.max - b.band / b.max)[0] || {}).to_move_up;
@@ -1112,13 +1136,13 @@
     for (const c of cand) { if (out.length >= 3) break; if (!out.includes(c)) out.push(c); }
     return out.map(c => clip(cap1(c.text), LIMIT_PR));
   }
-  const S_prior = r => { const p = S.priorities?.[r.s.key]; return p === undefined ? suggestPriorities(r) : p; };
+  const S_prior = (r, sel) => { const p = S.priorities?.[r.s.key]; return p === undefined ? suggestPriorities(r, sel) : p; };
 
   function reportModel(r) {
-    const L = lvl(), T = window.PhieuTrang.THEME[S.level], wr = writingOf(r.s);
+    const L = lvl(), T = window.PhieuTrang.THEME[S.level], sel = new Set(pickOf(r)), wr = sel.has('writing') ? writingOf(r.s) : null, wrAny = writingOf(r.s);
     const dates = Object.values(S.sheets[r.s.key] || {}).map(x => x.at);
     const day = dates.length ? new Date(Math.max(...dates)).toLocaleDateString('vi-VN') : '';
-    const skills = [];
+    let skills = [];
     for (const sec of L.phan) {
       const g = r.secs[sec.id];
       if (!g || g.incomplete) { skills.push({ id: sec.id, name: sec.ten, empty: true, scale: null, emptyNote: g ? 'Answer sheet missing' : 'No score yet', emptyVi: g ? 'Thiếu trang phiếu' : 'Chưa có bài' }); continue; }
@@ -1134,6 +1158,7 @@
       skills.push({ id: 'speaking', name: 'Speaking', raw: spRaw, max: SC.MAX[S.level], scale: SC.scale(S.level, spRaw), d: null,
         parts: Object.keys(SC.WEIGHT[S.level]).map(c => ({ name: SPN[c], v: spk.bands[c], n: 5, d: null })) });
     } else skills.push({ id: 'speaking', name: 'Speaking', empty: true, scale: null, emptyNote: spk ? 'Incomplete bands' : 'Not graded yet', emptyVi: spk ? 'Chưa đủ band các tiêu chí' : 'Chưa có điểm Speaking' });
+    skills = skills.filter(k => sel.has(k.id));   // chỉ các kỹ năng được chọn đưa vào phiếu
     const sc = skills.filter(s => s.scale != null).map(s => s.scale);
     const ov = sc.length ? Math.round(sc.reduce((a, b) => a + b, 0) / sc.length) : null;
     const s1 = {}; skills.forEach(s => { s1[s.id] = s.scale; });
@@ -1161,7 +1186,7 @@
         fix: cap1((allFill && RS[topR[0]].fix) || adv || 'xem lại các câu sai và đối chiếu đáp án').replace(/\.?$/, '.') };
     };
     for (const sec of L.phan) {
-      const g = r.secs[sec.id]; if (!g || g.incomplete) continue;
+      const g = r.secs[sec.id]; if (!g || g.incomplete || !sel.has(sec.id)) continue;
       let worst = null;
       for (const [pt, n] of partsOf(S.level, sec)) {
         const v = g.parts[pt]; if (!n || v >= n) continue;
@@ -1169,27 +1194,28 @@
       }
       if (worst) cand.push({ f: worst.f, c: skillCause(sec, g, worst.pt, worst.v, worst.n) });
     }
-    const extraN = (wr ? 1 : 0) + (S.speaking?.[r.s.key] ? 1 : 0);   // Writing và Speaking luôn có chỗ trong 4 ô
+    const extraN = (wr ? 1 : 0) + (sel.has('speaking') && S.speaking?.[r.s.key] ? 1 : 0);   // Writing và Speaking luôn có chỗ trong 4 ô
     cand.sort((a, b) => a.f - b.f).slice(0, Math.max(1, 4 - extraN)).forEach(x => causes.push(x.c));
     if (wr) {
       const crit = wr.parts.flatMap(p => p.criteria.map(c => ({ c, p }))).sort((a, b) => a.c.band / a.c.max - b.c.band / b.c.max)[0];
       if (crit && crit.c.band < crit.c.max) causes.push({ skill: 'writing', title: `Writing: cần cải thiện ${CRIT_VI[crit.c.id] || crit.c.id}`, body: clip(crit.c.comment, 160), fix: clip(crit.c.to_move_up || crit.c.key_takeaway, 120) });
     }
-    if (r.nonstd) causes.push({ title: 'Tô đáp án chưa đúng cách', body: `${r.nonstd} câu bị tô chưa đúng cách (tick, dấu X, tô không kín hoặc tô 2 ô) nên bị tính sai.`, fix: 'Tô kín một ô tròn cho mỗi câu.' });
+    const papersSel = papersOf(sel), nonstd = papersSel.flatMap(p => r.items[p]).filter(x => x && x.bad).length;
+    if (nonstd) causes.push({ title: 'Tô đáp án chưa đúng cách', body: `${nonstd} câu bị tô chưa đúng cách (tick, dấu X, tô không kín hoặc tô 2 ô) nên bị tính sai.`, fix: 'Tô kín một ô tròn cho mỗi câu.' });
     if (!causes.length) causes.push({ title: 'Kết quả rất tốt', body: 'Em không mất điểm đáng kể ở các phần đã chấm.', fix: 'Tiếp tục luyện tập đều đặn mỗi tuần.' });
     const gc = {}; (wr ? wr.parts : []).forEach(p => (p.errors || []).forEach(e => { gc[e.group] = (gc[e.group] || 0) + 1; }));
     const writingGroups = Object.keys(gc).length ? Object.entries(gc).sort((a, b) => b[1] - a[1]).map(([g, n]) => ({ ten: (GROUP_VI[g] || [g])[0], n, mau: (GROUP_VI[g] || [0, '#E3E7ED'])[1], note: '' }))
-      : [{ ten: wr ? 'No errors listed' : 'No Writing result yet', n: '', mau: '#E3E7ED', note: wr ? 'Không có lỗi được liệt kê' : 'Chưa có bài Writing' }];
+      : [{ ten: wr ? 'No errors listed' : (wrAny ? 'Not included' : 'No Writing result yet'), n: '', mau: '#E3E7ED', note: wr ? 'Không có lỗi được liệt kê' : (wrAny ? 'Không đưa vào phiếu này' : 'Chưa có bài Writing') }];
     const habits = [];
-    for (const p of PAPERS) {
+    for (const p of papersSel) {
       const blanks = r.items[p].filter(i => i && !i.bad && i.marks === 0 && (i.type === 'write' ? i.shown === '' : !i.chosen)).map(i => (p === 'listening' ? 'L' : 'R') + i.q);
       if (blanks.length) habits.push(`Có ${blanks.length} câu ${cap1(p)} bỏ trống (${blanks.slice(0, 6).join(', ')}${blanks.length > 6 ? ', ...' : ''}).`);
     }
-    const badQ = PAPERS.flatMap(p => r.items[p].filter(i => i && i.bad).map(i => (p === 'listening' ? 'L' : 'R') + i.q));
+    const badQ = papersSel.flatMap(p => r.items[p].filter(i => i && i.bad).map(i => (p === 'listening' ? 'L' : 'R') + i.q));
     if (badQ.length) habits.push(`Có ${badQ.length} câu tô chưa đúng cách (${badQ.slice(0, 6).join(', ')}${badQ.length > 6 ? ', ...' : ''}). Hãy tô kín một ô tròn.`); else habits.push('Tô đáp án rõ ràng, không có câu tô sai cách.');
     const wrong = [];
     for (const sec of L.phan) {
-      const g = r.secs[sec.id]; if (!g || g.incomplete) continue;
+      const g = r.secs[sec.id]; if (!g || g.incomplete || !sel.has(sec.id)) continue;
       const items = g.items.filter(i => !i.ok).map(i => {
         const key = i.key ?? [].concat(KEY[sec.giay][i.q]).join(' / ');
         const what = i.type === 'write' ? (i.shown === '' ? 'blank' : i.marks > 0 ? `${i.marks}/${i.maxMarks}` : (i.reason || 'incorrect')) : (i.bad && !i.chosen ? 'mark unclear' : (i.chosen || 'blank'));
@@ -1204,18 +1230,18 @@
     const m = {
       first: !hp, level: S.level, exam: S.testTitle, date: day,
       student: { name: r.s.name, id: r.s.code, cls: r.s.vh },
-      skills, overall: { scale: ov, d: od, partial: sc.length < skills.length },
+      skills, overall: { scale: ov, d: od, partial: sc.length < skills.length || sel.size < allSkillIds().length },
       history: [...(hp ? hp.hist : []), { label: 'Mock ' + (hp ? hp.hist.length + 1 : 1), s: s1, overall: ov }],
-      comment: clip(S_comment(r), LIMIT_CM), priorities: S_prior(r).map(x => clip(x, LIMIT_PR)),
+      comment: clip(S_comment(r, sel), LIMIT_CM), priorities: S_prior(r, sel).map(x => clip(x, LIMIT_PR)),
       diagnosis: { causes: causes.slice(0, 4), writingGroups, habits, wrong },
-      speaking: spk
+      speaking: sel.has('speaking') ? spk : null
     };
     return m;
   }
   function reportPages(r) {
     const PT = window.PhieuTrang, WR = window.WritingReport, L = lvl();
     if (!PT || !WR) return [reportHTML(r)];   // dự phòng: phiếu 1 trang cũ nếu thiếu file viet/phieu-trang.js
-    const m = reportModel(r), wr = writingOf(r.s), T = PT.THEME[S.level];
+    const m = reportModel(r), wr = pickOf(r).includes('writing') ? writingOf(r.s) : null, T = PT.THEME[S.level];
     // Trang Writing trước (số trang mỗi Part tùy độ dài lỗi và bài mẫu), rồi mới biết tổng số trang
     const wpages = []; let pg = 3;
     for (let i = 0; wr && i < wr.parts.length; i++) {
@@ -1314,11 +1340,33 @@
     if (isDaily()) return;   // bài hàng ngày không có phiếu báo điểm
     if (!again && !confirmWarn()) return;
     const r = results().find(x => x.s.key === key); if (!r) return;
+    if (!canReport(r)) { alert('Học sinh này chưa có điểm kỹ năng nào để xuất phiếu.'); return; }
     if (histP) await histP;   // lịch sử các đợt Mock trước
-    $('#reportComment').value = S_comment(r);
-    $('#reportPriorities').value = S_prior(r).join('\n');
+    const sel = new Set(pickOf(r)), scored = scoredIds(r);
+    $('#reportComment').value = S_comment(r, sel);
+    $('#reportPriorities').value = S_prior(r, sel).join('\n');
+    // khung chọn kỹ năng đưa vào phiếu
+    const box = $('#reportPick'), ids = allSkillIds();
+    box.innerHTML = '<b>Kỹ năng đưa vào phiếu</b><label class="pk pk-all"><input type="checkbox" id="pkAll"> Tất cả</label>'
+      + ids.map(id => `<label class="pk${scored.includes(id) ? '' : ' pk-none'}"><input type="checkbox" data-sk="${id}"${sel.has(id) ? ' checked' : ''}> ${esc(skillName(id))}${scored.includes(id) ? '' : ' <small>chưa có điểm</small>'}</label>`).join('')
+      + '<button type="button" class="btn small" id="pkScored">Chỉ kỹ năng có điểm</button><p class="hint" id="pkHint"></p>';
+    const boxes = [...box.querySelectorAll('[data-sk]')], pkAll = $('#pkAll');
+    const syncAll = () => { pkAll.checked = boxes.every(x => x.checked); };
+    syncAll();
+    const applyPick = ids2 => {   // đổi kỹ năng: nhận xét/ưu tiên chưa sửa tay thì tự gợi ý lại theo lựa chọn mới
+      if (!ids2.some(id => scored.includes(id))) { $('#pkHint').textContent = 'Phiếu cần có ít nhất 1 kỹ năng đã có điểm.'; boxes.forEach(x => { x.checked = sel.has(x.dataset.sk); }); syncAll(); return; }
+      const oldAutoC = suggestComment(r, sel).trim(), oldAutoP = suggestPriorities(r, sel).join('\n'), nsel = new Set(ids2);
+      const cm = $('#reportComment').value.trim(), pr = lines($('#reportPriorities').value);
+      (S.pick ||= {})[key] = ids2;
+      S.comments[key] = cm === oldAutoC ? suggestComment(r, nsel) : cm;
+      (S.priorities ||= {})[key] = pr.join('\n') === oldAutoP ? suggestPriorities(r, nsel) : pr;
+      save(); studentReport(key, true);
+    };
+    boxes.forEach(x => { x.onchange = () => { syncAll(); applyPick(boxes.filter(b => b.checked).map(b => b.dataset.sk)); }; });
+    pkAll.onchange = () => { boxes.forEach(x => { x.checked = pkAll.checked; }); if (!pkAll.checked) { boxes.forEach(x => { x.checked = scored.includes(x.dataset.sk); }); syncAll(); } applyPick(boxes.filter(b => b.checked).map(b => b.dataset.sk)); };
+    $('#pkScored').onclick = () => applyPick(scored);
     $('#reportComment').oninput = $('#reportPriorities').oninput = updateCounts; updateCounts();
-    $('#reportSuggest').onclick = () => { $('#reportComment').value = suggestComment(r); $('#reportPriorities').value = suggestPriorities(r).join('\n'); updateCounts(); };
+    $('#reportSuggest').onclick = () => { $('#reportComment').value = suggestComment(r, sel); $('#reportPriorities').value = suggestPriorities(r, sel).join('\n'); updateCounts(); };
     $('#reportUpdate').onclick = () => { S.comments[key] = $('#reportComment').value.trim(); (S.priorities ||= {})[key] = lines($('#reportPriorities').value); save(); studentReport(key, true); };
     busy('Đang tạo phiếu kết quả…');
     try {
@@ -1339,28 +1387,6 @@
     } catch (e) { alert(e.message || e); }
     finally { busy(''); $('#reportStage').innerHTML = ''; }
   }
-  async function classReport() {
-    if (isDaily()) return;
-    const rs = results().filter(r => r.any);
-    if (!rs.length) { alert('Chưa có phiếu nào để tạo phiếu kết quả.'); return; }
-    if (!confirmWarn()) return;
-    if (histP) await histP;
-    busy('Đang chuẩn bị…');
-    try {
-      await ensureLibs();
-      const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
-      let first = true;
-      for (let i = 0; i < rs.length; i++) { busy(`Đang tạo phiếu ${i + 1}/${rs.length}…`); for (const cv of await renderReportCanvases(rs[i])) { addPage(pdf, cv, first); first = false; } }
-      const name = `phieu-ket-qua_${slug(S.testTitle)}_${slug(S.cls)}.pdf`, blob = pdf.output('blob');
-      const file = new File([blob], name, { type: 'application/pdf' });
-      busy('');
-      if (navigator.canShare && navigator.canShare({ files: [file] }) && confirm(`Đã tạo ${rs.length} phiếu. Bấm OK để gửi qua Zalo / ứng dụng khác, hoặc Huỷ để tải file về máy.`))
-        navigator.share({ files: [file], title: name }).catch(() => download(blob, name));
-      else download(blob, name);
-    } catch (e) { alert(e.message || e); }
-    finally { busy(''); $('#reportStage').innerHTML = ''; }
-  }
-
   async function clearSession() {
     if (!confirm(`Xoá toàn bộ phiếu đã chụp của ${S.testTitle} – ${S.cls}? Không thể hoàn tác.`)) return;
     await idb.del(S.id);
@@ -1368,6 +1394,6 @@
     go('scan');
   }
 
-  window.__PET = { get S() { return S; }, results, reportModel };
+  window.__PET = { get S() { return S; }, results, reportModel, pickOf, scoredIds };
   boot().catch(e => { $('#loading').hidden = true; alert('Không tải được cấu hình app: ' + e.message); });
 })();
