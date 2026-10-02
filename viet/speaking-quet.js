@@ -30,6 +30,7 @@
     if ((!best || best[0] < 4) && LFIX[norm(label)]) { var b2 = score(cand, LFIX[norm(label)]); if (b2 && (!best || b2[0] > best[0])) best = b2; }
     return best ? best[1] : null;
   }
+  var WP_ORDER = { PET: ['P2', 'P3', 'P1', 'P4'], KET: ['P2', 'P1'], FCE: ['P3', 'P2', 'P4', 'P1'] };
   var LABEL_ALIAS = { 'articles': 'articles/prepositions', 'prepositions': 'articles/prepositions', 'word order': 'word order/question form', 'question form': 'word order/question form' };
 
   function fromResult(level, res, tpl) {
@@ -45,7 +46,10 @@
         if (on.length === 1) out.bands[c] = +on[0]; else out.flags.push({ code: q.code, text: 'Band ' + c + (on.length ? ': tô nhiều hơn 1 ô' : ': chưa tô') });
         return;
       }
-      if (q.code === 'Notably weak part') { out.weakPart = on.filter(function (x) { return /^P\d$/.test(x); })[0] || ''; return; }
+      if (q.code === 'Notably weak part') {   // tô nhiều Part: chọn theo thứ tự ưu tiên đã duyệt (PET P2>P3>P1>P4 · KET P2>P1 · FCE P3>P2>P4>P1)
+        var ps = on.filter(function (x) { return /^P\d$/.test(x); }), ord = WP_ORDER[level] || [];
+        out.weakPart = ord.filter(function (p) { return ps.indexOf(p) >= 0; })[0] || ps[0] || ''; return;
+      }
       if (!q.multi) {
         if (on.length > 1) { out.flags.push({ code: q.code, text: name + ': tô nhiều hơn 1 ô' }); return; }
         if (on.length === 1) add(match(B, q.code, on[0]));
