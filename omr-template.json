@@ -1403,7 +1403,11 @@
      ]
     }
    ],
-   "skill": "reading"
+   "skill": "reading",
+   "affine_rows": true,
+   "affine_range_mm": 2.2,
+   "row_snap_mm": 1.0,
+   "row_scale": false
   },
   "PET-listening": {
    "type_id": 2,
@@ -1972,7 +1976,11 @@
      ]
     }
    ],
-   "skill": "listening"
+   "skill": "listening",
+   "affine_rows": true,
+   "affine_range_mm": 2.2,
+   "row_snap_mm": 1.0,
+   "row_scale": false
   },
   "KET-reading": {
    "type_id": 3,
@@ -2667,7 +2675,11 @@
      ]
     }
    ],
-   "skill": "reading"
+   "skill": "reading",
+   "affine_rows": true,
+   "affine_range_mm": 2.2,
+   "row_snap_mm": 1.0,
+   "row_scale": false
   },
   "KET-listening": {
    "type_id": 4,
@@ -3382,7 +3394,11 @@
      ]
     }
    ],
-   "skill": "listening"
+   "skill": "listening",
+   "affine_rows": true,
+   "affine_range_mm": 2.2,
+   "row_snap_mm": 1.0,
+   "row_scale": false
   },
   "FCE-reading-1": {
    "type_id": 5,
@@ -3858,7 +3874,11 @@
     }
    ],
    "sheet_no": "TRANG 1/2 · Part 1–3",
-   "skill": "reading"
+   "skill": "reading",
+   "affine_rows": true,
+   "affine_range_mm": 2.2,
+   "row_snap_mm": 1.0,
+   "row_scale": false
   },
   "FCE-reading-2": {
    "type_id": 6,
@@ -4797,7 +4817,11 @@
     }
    ],
    "sheet_no": "TRANG 2/2 · Part 4–7",
-   "skill": "reading"
+   "skill": "reading",
+   "affine_rows": true,
+   "affine_range_mm": 2.2,
+   "row_snap_mm": 1.0,
+   "row_scale": false
   },
   "FCE-listening": {
    "type_id": 7,
@@ -5566,7 +5590,11 @@
      ]
     }
    ],
-   "skill": "listening"
+   "skill": "listening",
+   "affine_rows": true,
+   "affine_range_mm": 2.2,
+   "row_snap_mm": 1.0,
+   "row_scale": false
   },
   "PET-speaking": {
    "type_id": 8,
@@ -10093,7 +10121,11 @@
       "w": 6.6,
       "h": 6.6
      }
-    ]
+    ],
+    "affine_rows": true,
+    "affine_range_mm": 2.2,
+    "row_snap_mm": 1.0,
+    "row_scale": false
    }
   ],
   "PET-listening": [
@@ -10958,7 +10990,11 @@
       "w": 6.6,
       "h": 6.6
      }
-    ]
+    ],
+    "affine_rows": true,
+    "affine_range_mm": 2.2,
+    "row_snap_mm": 1.0,
+    "row_scale": false
    }
   ],
   "KET-reading": [
@@ -11949,7 +11985,11 @@
       "w": 6.6,
       "h": 6.6
      }
-    ]
+    ],
+    "affine_rows": true,
+    "affine_range_mm": 2.2,
+    "row_snap_mm": 1.0,
+    "row_scale": false
    }
   ],
   "KET-listening": [
@@ -12960,7 +13000,11 @@
       "w": 6.6,
       "h": 6.6
      }
-    ]
+    ],
+    "affine_rows": true,
+    "affine_range_mm": 2.2,
+    "row_snap_mm": 1.0,
+    "row_scale": false
    }
   ],
   "FCE-reading-1": [
@@ -13732,7 +13776,11 @@
       "w": 6.6,
       "h": 6.6
      }
-    ]
+    ],
+    "affine_rows": true,
+    "affine_range_mm": 2.2,
+    "row_snap_mm": 1.0,
+    "row_scale": false
    }
   ],
   "FCE-reading-2": [
@@ -14967,7 +15015,11 @@
       "w": 6.6,
       "h": 6.6
      }
-    ]
+    ],
+    "affine_rows": true,
+    "affine_range_mm": 2.2,
+    "row_snap_mm": 1.0,
+    "row_scale": false
    }
   ],
   "FCE-listening": [
@@ -16032,7 +16084,11 @@
       "w": 6.6,
       "h": 6.6
      }
-    ]
+    ],
+    "affine_rows": true,
+    "affine_range_mm": 2.2,
+    "row_snap_mm": 1.0,
+    "row_scale": false
    }
   ]
  }
