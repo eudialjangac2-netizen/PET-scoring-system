@@ -1,0 +1,37 @@
+{
+ "_ghi_chu": "Lời khuyên theo 8 lý do câu điền sai (danh sách thả xuống ở bước Câu viết). Dòng 'Yêu cầu Part' nằm ở viet/yeu-cau-part.js (của Elaine).",
+ "dien": {
+  "Sai chính tả": {
+   "why": "sai chính tả",
+   "fix": "Kiểm tra từng chữ cái trước khi nộp; viết in hoa, rõ từng chữ."
+  },
+  "Sai dạng từ": {
+   "why": "sai dạng từ",
+   "fix": "Sau khi điền, kiểm tra dạng từ (số ít / số nhiều, thì, hậu tố)."
+  },
+  "Sai thông tin": {
+   "why": "sai thông tin",
+   "fix": "Đọc/nghe kỹ lại câu hỏi để điền đúng thông tin được hỏi."
+  },
+  "Thiếu từ": {
+   "why": "thiếu từ",
+   "fix": "Điền đủ số từ mà đề yêu cầu."
+  },
+  "Thừa từ": {
+   "why": "thừa từ",
+   "fix": "Chỉ điền đúng số từ cho phép, không thêm từ."
+  },
+  "Sai số / giờ": {
+   "why": "sai số hoặc giờ",
+   "fix": "Nghe và đọc kỹ số, giờ; kiểm tra lại cách viết số."
+  },
+  "Bỏ trống": {
+   "why": "bỏ trống",
+   "fix": "Không bỏ trống: hãy điền một đáp án dù chưa chắc chắn."
+  },
+  "Chữ khó đọc, cần xem lại": {
+   "why": "chữ khó đọc",
+   "fix": "Viết in hoa, mỗi ô một chữ cái rõ ràng."
+  }
+ }
+}
