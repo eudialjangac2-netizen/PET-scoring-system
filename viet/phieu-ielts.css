@@ -1,0 +1,15 @@
+/* Phiếu IELTS (xem phieu-ielts.js). Dùng cùng phieu-trang.css; A4 = 794 x 1123 px. */
+.pi-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 12px; flex: 1; min-height: 0; margin-bottom: 6px; }
+.pi-card { border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow: hidden; }
+.pi-h { display: flex; justify-content: space-between; align-items: center; }
+.pi-h h2 { margin: 0; font-size: 15px; } .pi-h h2 small { font-size: 10.5px; font-weight: 400; margin-left: 4px; }
+.pi-band { display: flex; align-items: baseline; gap: 4px; } .pi-band b { font-size: 26px; line-height: 1; color: var(--ink); } .pi-band span { font-size: 10px; color: #5B6576; }
+.pi-crit { display: flex; flex-direction: column; gap: 5px; }
+.pi-cr { display: grid; grid-template-columns: 1fr 70px 26px; gap: 8px; align-items: center; font-size: 11px; line-height: 1.25; }
+.pi-cr small { display: block; font-size: 9.5px; color: #5B6576; } .pi-cr .pt-bar { height: 6px; border-radius: 9px; overflow: hidden; } .pi-cr .pt-bar i { display: block; height: 100%; border-radius: 9px; } .pi-cr b { text-align: right; }
+.pi-raw { font-size: 11px; color: #5B6576; }
+.pi-ft { border-top: 1px dashed #00000026; padding-top: 6px; font-size: 11.5px; } .pi-ft .tt { font-weight: 700; } .pi-ft small.vi { display: block; font-weight: 400; font-size: 10px; color: #5B6576; }
+.pi-fb { display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 0; background: #ffffffb8; border-radius: 9px; padding: 8px 10px; }
+.pi-fr { flex: 1; min-height: 0; } .pi-fr b { font-size: 11px; } .pi-fr b small { font-weight: 400; color: #5B6576; font-size: 9.5px; margin-left: 3px; }
+.pi-fr p { margin: 2px 0 0; font-size: 11px; line-height: 1.45; }
+.pi-blank { height: 34px; background: repeating-linear-gradient(transparent 0 16px, #C9CFD8 16px 17px); }
