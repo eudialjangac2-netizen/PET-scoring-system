@@ -30,7 +30,7 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 
 ## Đang làm
 
-- Elaine: đã xong phiếu Speaking, dòng "Yêu cầu Part", bước 7 "Bài làm máy" (FCE) và trang 2 đủ các kỹ năng (PR #9, #10 đã merge). Tiếp theo: chạy thử bằng dữ liệu thật trên bản chính thức, sau đó làm tách Use of English.
+- Elaine: đã xong phiếu Speaking, dòng "Yêu cầu Part", bước 7 "Bài làm máy" (FCE) và trang 2 đủ các kỹ năng (PR #9, #10 đã merge). Đã làm xong nhánh `viet-trang2-tren-pr12` (PR #13, đã gộp vào PR #12 của Uyên, chờ Uyên merge #12 vào main): trang 2 mỗi kỹ năng một thẻ, đã test vừa một trang A4 cho KET, PET, FCE trên bản gộp. Use of English đã là kỹ năng riêng cho FCE sẵn trong `cap-do.json` (phần `uoe`), không cần tách thêm. Tiếp theo: chạy thử bằng dữ liệu thật trên bản chính thức (so điểm app với cột POINTS của Sheet), thử 2 đợt Mock thật sau khi #12 vào main.
 - Uyên: ghi vào mục "Uyên cập nhật" bên dưới. Đã test quét phiếu Speaking, đang làm lưu lịch sử Mock và đồng bộ Google Sheet.
 
 ## Kế hoạch
@@ -38,7 +38,8 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 1. (XONG, PR #4) Gắn phiếu 4 trang vào app.
 2. (XONG, PR #8, #9) Speaking: nhập tay, quét phiếu chấm, bảng quy đổi, thẻ chẩn đoán, thẻ trang 2 theo mẫu của Uyên.
    (XONG, PR #10) Dòng "Yêu cầu Part", số câu trong Habits, bước 7 "Bài làm máy" cho FCE trên máy, mỗi kỹ năng 1 thẻ ở trang 2.
-3. Elaine: kiểm tra bản chính thức bằng dữ liệu FCE thật (Raw Answers, Writing, Speaking), rồi tách Use of English thành kỹ năng riêng cho FCE (chạm `cap-do.json` và phần tính điểm Reading của Uyên, cần báo Uyên trước), làm sau khi xong phiếu Speaking.
+3. Elaine: kiểm tra bản chính thức bằng dữ liệu FCE thật (Raw Answers, Writing, Speaking). (Use of English đã là kỹ năng riêng sẵn trong `cap-do.json`, không còn việc tách.)
+   Sau khi Uyên merge PR #12 (đã gồm #13): Elaine cập nhật nhật ký, ghi vào mục "Thay đổi file CHUNG" rằng #13 sửa `reportModel` và phần chẩn đoán trong `cham-bai.js`, `viet/phieu-trang.js/css`.
 4. Uyên: lưu lịch sử điểm theo học sinh qua 5 Mock để vẽ biểu đồ và tính tăng/giảm so với Mock trước (mã học sinh làm khóa).
 5. Uyên: đồng bộ Google Sheet có cột Writing và Speaking (Apps Script).
 6. (XONG) Skill `ruby-writing-json` cho giáo viên: hỏi JSON, Word hoặc cả hai.
