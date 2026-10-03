@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "level": "PET",
+  "student": {
+    "id": "C260159XX",
+    "name": "Tên học sinh (mẫu)"
+  },
+  "bands": {
+    "GV": 3,
+    "DM": 3,
+    "P": 2,
+    "IC": 4,
+    "GA": 3
+  },
+  "evidence": [
+    "G-S • developing",
+    "G-C • evidence present",
+    "V-R • adequate",
+    "DM-E • developed",
+    "P-I • effortful",
+    "P-W • frequent errors",
+    "D • weak",
+    "Whole-test handling • generally successful"
+  ],
+  "weak_part": "P3"
+}
