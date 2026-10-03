@@ -30,7 +30,7 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 
 ## Đang làm
 
-- Elaine: đã xong phiếu Speaking, dòng "Yêu cầu Part", bước 7 "Bài làm máy" (FCE) và trang 2 đủ các kỹ năng (PR #9, #10 đã merge). Đã làm xong nhánh `viet-trang2-tren-pr12` (PR #13, đã gộp vào PR #12 của Uyên, chờ Uyên merge #12 vào main): trang 2 mỗi kỹ năng một thẻ, đã test vừa một trang A4 cho KET, PET, FCE trên bản gộp. Use of English đã là kỹ năng riêng cho FCE sẵn trong `cap-do.json` (phần `uoe`), không cần tách thêm. Tiếp theo: chạy thử bằng dữ liệu thật trên bản chính thức (so điểm app với cột POINTS của Sheet), thử 2 đợt Mock thật sau khi #12 vào main.
+- Elaine: đã xong phiếu Speaking, dòng "Yêu cầu Part", bước 7 "Bài làm máy" (FCE) và trang 2 đủ các kỹ năng (PR #9, #10 đã merge). Trang 2 mỗi kỹ năng một thẻ (PR #13, gộp trong PR #12) đã vào main ngày 03/10/2026, đã test vừa một trang A4 cho KET, PET, FCE. Use of English đã là kỹ năng riêng cho FCE sẵn trong `cap-do.json` (phần `uoe`), không cần tách thêm. Tiếp theo: thử 2 đợt Mock thật trên bản chính thức (so điểm app với cột POINTS của Sheet, kiểm tra mũi tên lịch sử).
 - Uyên: ghi vào mục "Uyên cập nhật" bên dưới. Đã test quét phiếu Speaking, đang làm lưu lịch sử Mock và đồng bộ Google Sheet.
 
 ## Kế hoạch
@@ -38,7 +38,7 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 1. (XONG, PR #4) Gắn phiếu 4 trang vào app.
 2. (XONG, PR #8, #9) Speaking: nhập tay, quét phiếu chấm, bảng quy đổi, thẻ chẩn đoán, thẻ trang 2 theo mẫu của Uyên.
    (XONG, PR #10) Dòng "Yêu cầu Part", số câu trong Habits, bước 7 "Bài làm máy" cho FCE trên máy, mỗi kỹ năng 1 thẻ ở trang 2.
-3. Elaine: kiểm tra bản chính thức bằng dữ liệu FCE thật (Raw Answers, Writing, Speaking). (Use of English đã là kỹ năng riêng sẵn trong `cap-do.json`, không còn việc tách.)
+3. Elaine: thử 2 đợt Mock thật trên bản chính thức (PR #12 đã merge): Reading/Listening, Writing, Speaking, FCE bài làm máy, mũi tên lịch sử. (Use of English đã là kỹ năng riêng sẵn trong `cap-do.json`, không còn việc tách.)
    Sau khi Uyên merge PR #12 (đã gồm #13): Elaine cập nhật nhật ký, ghi vào mục "Thay đổi file CHUNG" rằng #13 sửa `reportModel` và phần chẩn đoán trong `cham-bai.js`, `viet/phieu-trang.js/css`.
 4. Uyên: lưu lịch sử điểm theo học sinh qua 5 Mock để vẽ biểu đồ và tính tăng/giảm so với Mock trước (mã học sinh làm khóa).
 5. Uyên: đồng bộ Google Sheet có cột Writing và Speaking (Apps Script).
@@ -58,6 +58,8 @@ Quy tắc: file nào thuộc người nào thì chỉ người đó sửa. Muố
 - PR #8 đã sửa `omr-engine.js` (bán kính ô tô theo `ring_mm`, `shift_mm` và `marked_cov` riêng từng trang, dòng nhiều ô tô mượn độ lệch từ dòng đơn gần nhất; mặc định giữ nguyên nên Reading/Listening không đổi), `omr-template.json` (thêm 3 page Speaking, page_id types 8/9/10), `cham-bai.js` (`recordSpeaking`, `S.speaking`, cột Speaking, quy đổi điểm), `cham-bai.html` (bước 6 Speaking). Uyên cần `git pull` main trước khi sửa tiếp.
 
 - PR #10 đã sửa `cham-bai.js` (hàm `results()` đọc thêm `S.online` cho bài FCE làm trên máy, `onlineFromFiles`/`applyOnline`/`renderOnline`, bước `online` trong `go()`; hàm chẩn đoán trang 2 chọn 1 Part yếu nhất mỗi kỹ năng và giới hạn số câu trong Questions to Review), `cham-bai.html` (bước 7 "Bài làm máy", Kết quả thành bước 8, nạp `viet/nhap-may.js` và `viet/yeu-cau-part.js`), `de-thi/` (thêm `fce_practice_test05.json`, `fce_practice_test06.json`, sửa `manifest.json`). Uyên cần `git pull` main trước khi sửa tiếp.
+
+- PR #12 (kèm #13) đã merge ngày 03/10/2026. #13 sửa `reportModel` và phần chẩn đoán (thẻ theo kỹ năng, giới hạn câu trong Questions to Review) trong `cham-bai.js`, cùng `viet/phieu-trang.js/css` (Questions to Review chia cột theo số kỹ năng, lớp `.pt-tight` khi có 5 thẻ). Uyên cần `git pull` main trước khi sửa tiếp.
 
 ## Uyên cập nhật (Uyên tự ghi, mới nhất ở trên)
 
