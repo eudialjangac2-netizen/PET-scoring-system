@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "level": "KET",
+  "student": {
+    "id": "C260074NA",
+    "name": "Tên học sinh (mẫu)"
+  },
+  "bands": {
+    "GV": 3,
+    "P": 4,
+    "IC": 3,
+    "GA": 3
+  },
+  "evidence": [
+    "G-S • developing",
+    "V-R • adequate",
+    "P-I • mostly clear",
+    "GA-L • short sentences/phrases"
+  ],
+  "weak_part": "P2"
+}

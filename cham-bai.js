@@ -73,6 +73,7 @@
     CFG.on = /^https:\/\/script\.google\.com\//.test(CFG.sheetUrl || '');
     $('#sheetBox').hidden = !CFG.on; $('#fileBox').open = !CFG.on;
     $('#tCode').value = lsGet('omr-tcode', '');
+    bindSpeakingJson();
     $('#tCodeEye').onclick = () => {   // hiện / ẩn mã giáo viên
       const show = $('#tCode').type === 'password'; $('#tCode').type = show ? 'text' : 'password';
       $('#tCodeEye').classList.toggle('on', show); $('#tCodeEye').setAttribute('aria-pressed', show);
@@ -240,7 +241,7 @@
     const L = lvl(), header = ['Loại', ...(isDaily() ? [] : ['Đợt Mock']), 'Đề', 'Lớp Cambridge', 'Mã HS', 'Họ tên', 'Lớp'];
     for (const sec of L.phan) header.push(`${sec.ten} /${secMax(S.level, sec)}`, ...(isDaily() ? [`${sec.ten} %`] : [`${sec.ten} thang`, `${sec.ten} CEFR`]),
       ...partsOf(S.level, sec).map(([p, n]) => `${sec.viet} Part ${p} (/${n})`));
-    header.push(...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), 'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét', ...PAPERS.map(p => `Chi tiết ${p === 'reading' ? 'Reading' : 'Listening'}`));
+    header.push(...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), 'Số câu tô không chuẩn', 'Ghi chú', ...CM_COLS, ...PAPERS.map(p => `Chi tiết ${p === 'reading' ? 'Reading' : 'Listening'}`));
     const rows = results().filter(r => r.any).map(r => {
       const o = { 'Khoá': `${S.test}|${S.cls}|${r.s.code}${isDaily() ? '|' + S.label : ''}`, 'Loại': isDaily() ? 'Hằng ngày' + (S.label ? ' · ' + S.label : '') : 'Mock', ...(isDaily() ? {} : { 'Đợt Mock': S.dot }), 'Đề': S.testTitle, 'Lớp Cambridge': S.cls, 'Mã HS': r.s.code, 'Họ tên': r.s.name, 'Lớp': r.s.vh };
       for (const sec of L.phan) {
@@ -252,7 +253,7 @@
       for (const p of PAPERS) o[`Chi tiết ${p === 'reading' ? 'Reading' : 'Listening'}`] = r.items[p].filter(Boolean).map(i => `${i.q}${i.type === 'write' ? '' : (i.chosen || '-')}${i.marks === i.maxMarks ? '✓' : i.marks > 0 ? '½' : '✗'}`).join(' ');
       if (hasWriting()) WR_COLS.forEach((c, k) => { o[c] = wrVals(r)[k]; });
       if (hasSpeaking()) spColsOf().forEach((c, k) => { o[c] = spVals(r)[k]; });
-      o['Số câu tô không chuẩn'] = r.nonstd; o['Ghi chú'] = note(r); o['Nhận xét'] = S_comment(r);
+      o['Số câu tô không chuẩn'] = r.nonstd; o['Ghi chú'] = note(r); cmtVals(r).forEach((v, k) => { o[CM_COLS[k]] = v; });
       return o;
     });
     return { header, rows };
@@ -378,6 +379,13 @@
     if (!res.ok) return { cls: 'q-err', html: `${esc(f.name)}: ${esc(res.error)}` };
     return record(res, false);
   }
+  // Mã tô thiếu / mờ ở 1–2 cột (vd 26?159): nếu CHỈ MỘT học sinh trong lớp khớp các chữ số còn lại thì dùng học sinh đó và báo "kiểm tra lại"
+  function guessByCode(res) {
+    const c = String(res.code || ''), q = (c.match(/\?/g) || []).length;
+    if (res.codeOk || c.length !== 6 || q < 1 || q > 2 || q === 6) return null;
+    const re = new RegExp('^' + c.replace(/\?/g, '\\d') + '$'), hit = students().filter(s => re.test(s.key));
+    return hit.length === 1 ? hit[0] : null;
+  }
   // ghi kết quả một phiếu; auto = đang quét tự động (không hỏi, bỏ qua phiếu trùng)
   function record(res, auto) {
     if (res.level !== S.level)
@@ -385,7 +393,9 @@
         short: `Phiếu ${res.level} — lớp đang chấm ${S.level}` };
     if (TPL.pages[res.page].skill === 'speaking') return recordSpeaking(res, auto);
     const sheet = buildSheet(res);
-    const stu = res.codeOk ? stuByKey(res.code) : null;
+    const guess = res.codeOk ? null : guessByCode(res);
+    const stu = res.codeOk ? stuByKey(res.code) : guess;
+    if (guess) { const m = assign(guess.key, res.page, sheet, auto); if (m && m.ok !== false) { m.cls = 'q-flag'; m.html += ` <i>(mã tô chưa rõ "${esc(res.code)}", khớp duy nhất với học sinh này, kiểm tra lại)</i>`; } return m; }
     if (!stu) {
       const id = Date.now() + Math.random();
       S.unknown.push({ id, page: res.page, code: res.code, sheet });
@@ -892,6 +902,52 @@
       onSave: (key, v) => { if (v) S.speaking[key] = v; else delete S.speaking[key]; save(); } });
   }
 
+  // ---------- Speaking: nhập bằng JSON (cùng cách với Writing); quét phiếu hoặc nhập tay vẫn dùng được ----------
+  // Một JSON = một học sinh. Cũng nhận mảng [ {...}, {...} ] hoặc { "students": [ ... ] }. Quy tắc: viet/HOP-DONG-JSON-SPEAKING.md
+  function spJsonCheck(d) {
+    const errs = [], warns = [], bank = (window.SPEAKING_BANK || {})[S.level] || {}, W = (window.SpeakingScore || {}).WEIGHT?.[S.level] || {};
+    if (!d || typeof d !== 'object' || Array.isArray(d)) return { errs: ['mỗi mục phải là một đối tượng JSON { ... }'] };
+    if (d.level && String(d.level).toUpperCase() !== S.level) errs.push(`JSON này là cấp độ ${esc(d.level)}, lớp đang chấm là ${S.level}`);
+    const sid = typeof d.student === 'object' && d.student ? d.student.id : d.student;
+    const stu = wrFindStudent(sid);
+    if (!sid) errs.push('thiếu mã học sinh (student.id)'); else if (!stu) errs.push(`mã học sinh "${esc(sid)}" không có trong lớp ${esc(S.cls)}`);
+    const bands = {}, b = d.bands || {};
+    for (const c of Object.keys(W)) { const v = Number(b[c]); if (!Number.isInteger(v) || v < 1 || v > 5) errs.push(`band ${c} phải là số nguyên từ 1 đến 5 (đang là ${esc(b[c] ?? 'trống')})`); else bands[c] = v; }
+    Object.keys(b).filter(c => !(c in W)).forEach(c => warns.push(`band "${esc(c)}" không thuộc ${S.level}, bỏ qua`));
+    const ev = [], evIn = Array.isArray(d.evidence) ? d.evidence : (d.evidence == null ? [] : null);
+    if (evIn === null) errs.push('evidence phải là danh sách (mảng) các mã chẩn đoán');
+    else evIn.forEach(k => { const key = String(k).replace(/\s*[•·]\s*/, ' • ').trim(); if (bank[key] && !/^Weak part/.test(key)) { if (!ev.includes(key)) ev.push(key); } else warns.push(`mã chẩn đoán "${esc(k)}" không có trong bộ nhận xét ${S.level}, bỏ qua`); });
+    const parts = Object.keys(bank).filter(k => /^Weak part/.test(k)).map(k => k.split(' • ')[1]);
+    let wp = d.weak_part == null ? '' : String(d.weak_part).trim().toUpperCase();
+    if (/^(NONE|-|)$/.test(wp)) wp = ''; else if (!parts.includes(wp)) { warns.push(`weak_part "${esc(d.weak_part)}" không hợp lệ (${parts.join(', ')}), bỏ qua`); wp = ''; }
+    return { errs, warns, stu, value: { bands, evidence: ev, weakPart: wp, at: Date.now(), json: true, flags: [] } };
+  }
+  function spJsonRun(text, label) {
+    let data; try { data = JSON.parse(String(text).replace(/^\uFEFF/, '')); } catch (e) { return { html: wrBox('err', `${label ? esc(label) + ': ' : ''}không đọc được JSON (${esc(e.message)}). Kiểm tra dấu ngoặc, dấu phẩy và dấu nháy kép.`), ok: 0 }; }
+    const list = Array.isArray(data) ? data : Array.isArray(data?.students) ? data.students : [data];
+    const out = []; let ok = 0;
+    list.forEach((d, i) => {
+      const tag = list.length > 1 ? `Mục ${i + 1}: ` : '', r = spJsonCheck(d);
+      if (r.errs.length) { out.push(wrBox('err', `${label ? esc(label) + ' · ' : ''}${tag}<b>chưa lưu</b>: ${r.errs.join('; ')}.`)); return; }
+      if ((S.speaking || {})[r.stu.key] && !confirm(`${r.stu.name} đã có kết quả Speaking. Ghi đè bằng JSON này?`)) { out.push(wrBox('info', `${tag}Giữ kết quả Speaking cũ của ${esc(r.stu.name)}.`)); return; }
+      (S.speaking ||= {})[r.stu.key] = r.value; ok++;
+      const tot = window.SpeakingScore.total(S.level, r.value.bands), sc = window.SpeakingScore.scale(S.level, tot);
+      out.push(wrBox(r.warns.length ? 'warn' : 'info', `${tag}Đã lưu Speaking cho <b>${esc(r.stu.name)}</b> (${esc(r.stu.code)}): ${tot}/${window.SpeakingScore.MAX[S.level]}${sc != null ? `, thang ${sc}` : ''}.${r.warns.length ? '<br>Lưu ý: ' + r.warns.join('; ') + '.' : ''}`));
+    });
+    if (ok) { save(); renderSpeaking(); updateBadges(); }
+    return { html: out.join(''), ok };
+  }
+  function bindSpeakingJson() {
+    const msg = h => { $('#spJsMsg').innerHTML = h; };
+    $('#spJsSave').onclick = () => { const t = $('#spJsText').value.trim(); if (!t) { msg(wrBox('warn', 'Chưa có nội dung. Dán JSON vào khung hoặc tải file lên.')); return; } const r = spJsonRun(t, ''); msg(r.html); if (r.ok) $('#spJsText').value = ''; };
+    $('#spJsClear').onclick = () => { $('#spJsText').value = ''; msg(''); };
+    $('#spJsFile').onchange = async e => {
+      const fs = [...e.target.files]; e.target.value = ''; let html = '', n = 0;
+      for (const f of fs) { const r = spJsonRun(await f.text(), fs.length > 1 ? f.name : ''); html += r.html; n += r.ok; }
+      msg(html + (fs.length > 1 ? wrBox('info', `Đã xử lý ${fs.length} file, lưu được ${n} học sinh.`) : ''));
+    };
+  }
+
   // ---------- bài làm trên máy (FCE) ----------
   async function onlineFromFiles(files) {
     let raw = null, res = [];
@@ -969,12 +1025,13 @@
     const w = warnings(), L = lvl(), daily = isDaily(), sp = hasSpeaking();
     $('#exportWarn').innerHTML = (w.length ? `<div class="notice warn">${w.map(esc).join('<br>')}</div>` : '')
       + (HIST_ERR && !daily ? `<div class="notice info">Chưa đọc được điểm các đợt Mock trước (${esc(HIST_ERR)}). Phiếu báo điểm hiện như đợt đầu, chưa có mũi tên tăng giảm.</div>` : '');
-    $('#rpHint').hidden = daily;   // bài hàng ngày: không có phiếu báo điểm
+    const hint = $('#rpHint'); hint.dataset.def = hint.dataset.def || hint.innerHTML;   // câu hướng dẫn mặc định (Mock)
+    hint.innerHTML = daily ? 'Bài hàng ngày chỉ có điểm thô và %, <b>không có phiếu báo điểm</b>. Muốn xuất phiếu, quay lại bước 1 và chọn <b>Mock test</b>.' : hint.dataset.def;   // bài hàng ngày: không có phiếu báo điểm
     const rs = results();
     $('#resTable').innerHTML = `<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Lớp</th>${L.phan.map(s => daily
       ? `<th>${s.ten} /${secMax(S.level, s)}</th><th>%</th>` : `<th>${s.ten} /${secMax(S.level, s)}</th><th>Thang</th><th>CEFR</th>`).join('')}${hasWriting() ? '<th>Writing</th><th>Writing thang</th>' : ''}${sp ? (daily ? '<th>Speaking</th><th>%</th>' : '<th>Speaking</th><th>Speaking thang</th>') : ''}<th>Tô không chuẩn</th></tr></thead><tbody>` +
       rs.map(r => `<tr class="${r.any ? '' : 'missing'}"><td class="num">${r.stt}</td><td>${esc(r.s.code)}</td>
-        <td class="nm-cell"><div class="nm-in"><span>${esc(r.s.name)}</span>${canReport(r) ? `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>` : ''}</div></td>
+        <td class="nm-cell"><div class="nm-in"><span>${esc(r.s.name)}</span>${canReport(r) ? `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>` : (!daily && r.any ? '<small class="hint">chưa có kỹ năng nào đủ trang để tính điểm</small>' : '')}</div></td>
         <td>${esc(r.s.vh)}</td>${L.phan.map(s => { const g = r.secs[s.id], t = secCell(g);
           if (t) return `<td colspan="${daily ? 2 : 3}">${t}</td>`;
           return daily ? `<td class="num">${g.raw}</td><td class="num">${pctTxt(g.raw, g.max)}</td>` : `<td class="num">${g.raw}</td><td class="num">${scaleText(g.scale)}</td><td>${g.cefr}</td>`; }).join('')}
@@ -999,10 +1056,55 @@
   function confirmWarn() { const w = warnings(); return !w.length || confirm('Lưu ý:\n' + w.join('\n') + '\n\nVẫn tiếp tục?'); }
 
   // tiêu đề cột chung cho Excel / CSV
+  // Nhận xét đầy đủ cho từng học sinh: tổng thể, ưu tiên tiếp theo, Speaking, Writing. Dùng cho Excel, CSV và Google Sheet ở CẢ HAI chế độ.
+  const CM_COLS = ['Nhận xét', 'Ưu tiên tiếp theo', 'Nhận xét Speaking', 'Nhận xét Writing'];
+  const paperPre = p => p === 'listening' ? 'L' : 'R';
+  function dailyComment(r) {   // bài hàng ngày: không dùng thang Cambridge, chỉ điểm thô, Part mạnh/yếu và câu cần xem lại
+    const out = [];
+    for (const sec of lvl().phan) {
+      const g = r.secs[sec.id]; if (!g || g.incomplete) continue;
+      const pts = partsOf(S.level, sec).filter(([, n]) => n).map(([p, n]) => ({ p, n, v: g.parts[p], f: g.parts[p] / n }));
+      const strong = pts.filter(x => x.f >= 0.8).map(x => `Part ${x.p}`), weak = pts.filter(x => x.f < 0.6).sort((a, b) => a.f - b.f).slice(0, 2).map(x => `Part ${x.p} (${x.v}/${x.n})`);
+      out.push(`${sec.ten}: ${g.raw}/${g.max} (${pctTxt(g.raw, g.max)}).` + (strong.length ? ` Làm tốt ${joinList(strong)}.` : '') + (weak.length ? ` Cần ôn ${joinList(weak)}.` : ''));
+    }
+    const bad = PAPERS.flatMap(p => (r.items[p] || []).filter(i => i && !i.ok && !i.bad).map(i => paperPre(p) + i.q));
+    if (bad.length) out.push(`Các câu cần xem lại: ${bad.slice(0, 10).join(', ')}${bad.length > 10 ? ` và ${bad.length - 10} câu khác` : ''}.`);
+    if (r.nonstd) out.push(`${r.nonstd} câu tô chưa đúng cách nên bị tính sai.`);
+    return out.join(' ');
+  }
+  function dailyPriorities(r) {   // 3 phần yếu nhất kèm lời khuyên có sẵn của từng Part
+    const c = [];
+    for (const sec of lvl().phan) {
+      const g = r.secs[sec.id]; if (!g || g.incomplete) continue;
+      for (const [p, n] of partsOf(S.level, sec)) { const f = n ? g.parts[p] / n : 1; if (f < 0.6) c.push({ f, t: `${sec.ten} Part ${p}: ${cap1(NX?.loiKhuyen?.[S.level]?.[sec.id]?.[p] || 'xem lại các câu sai và đối chiếu đáp án')}` }); }
+    }
+    return c.sort((a, b) => a.f - b.f).slice(0, 3).map(x => x.t.replace(/\.?$/, '.'));
+  }
+  function speakingText(r) {
+    const sp = (S.speaking || {})[r.s.key]; if (!sp || !window.SpeakingDiagnosis || !spokenOk(r.s)) return '';
+    let d = null; try { d = window.SpeakingDiagnosis.pick(S.level, sp); } catch (e) { return ''; }
+    if (!d) return '';
+    const bits = [];
+    if (d.strength) bits.push('Điểm mạnh: ' + d.strength);
+    if (d.areas && d.areas.length) bits.push('Cần cải thiện: ' + d.areas.map(a => a.text + (a.part ? ` (rõ nhất ở ${a.part})` : '')).join(' '));
+    if (d.next) bits.push('Cách sửa: ' + d.next);
+    return bits.join('\n');
+  }
+  function writingText(r) {
+    const d = writingOf(r.s); if (!d) return '';
+    const steps = (d.overall_next_steps || []).filter(Boolean);
+    if (steps.length) return steps.map(x => '• ' + x).join('\n');
+    return (d.parts || []).map(p => p.short_comment ? `Part ${p.part}: ${p.short_comment}` : '').filter(Boolean).join('\n');
+  }
+  function cmtVals(r) {
+    if (!r.any) return ['', '', '', ''];
+    const daily = isDaily(), pr = daily ? dailyPriorities(r) : S_prior(r);
+    return [daily ? dailyComment(r) : S_comment(r), pr.map((x, i) => `${i + 1}. ${x}`).join('\n'), speakingText(r), writingText(r)];
+  }
   function exportHeader() {
     const L = lvl(), qCols = p => Object.keys(QMAP[S.level][p]).map(Number).sort((a, b) => a - b).map(q => PAPER_SHORT[p] + q);
     const secCols = sec => [`${sec.ten} /${secMax(S.level, sec)}`, ...(isDaily() ? [`${sec.ten} %`] : [`${sec.ten} thang`, `${sec.ten} CEFR`]), ...partsOf(S.level, sec).map(([p, n]) => `${sec.viet} Part ${p} (/${n})`)];
-    return { qCols, cols: ['STT', 'Mã HS', 'Họ tên', 'Lớp', ...qCols('reading'), ...qCols('listening'), ...L.phan.flatMap(secCols), ...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), 'Số câu tô không chuẩn', 'Ghi chú', 'Nhận xét'] };
+    return { qCols, cols: ['STT', 'Mã HS', 'Họ tên', 'Lớp', ...qCols('reading'), ...qCols('listening'), ...L.phan.flatMap(secCols), ...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), 'Số câu tô không chuẩn', 'Ghi chú', ...CM_COLS] };
   }
   function secVals(r) {
     return [...lvl().phan.flatMap(sec => { const g = r.secs[sec.id], ok = g && !g.incomplete, t = !g ? '' : g.incomplete ? 'thiếu trang' : '';
@@ -1025,12 +1127,13 @@
       }
       for (const r of rs) {
         const its = [...r.items.reading, ...r.items.listening];
-        const row = ws.addRow([r.stt, r.s.code, r.s.name, r.s.vh, ...its.map(it => it ? cellOf(it) : ''), ...secVals(r), r.nonstd, note(r) || '', r.any ? S_comment(r) : '']);
+        const row = ws.addRow([r.stt, r.s.code, r.s.name, r.s.vh, ...its.map(it => it ? cellOf(it) : ''), ...secVals(r), r.nonstd, note(r) || '', ...cmtVals(r)]);
         its.forEach((it, j) => { if (!it) return; const c = row.getCell(5 + j);
           c.fill = fill(it.flag ? YEL : it.ok ? GREEN : it.marks > 0 ? AMB : RED); c.alignment = { horizontal: 'center' }; });
         if (!r.any) row.font = { color: { argb: 'FF9AA3B1' } };
       }
       for (let j = 0; j < nQ; j++) ws.getColumn(5 + j).width = 5;
+      CM_COLS.forEach((cn, k) => { const col = ws.getColumn(cols.length - CM_COLS.length + 1 + k); col.width = k === 1 ? 46 : 60; col.alignment = { wrapText: true, vertical: 'top' }; });   // nhận xét: cột rộng, tự xuống dòng
     };
     build('Tổng hợp', it => it.marks);
     build('Đáp án đã chọn', it => it.shown);
@@ -1058,7 +1161,7 @@
     const rs = results(), { cols } = exportHeader(), q = s => `"${String(s).replace(/"/g, '""')}"`;
     const lines = [cols];
     for (const r of rs) lines.push([r.stt, r.s.code, r.s.name, r.s.vh, ...[...r.items.reading, ...r.items.listening].map(it => it ? it.marks : ''),
-      ...secVals(r), r.nonstd, note(r), r.any ? S_comment(r) : '']);
+      ...secVals(r), r.nonstd, note(r), ...cmtVals(r)]);
     download(new Blob(['\uFEFF' + lines.map(l => l.map(q).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }), fname('csv'));
   }
 
@@ -1351,7 +1454,10 @@
     const r = results().find(x => x.s.key === key); if (!r) return;
     if (!canReport(r)) { alert('Học sinh này chưa có điểm kỹ năng nào để xuất phiếu.'); return; }
     if (histP) await histP;   // lịch sử các đợt Mock trước
-    const sel = new Set(pickOf(r)), scored = scoredIds(r);
+    const sel = new Set(pickOf(r)), scored = scoredIds(r), wide = window.matchMedia('(min-width: 900px)').matches;
+    const keepOpen = $('#reportModal').hidden ? null : { pick: $('#mtPick').open, cm: $('#mtCm').open };
+    $('#mtPick').open = keepOpen ? keepOpen.pick : wide; $('#mtCm').open = keepOpen ? keepOpen.cm : wide;
+    $('#mtPickN').textContent = `${sel.size}/${allSkillIds().length}`;
     $('#reportComment').value = S_comment(r, sel);
     $('#reportPriorities').value = S_prior(r, sel).join('\n');
     // khung chọn kỹ năng đưa vào phiếu
@@ -1388,10 +1494,28 @@
       const box = $('#reportImgs'); box.innerHTML = '';
       jpgs.forEach((b, i) => { const im = document.createElement('img'); im.alt = `Trang ${i + 1}`; im.src = URL.createObjectURL(b); box.appendChild(im); });
       $('#reportJpg').onclick = () => jpgs.forEach((b, i) => setTimeout(() => download(b, files[i].name), i * 400));
-      $('#reportPdf').onclick = () => { const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' }); canvases.forEach((c, i) => addPage(pdf, c, i === 0)); download(pdf.output('blob'), base + '.pdf'); };
-      const canShare = !!(navigator.canShare && navigator.canShare({ files }));
-      $('#reportShare').hidden = !canShare;
-      $('#reportShare').onclick = () => navigator.share({ files, title: `Phiếu kết quả — ${r.s.name}` }).catch(() => {});
+      const makePdf = () => { const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' }); canvases.forEach((c, i) => addPage(pdf, c, i === 0)); return pdf.output('blob'); };
+      $('#reportPdf').onclick = () => download(makePdf(), base + '.pdf');
+      // Gửi qua Zalo / ứng dụng khác (Web Share): PDF dựng sẵn ở nền để bấm là gửi ngay, không mất thao tác chạm của người dùng
+      let pdfFile = null;
+      const hint = $('#shareHint'), shareBtn = $('#reportShare'), imgBtn = $('#reportShareImg');
+      const hasShare = !!navigator.share, canF = fs => !!(navigator.canShare && fs && navigator.canShare({ files: fs }));
+      shareBtn.hidden = true; imgBtn.hidden = true; hint.textContent = hasShare ? 'Đang chuẩn bị tệp để gửi…' : '';
+      const doShare = async fs => {
+        hint.textContent = '';
+        try { await navigator.share({ files: fs, title: `Phiếu kết quả — ${r.s.name}` }); }
+        catch (e) {
+          if (e && e.name === 'AbortError') return;   // người dùng đóng bảng chia sẻ
+          hint.textContent = `Không gửi được từ trình duyệt (${e && e.name ? e.name : 'lỗi'}). Bấm "Tải PDF" rồi gửi tệp trong Zalo.`;
+        }
+      };
+      setTimeout(() => {
+        try { pdfFile = new File([makePdf()], base + '.pdf', { type: 'application/pdf' }); } catch (e) { pdfFile = null; }
+        const okPdf = hasShare && canF(pdfFile ? [pdfFile] : null), okImg = hasShare && canF(files);
+        shareBtn.hidden = !okPdf; imgBtn.hidden = !okImg;
+        shareBtn.onclick = () => doShare([pdfFile]); imgBtn.onclick = () => doShare(files);
+        hint.textContent = okPdf || okImg ? '' : 'Trình duyệt này không chia sẻ tệp trực tiếp. Bấm "Tải PDF" rồi gửi tệp trong Zalo (máy tính: kéo tệp vào cửa sổ chat).';
+      }, 60);
       $('#reportModal').hidden = false;
     } catch (e) { alert(e.message || e); }
     finally { busy(''); $('#reportStage').innerHTML = ''; }
@@ -1403,6 +1527,6 @@
     go('scan');
   }
 
-  window.__PET = { get S() { return S; }, results, reportModel, pickOf, scoredIds };
+  window.__PET = { get S() { return S; }, results, reportModel, pickOf, scoredIds, guessByCode, spJsonCheck };
   boot().catch(e => { $('#loading').hidden = true; alert('Không tải được cấu hình app: ' + e.message); });
 })();
