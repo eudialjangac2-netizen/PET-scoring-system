@@ -241,7 +241,7 @@
     const L = lvl(), header = ['Loại', ...(isDaily() ? [] : ['Đợt Mock']), 'Đề', 'Lớp Cambridge', 'Mã HS', 'Họ tên', 'Lớp'];
     for (const sec of L.phan) header.push(`${sec.ten} /${secMax(S.level, sec)}`, ...(isDaily() ? [`${sec.ten} %`] : [`${sec.ten} thang`, `${sec.ten} CEFR`]),
       ...partsOf(S.level, sec).map(([p, n]) => `${sec.viet} Part ${p} (/${n})`));
-    header.push(...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), 'Số câu tô không chuẩn', 'Ghi chú', ...CM_COLS, ...PAPERS.map(p => `Chi tiết ${p === 'reading' ? 'Reading' : 'Listening'}`));
+    header.push(...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), 'Số câu tô không chuẩn', 'Ghi chú', ...CM_COLS, ...PAPERS.map(p => `Chi tiết ${p === 'reading' ? 'Reading' : 'Listening'}`), ...detCols());   // cột chi tiết Writing / Speaking đặt CUỐI: mọi tab có cùng thứ tự
     const rows = results().filter(r => r.any).map(r => {
       const o = { 'Khoá': `${S.test}|${S.cls}|${r.s.code}${isDaily() ? '|' + S.label : ''}`, 'Loại': isDaily() ? 'Hằng ngày' + (S.label ? ' · ' + S.label : '') : 'Mock', ...(isDaily() ? {} : { 'Đợt Mock': S.dot }), 'Đề': S.testTitle, 'Lớp Cambridge': S.cls, 'Mã HS': r.s.code, 'Họ tên': r.s.name, 'Lớp': r.s.vh };
       for (const sec of L.phan) {
@@ -253,6 +253,7 @@
       for (const p of PAPERS) o[`Chi tiết ${p === 'reading' ? 'Reading' : 'Listening'}`] = r.items[p].filter(Boolean).map(i => `${i.q}${i.type === 'write' ? '' : (i.chosen || '-')}${i.marks === i.maxMarks ? '✓' : i.marks > 0 ? '½' : '✗'}`).join(' ');
       if (hasWriting()) WR_COLS.forEach((c, k) => { o[c] = wrVals(r)[k]; });
       if (hasSpeaking()) spColsOf().forEach((c, k) => { o[c] = spVals(r)[k]; });
+      { const dc = detCols(), dv = detVals(r); dc.forEach((c, k) => { o[c] = dv[k]; }); }
       o['Số câu tô không chuẩn'] = r.nonstd; o['Ghi chú'] = note(r); cmtVals(r).forEach((v, k) => { o[CM_COLS[k]] = v; });
       return o;
     });
@@ -416,7 +417,7 @@
     if (S.speaking[stu.key] && !confirm(`Đã có kết quả Speaking của ${stu.name}. Thay bằng phiếu mới?`)) return { cls: 'q-err', html: `Giữ kết quả Speaking cũ của ${esc(stu.name)}.` };
     const d = window.SpeakingScan.fromResult(S.level, res, TPL);
     const need = Object.keys(window.SpeakingScore.WEIGHT[S.level]).filter(c => !d.bands[c]);
-    S.speaking[stu.key] = { bands: d.bands, evidence: d.evidence, weakPart: d.weakPart, at: Date.now(), scan: true, flags: d.flags.map(f => f.text) };
+    S.speaking[stu.key] = { bands: d.bands, evidence: d.evidence, weakPart: d.weakPart, rows: d.rows || {}, at: Date.now(), scan: true, flags: d.flags.map(f => f.text) };
     const bad = d.flags.map(f => f.text);
     const note = need.length || bad.length ? ` · cần xem lại ở bước 6: ${[...need.map(c => 'thiếu band ' + c), ...bad.filter(t => !/^Band/.test(t))].join(', ')}` : ' · đọc tốt';
     return { cls: need.length || bad.length ? 'q-flag' : 'q-ok', ok: true, short: `✓ ${stu.name} — Speaking${note}`, html: `<b>${esc(stu.name)}</b> (${stu.code}) — Speaking${esc(note)}` };
@@ -920,7 +921,12 @@
     const parts = Object.keys(bank).filter(k => /^Weak part/.test(k)).map(k => k.split(' • ')[1]);
     let wp = d.weak_part == null ? '' : String(d.weak_part).trim().toUpperCase();
     if (/^(NONE|-|)$/.test(wp)) wp = ''; else if (!parts.includes(wp)) { warns.push(`weak_part "${esc(d.weak_part)}" không hợp lệ (${parts.join(', ')}), bỏ qua`); wp = ''; }
-    return { errs, warns, stu, value: { bands, evidence: ev, weakPart: wp, at: Date.now(), json: true, flags: [] } };
+    let rows = {};
+    if (d.rows != null) {   // tuỳ chọn: { "G-R": ["articles"], "IC": ["I initiate", "R respond"] } (khoá = mã dòng trên phiếu, giá trị = các nhãn đã tô)
+      if (typeof d.rows !== 'object' || Array.isArray(d.rows)) warns.push('rows phải là đối tượng { "mã dòng": ["nhãn", …] }, bỏ qua');
+      else Object.entries(d.rows).forEach(([k, v]) => { const a = Array.isArray(v) ? v : (v == null || v === '' ? [] : [v]); rows[k] = a.map(x => String(x).trim()).filter(Boolean); });
+    }
+    return { errs, warns, stu, value: { bands, evidence: ev, weakPart: wp, rows, at: Date.now(), json: true, flags: [] } };
   }
   function spJsonRun(text, label) {
     let data; try { data = JSON.parse(String(text).replace(/^\uFEFF/, '')); } catch (e) { return { html: wrBox('err', `${label ? esc(label) + ': ' : ''}không đọc được JSON (${esc(e.message)}). Kiểm tra dấu ngoặc, dấu phẩy và dấu nháy kép.`), ok: 0 }; }
@@ -1057,6 +1063,77 @@
 
   // tiêu đề cột chung cho Excel / CSV
   // Nhận xét đầy đủ cho từng học sinh: tổng thể, ưu tiên tiếp theo, Speaking, Writing. Dùng cho Excel, CSV và Google Sheet ở CẢ HAI chế độ.
+  // ====== Chi tiết từng tiêu chí của Speaking và Writing (dùng cho Excel, CSV, Google Sheet) ======
+  const SPK_NAME = { GV: 'Grammar & Vocabulary', DM: 'Discourse Management', P: 'Pronunciation', IC: 'Interactive Communication', GA: 'Global Achievement' };
+  const WR_CRIT = { content: 'Content', communicative_achievement: 'Communicative Achievement', organisation: 'Organisation', language: 'Language' };
+  const WR_GROUP_TO_CRIT = { content: 'content', style: 'communicative_achievement', organisation: 'organisation', grammar: 'language', vocabulary: 'language' };
+  const nrm = x => String(x || '').toLowerCase().replace(/[^a-z0-9+]/g, '');
+  // Các tiêu chí lớn của phiếu Speaking, theo đúng thứ tự và các dòng trên phiếu in (lấy từ omr-template.json)
+  function spCrits() {
+    const T = TPL?.pages?.[`${S.level}-speaking`]; if (!T) return [];
+    const qb = Object.fromEntries(T.questions.map(q => [q.q, q]));
+    return T.blocks.map(b => {
+      const qs = b.qs.map(n => qb[n]).filter(Boolean), band = qs.find(q => /^BAND-/.test(q.code));
+      return band ? { crit: band.code.slice(5), rows: qs.filter(q => !/^BAND-/.test(q.code) && q.code !== 'Notably weak part'), weak: qs.some(q => q.code === 'Notably weak part') } : null;
+    }).filter(Boolean);
+  }
+  // Nhãn đã tô ở một dòng: từ phiếu quét (rows) nếu có; nếu không (nhập tay hoặc JSON) thì suy từ mã chẩn đoán (evidence)
+  function spRowLabels(d, q) {
+    if (d.rows && d.rows[q.code] !== undefined) return d.rows[q.code];
+    const ev = d.evidence || [], ALIAS = { supportindependence: 'support' }, want = nrm(q.code), want2 = ALIAS[want] || want;
+    const mine = ev.map(k => String(k).split(' • ')).filter(([c]) => [want, want2].includes(nrm(c)) || [want, want2].includes(ALIAS[nrm(c)] || nrm(c)));
+    if (q.code === 'IC') {   // IC: các chức năng giám khảo đã thấy (I, R, A, D, Q, N, L, F)
+      const seen = ev.map(k => String(k).split(' • ')).filter(([c, st]) => /^[IRADQNLF]$/.test(c) && /observed/.test(st || '')).map(([c]) => c);
+      return q.options.map(o => o.label).filter(l => seen.includes(l.split(' ')[0]));
+    }
+    return mine.map(([, st]) => st).filter(Boolean);
+  }
+  function spDetail(d, c) {   // nội dung một ô "Speaking · tiêu chí": Band + từng dòng nhỏ
+    const w = window.SpeakingScore.WEIGHT[S.level][c.crit], has = (d.evidence || []).length || Object.keys(d.rows || {}).length, lines = [`Band ${d.bands?.[c.crit] ?? '—'}${w > 1 ? ` (×${w})` : ''}`];
+    let n = 0;
+    if (has) c.rows.forEach(q => { const l = spRowLabels(d, q); if (l.length) { n++; lines.push(`${String(q.row || q.code).replace(/\s*[*✱]\s*$/, '')}: ${l.join(', ')}`); } });   // chỉ liệt kê các dòng ĐÃ TÔ
+    if (c.weak && d.weakPart) { n++; lines.push(`Notably weak part: ${d.weakPart.replace(/^P/, 'Part ')}`); }
+    if (!n) lines.push('(chưa ghi nhận dòng chi tiết nào)');
+    return lines.join('\n');
+  }
+  const spCritList = () => spCrits().filter(c => window.SpeakingScore?.WEIGHT?.[S.level]?.[c.crit]);
+  function wrCritIds() {   // tiêu chí Writing có trong các bài đã nhập của lớp (theo thứ tự chuẩn)
+    const seen = new Set(); students().forEach(s => (writingOf(s)?.parts || []).forEach(p => (p.criteria || []).forEach(c => seen.add(c.id))));
+    return Object.keys(WR_CRIT).filter(id => seen.has(id));
+  }
+  const wrPartNos = () => { const n = new Set(); students().forEach(s => (writingOf(s)?.parts || []).forEach(p => n.add(p.part))); return [...n].sort((a, b) => a - b); };
+  function wrDetail(d, id) {   // nội dung một ô "Writing · tiêu chí": mỗi Part một khối (band, nhận xét, để lên band, lỗi thuộc tiêu chí)
+    return (d.parts || []).map(p => {
+      const c = (p.criteria || []).find(x => x.id === id); if (!c) return '';
+      const L = [`Part ${p.part}: Band ${c.band}/${c.max}`];
+      if (c.comment) L.push(`Nhận xét: ${c.comment}`);
+      if (c.to_move_up) L.push(`Để lên band: ${c.to_move_up}`);
+      const errs = (p.errors || []).filter(e => (WR_GROUP_TO_CRIT[e.group] || 'language') === id);
+      if (errs.length) L.push(`Lỗi (${errs.length}${p.errors_omitted ? `, còn ${p.errors_omitted} lỗi chưa liệt kê` : ''}):` + errs.slice(0, 12).map(e => `\n  • [${e.group}] ${e.original} → ${e.corrected}${e.explanation ? ` (${e.explanation})` : ''}${e.impeding ? ' · ảnh hưởng hiểu' : ''}`).join('') + (errs.length > 12 ? `\n  • … và ${errs.length - 12} lỗi khác` : ''));
+      return L.join('\n');
+    }).filter(Boolean).join('\n\n');
+  }
+  // Danh sách cột chi tiết, đặt sau điểm Writing và Speaking
+  function detCols() {
+    const out = [];
+    if (hasWriting()) { wrPartNos().forEach(pn => wrCritIds().forEach(id => out.push(`Writing Part ${pn} · ${WR_CRIT[id]} (band)`))); wrCritIds().forEach(id => out.push(`Writing · ${WR_CRIT[id]} (chi tiết)`)); }
+    if (hasSpeaking()) { spCritList().forEach(c => out.push(`Speaking · ${c.crit} (band)`)); spCritList().forEach(c => out.push(`Speaking · ${SPK_NAME[c.crit] || c.crit} (chi tiết)`)); }
+    return out;
+  }
+  function detVals(r) {
+    const out = [], wr = writingOf(r.s), sp = (S.speaking || {})[r.s.key];
+    if (hasWriting()) {
+      wrPartNos().forEach(pn => wrCritIds().forEach(id => { const c = wr?.parts?.find(p => p.part === pn)?.criteria?.find(x => x.id === id); out.push(c ? c.band : ''); }));
+      wrCritIds().forEach(id => out.push(wr ? wrDetail(wr, id) : ''));
+    }
+    if (hasSpeaking()) {
+      const ok = sp && spokenOk(r.s);
+      spCritList().forEach(c => out.push(sp?.bands?.[c.crit] ?? ''));
+      spCritList().forEach(c => out.push(sp ? spDetail(sp, c) : ''));
+    }
+    return out;
+  }
+  const DET_TEXT = n => /\(chi tiết\)$/.test(n);   // cột chữ dài: cho rộng và xuống dòng
   const CM_COLS = ['Nhận xét', 'Ưu tiên tiếp theo', 'Nhận xét Speaking', 'Nhận xét Writing'];
   const paperPre = p => p === 'listening' ? 'L' : 'R';
   function dailyComment(r) {   // bài hàng ngày: không dùng thang Cambridge, chỉ điểm thô, Part mạnh/yếu và câu cần xem lại
@@ -1104,7 +1181,7 @@
   function exportHeader() {
     const L = lvl(), qCols = p => Object.keys(QMAP[S.level][p]).map(Number).sort((a, b) => a - b).map(q => PAPER_SHORT[p] + q);
     const secCols = sec => [`${sec.ten} /${secMax(S.level, sec)}`, ...(isDaily() ? [`${sec.ten} %`] : [`${sec.ten} thang`, `${sec.ten} CEFR`]), ...partsOf(S.level, sec).map(([p, n]) => `${sec.viet} Part ${p} (/${n})`)];
-    return { qCols, cols: ['STT', 'Mã HS', 'Họ tên', 'Lớp', ...qCols('reading'), ...qCols('listening'), ...L.phan.flatMap(secCols), ...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), 'Số câu tô không chuẩn', 'Ghi chú', ...CM_COLS] };
+    return { qCols, cols: ['STT', 'Mã HS', 'Họ tên', 'Lớp', ...qCols('reading'), ...qCols('listening'), ...L.phan.flatMap(secCols), ...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), 'Số câu tô không chuẩn', 'Ghi chú', ...CM_COLS, ...detCols()] };
   }
   function secVals(r) {
     return [...lvl().phan.flatMap(sec => { const g = r.secs[sec.id], ok = g && !g.incomplete, t = !g ? '' : g.incomplete ? 'thiếu trang' : '';
@@ -1127,13 +1204,14 @@
       }
       for (const r of rs) {
         const its = [...r.items.reading, ...r.items.listening];
-        const row = ws.addRow([r.stt, r.s.code, r.s.name, r.s.vh, ...its.map(it => it ? cellOf(it) : ''), ...secVals(r), r.nonstd, note(r) || '', ...cmtVals(r)]);
+        const row = ws.addRow([r.stt, r.s.code, r.s.name, r.s.vh, ...its.map(it => it ? cellOf(it) : ''), ...secVals(r), r.nonstd, note(r) || '', ...cmtVals(r), ...detVals(r)]);
         its.forEach((it, j) => { if (!it) return; const c = row.getCell(5 + j);
           c.fill = fill(it.flag ? YEL : it.ok ? GREEN : it.marks > 0 ? AMB : RED); c.alignment = { horizontal: 'center' }; });
         if (!r.any) row.font = { color: { argb: 'FF9AA3B1' } };
       }
       for (let j = 0; j < nQ; j++) ws.getColumn(5 + j).width = 5;
-      CM_COLS.forEach((cn, k) => { const col = ws.getColumn(cols.length - CM_COLS.length + 1 + k); col.width = k === 1 ? 46 : 60; col.alignment = { wrapText: true, vertical: 'top' }; });   // nhận xét: cột rộng, tự xuống dòng
+      cols.forEach((cn, k) => { if (DET_TEXT(cn)) { const col = ws.getColumn(k + 1); col.width = 62; col.alignment = { wrapText: true, vertical: 'top' }; } else if (/\(band\)$/.test(cn)) ws.getColumn(k + 1).width = 11; });
+      CM_COLS.forEach((cn, k) => { const col = ws.getColumn(cols.indexOf(cn) + 1); col.width = k === 1 ? 46 : 60; col.alignment = { wrapText: true, vertical: 'top' }; });   // nhận xét: cột rộng, tự xuống dòng
     };
     build('Tổng hợp', it => it.marks);
     build('Đáp án đã chọn', it => it.shown);
@@ -1161,7 +1239,7 @@
     const rs = results(), { cols } = exportHeader(), q = s => `"${String(s).replace(/"/g, '""')}"`;
     const lines = [cols];
     for (const r of rs) lines.push([r.stt, r.s.code, r.s.name, r.s.vh, ...[...r.items.reading, ...r.items.listening].map(it => it ? it.marks : ''),
-      ...secVals(r), r.nonstd, note(r), ...cmtVals(r)]);
+      ...secVals(r), r.nonstd, note(r), ...cmtVals(r), ...detVals(r)]);
     download(new Blob(['\uFEFF' + lines.map(l => l.map(q).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }), fname('csv'));
   }
 
