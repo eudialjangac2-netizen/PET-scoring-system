@@ -1570,12 +1570,25 @@
   // ---------- phiếu kết quả cá nhân ----------
   const LIBS = ['https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
                 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'];
-  const loadScript = src => new Promise((res, rej) => {
-    if (document.querySelector(`script[src="${src}"]`)) return res();
-    const s = document.createElement('script'); s.src = src; s.onload = res;
-    s.onerror = () => rej(new Error('Không tải được thư viện tạo phiếu — kiểm tra kết nối mạng.'));
+  // Tải thư viện: kiểm tra thư viện thật sự có mặt (không chỉ thẻ <script>), tải lỗi thì thử nguồn dự phòng, không tải trùng
+  const LIB_ALT = { [LIBS[0]]: 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+                    [LIBS[1]]: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js' };
+  const libOk = src => /jspdf/.test(src) ? !!(window.jspdf && window.jspdf.jsPDF) : !!window.html2canvas;
+  const libBusy = {};
+  const addScript = src => new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => { s.remove(); rej(new Error('load ' + src)); };
     document.head.appendChild(s);
   });
+  const loadScript = src => {
+    if (libOk(src)) return Promise.resolve();
+    if (!libBusy[src]) libBusy[src] = (async () => {
+      for (const u of [src, LIB_ALT[src]]) {
+        try { await addScript(u); if (libOk(src)) return; } catch (e) { console.error(e); }
+      }
+      throw new Error('Không tải được thư viện tạo phiếu — kiểm tra kết nối mạng rồi thử lại.');
+    })().finally(() => { delete libBusy[src]; });
+    return libBusy[src];
+  };
   const ensureLibs = () => Promise.all(LIBS.map(loadScript));
   const barColor = f => f >= 0.75 ? '#1E7F4F' : f >= 0.5 ? '#E0A100' : '#B42318';
   function reportHTML(r) {
