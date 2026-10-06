@@ -93,7 +93,11 @@
     $('#btnStart').onclick = start;
     $('#fileCam').onchange = e => { handleFiles([...e.target.files]); e.target.value = ''; };
     $('#fileMany').onchange = e => { handleFiles([...e.target.files]); e.target.value = ''; };
-    $('#btnXlsx').onclick = exportXlsx; $('#btnCsv').onclick = exportCsv;
+    $('#btnXlsx').onclick = async () => {
+      if (!(await exportXlsx())) return;
+      if ($('#xPhieu').checked) setTimeout(exportPhieu, 600);   // cách 0,6 giây để trình duyệt nhận 2 lần tải
+    };
+    $('#btnPhieu').onclick = exportPhieu; $('#btnCsv').onclick = exportCsv;
     $('#btnClear').onclick = clearSession;
     $('#btnScan').onclick = startScanner; $('#scanStop').onclick = stopScanner;
     document.addEventListener('visibilitychange', () => { if (document.hidden && cam.running) stopScanner(); });
@@ -448,8 +452,112 @@
   }
 
 
+  function pageJpeg(res) {   // ảnh xám cả trang A4 (đã nắn) thu còn 5 px/mm
+    const W = res.width, H = res.height, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const ctx = c.getContext('2d'), im = ctx.createImageData(W, H), d = im.data, px = res.px;
+    for (let i = 0, j = 0; i < px.length; i++, j += 4) { d[j] = d[j + 1] = d[j + 2] = px[i]; d[j + 3] = 255; }
+    ctx.putImageData(im, 0, 0);
+    const s = document.createElement('canvas'); s.width = Math.round(W * 0.5); s.height = Math.round(H * 0.5);
+    const sx = s.getContext('2d'); sx.imageSmoothingQuality = 'high'; sx.drawImage(c, 0, 0, s.width, s.height);
+    return s.toDataURL('image/jpeg', 0.62);
+  }
+  // <<annot
+  // Vẽ phiếu đã chấm: xanh lá = tô đúng · đỏ = tô sai · vòng xanh lá = đáp án đúng (khi sai/bỏ trống) · vàng = tô chưa chuẩn · xanh dương = ô câu viết
+  const ANN = { ok: [30, 170, 90], bad: [225, 50, 45], warn: [245, 190, 20], write: [60, 150, 240] };
+  const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+  function drawAnnotated(img, sh, p, head) {
+    const K = img.width / 210, bh = Math.round(K * 15.5), W = img.width, H = img.height + bh;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.drawImage(img, 0, bh);
+    const R = (sh.geo.rb || 2.3) * K * 1.12, lw = Math.max(2, K * 0.4);
+    const dot = (x, y, col, ring) => {
+      g.beginPath(); g.arc(x, y + bh, R, 0, Math.PI * 2);
+      if (ring) { g.lineWidth = lw; g.strokeStyle = rgba(col, 0.95); g.stroke(); }
+      else { g.fillStyle = rgba(col, 0.55); g.fill(); g.lineWidth = lw * 0.6; g.strokeStyle = rgba(col, 1); g.stroke(); }
+    };
+    let got = 0, max = 0;
+    const qs = Object.keys(sh.geo.m).concat(Object.keys(sh.geo.w)).map(Number).sort((a, b) => a - b);
+    for (const q of qs) {
+      const it = gradeQ(p, q, sh); got += it.marks; max += it.maxMarks;
+      if (it.type === 'write') {
+        const b = sh.geo.w[q], w = sh.write[q], x = b[0] * K, y = b[1] * K + bh, bw = b[2] * K, bhh = b[3] * K;
+        const col = it.ok ? ANN.ok : it.marks > 0 ? ANN.warn : ANN.bad;
+        g.fillStyle = rgba(ANN.write, 0.30); g.fillRect(x, y, bw, bhh);
+        g.lineWidth = lw * 1.3; g.strokeStyle = rgba(col, 1); g.strokeRect(x, y, bw, bhh);
+        const t = w.blank ? 'bỏ trống' : (it.ok ? '✓' : it.marks > 0 ? `${it.marks}/${it.maxMarks}` : '✗');
+        g.font = `700 ${Math.round(K * 2.9)}px "Be Vietnam Pro", Arial, sans-serif`; g.textBaseline = 'middle'; g.textAlign = 'right';
+        const tw = g.measureText(t).width + K * 2.4;
+        g.fillStyle = rgba(col, 1); g.fillRect(x + bw - tw, y - K * 3.4, tw, K * 3.4);
+        g.fillStyle = '#fff'; g.fillText(t, x + bw - K * 1.2, y - K * 1.7);
+        continue;
+      }
+      const m = sh.mcq[q], o = sh.over[q], key = (KEY[p] || {})[q], opts = sh.geo.m[q], at = L => { const e = opts.find(v => v[0] === L); return e ? [e[1] * K, e[2] * K] : null; };
+      const flag = isFlag(m), acc = o && o.accept;
+      if (acc || (!flag && m.status === 'ok')) {
+        const L = acc || m.answer, ps = at(L); if (ps) dot(ps[0], ps[1], L === key ? ANN.ok : ANN.bad, false);
+      } else if (flag) {
+        for (const L of String(m.answer)) { const ps = at(L); if (ps) dot(ps[0], ps[1], ANN.warn, false); }
+      }
+      if (typeof key === 'string' && it.chosen !== key) { const ps = at(key); if (ps) dot(ps[0], ps[1], ANN.ok, true); }
+    }
+    // dải thông tin phía trên
+    g.fillStyle = '#F4F6FA'; g.fillRect(0, 0, W, bh); g.fillStyle = '#D5DAE3'; g.fillRect(0, bh - 2, W, 2);
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+    g.fillStyle = '#1B2437'; g.font = `700 ${Math.round(K * 4.2)}px "Be Vietnam Pro", Arial, sans-serif`;
+    g.fillText(head.title, K * 6, K * 5.6);
+    g.font = `400 ${Math.round(K * 3.1)}px "Be Vietnam Pro", Arial, sans-serif`; g.fillStyle = '#4A5468';
+    g.fillText(head.sub + `  ·  ${got}/${max} điểm`, K * 6, K * 10);
+    const leg = [['ok', 'tô đúng'], ['bad', 'tô sai'], ['ring', 'đáp án đúng'], ['warn', 'tô chưa chuẩn'], ['write', 'câu viết']];
+    let lx = K * 6; const ly = K * 13.8;
+    g.font = `400 ${Math.round(K * 2.7)}px "Be Vietnam Pro", Arial, sans-serif`;
+    for (const [k, t] of leg) {
+      g.beginPath(); g.arc(lx + K * 1.3, ly - K * 0.9, K * 1.2, 0, Math.PI * 2);
+      if (k === 'ring') { g.lineWidth = lw; g.strokeStyle = rgba(ANN.ok, 1); g.stroke(); }
+      else if (k === 'write') { g.fillStyle = rgba(ANN.write, 0.5); g.fillRect(lx, ly - K * 2.1, K * 2.8, K * 2.4); }
+      else { g.fillStyle = rgba(ANN[k], 0.7); g.fill(); }
+      g.fillStyle = '#4A5468'; g.fillText(t, lx + K * 3.6, ly); lx += K * 3.6 + g.measureText(t).width + K * 3.2;
+    }
+    return c;
+  }
+  // annot>>
+  const loadImg = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+  async function exportPhieu() {
+    const rs = results().filter(r => Object.keys(S.sheets[r.s.key] || {}).length);
+    if (!rs.length) { alert('Chưa có phiếu nào được quét trong đợt này.'); return false; }
+    busy('Đang tạo file phiếu làm bài…');
+    let pdf = null, n = 0, skip = 0;
+    try {
+      await loadScript(LIBS[1]);
+      for (const r of rs) for (const p of PAPERS) for (const pk of (LV[S.level].giay[p] || [])) {
+        const sh = S.sheets[r.s.key]?.[pk]; if (!sh) continue;
+        const data = sh.pgk && sh.geo ? await idb.get(sh.pgk).catch(() => null) : null;
+        if (!data) { skip++; continue; }
+        const c = drawAnnotated(await loadImg(data), sh, p, { title: `${r.s.name}  (${r.s.code})  ·  ${S.cls}`, sub: `${S.testTitle}  ·  ${pageName(pk)}` });
+        const h = 210 * c.height / c.width;
+        if (!pdf) pdf = new window.jspdf.jsPDF({ unit: 'mm', format: [210, h], orientation: 'p' }); else pdf.addPage([210, h], 'p');
+        pdf.addImage(c.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, 210, h);
+        n++; $('#loadingMsg').textContent = `Đang tạo file phiếu làm bài… ${n}`;
+        await new Promise(res => setTimeout(res, 0));
+      }
+    } catch (e) { console.error(e); busy(''); alert('Không tạo được file phiếu làm bài: ' + (e.message || e)); return false; }
+    busy('');
+    if (!pdf) { alert('Các phiếu trong đợt này được quét trước khi app có tính năng lưu ảnh phiếu, nên chưa xuất được phiếu làm bài. Quét lại phiếu (xoá phiếu cũ trước) để có ảnh.'); return false; }
+    download(pdf.output('blob'), fname('pdf').replace('ket-qua_', 'phieu-lam-bai_'));
+    if (skip) setTimeout(() => alert(`Đã xuất ${n} phiếu. ${skip} phiếu quét trước bản cập nhật không có ảnh nên không có trong file.`), 400);
+    return true;
+  }
+
   function buildSheet(res) {
     const sh = { page: res.page, at: Date.now(), mcq: {}, write: {}, over: {}, head: crop(res, 15, 36, 195, 106, 0.35) };
+    // ảnh cả trang (đã nắn thẳng) + toạ độ từng ô: dùng để xuất "phiếu làm bài đã tô màu" cho giáo viên kiểm tra
+    try {
+      const T0 = TPL.pages[res.page], vv = ((TPL.variants || {})[res.page] || []).find(v => (v.layout || '') === res.layout), TT = vv || T0;
+      sh.geo = { rb: TT.bubble_radius_mm || TT.ring_mm || TPL.bubble_radius_mm || 2.3, m: {}, w: {} };
+      for (const [q, m] of Object.entries(res.mcq)) sh.geo.m[q] = (m.opts || []).map(o => [o.label, o.x, o.y]);
+      for (const [q, w] of Object.entries(res.write)) sh.geo.w[q] = [w.box.x, w.box.y, w.box.w, w.box.h].map(v => +v.toFixed(1));
+      sh.pgk = `pg:${S.id}:${sh.at}:${Math.random().toString(36).slice(2, 7)}`;
+      idb.set(sh.pgk, pageJpeg(res)).catch(() => {});
+    } catch (e) { console.error(e); delete sh.pgk; }
     for (const [q, m] of Object.entries(res.mcq)) {
       sh.mcq[q] = { answer: m.answer, status: m.status };
       if (m.status === 'nonstd' || m.status === 'multi')
@@ -469,6 +577,7 @@
         short: `Đã có ${pageShort(page)} của ${stu.name} — bỏ qua` };
     if (S.sheets[key][page] && !confirm(`Đã có phiếu ${pageName(page)} của ${stu.name}. Thay bằng phiếu mới?`))
       return { cls: 'q-err', html: `Giữ phiếu ${esc(pageName(page))} cũ của ${esc(stu.name)}.` };
+    if (S.sheets[key][page]?.pgk) idb.del(S.sheets[key][page].pgk).catch(() => {});
     S.sheets[key][page] = sheet;
     const paper = TPL.pages[page].skill;
     Object.keys(S.writeDone).filter(k => k.startsWith(paper + '-') && QMAP[S.level][paper][k.split('-')[1]]?.page === page).forEach(k => delete S.writeDone[k]);
@@ -485,6 +594,7 @@
       const st = S.sheets[ref.key], stu = stuByKey(ref.key);
       if (!st?.[ref.page] || st[ref.page].at !== ref.at) { alert('Phiếu này đã được thay bằng phiếu khác hoặc đã xoá.'); return false; }
       if (!confirm(`Xoá phiếu ${pageName(ref.page)} của ${stu ? stu.name : ref.key}?`)) return false;
+      if (st[ref.page].pgk) idb.del(st[ref.page].pgk).catch(() => {});
       delete st[ref.page]; if (!Object.keys(st).length) delete S.sheets[ref.key];
     }
     renderScan(); save(); return true;
@@ -1189,7 +1299,7 @@
       ...(hasWriting() ? wrVals(r) : []), ...(hasSpeaking() ? spVals(r) : [])];
   }
   async function exportXlsx() {
-    if (!confirmWarn()) return;
+    if (!confirmWarn()) return false;
     const rs = results(), wb = new ExcelJS.Workbook(), { qCols, cols } = exportHeader();
     const fill = c => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: c } });
     const GREEN = 'FFE3F3EA', RED = 'FFFBE7E5', YEL = 'FFFFE9A8', AMB = 'FFFFF3CC', HEAD = 'FF' + lvl().mau.replace('#', '');
@@ -1233,6 +1343,7 @@
     st.columns.forEach((c, i) => c.width = [11, 6, 6, 16, 22, 8, 8, 8, 28, 20][i]);
     const buf = await wb.xlsx.writeBuffer();
     download(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fname('xlsx'));
+    return true;
   }
   function exportCsv() {
     if (!confirmWarn()) return;
@@ -1601,6 +1712,7 @@
   async function clearSession() {
     if (!confirm(`Xoá toàn bộ phiếu đã chụp của ${S.testTitle} – ${S.cls}? Không thể hoàn tác.`)) return;
     await idb.del(S.id);
+    for (const st of Object.values(S.sheets || {})) for (const sh of Object.values(st)) if (sh.pgk) idb.del(sh.pgk).catch(() => {});
     S = { id: S.id, mode: S.mode, label: S.label, dot: S.dot, mixed: S.mixed, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {}, online: {} };
     go('scan');
   }
