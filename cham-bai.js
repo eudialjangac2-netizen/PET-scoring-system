@@ -1072,8 +1072,119 @@
   // ---------- Speaking (band, mã chẩn đoán, part yếu nhất; viet/speaking-nhap.js) ----------
   function renderSpeaking() {
     S.speaking = S.speaking || {};
-    window.SpeakingEntry.mount({ root: $('#spBox'), level: S.level, students: students(), data: S.speaking,
+    const root = $('#spBox');
+    window.SpeakingEntry.mount({ root, level: S.level, students: students(), data: S.speaking,
       onSave: (key, v) => { if (v) S.speaking[key] = v; else delete S.speaking[key]; save(); } });
+    // nút Nhập / Sửa mở phiếu tick trên màn hình (cách cũ bằng danh sách chọn vẫn dùng được trong phiếu: "Nhập bằng danh sách chọn")
+    if (!root.__tick) {
+      root.__tick = true;
+      root.addEventListener('click', e => {
+        const b = e.target.closest('[data-sp]'); if (!b || root.__old) return;
+        e.stopPropagation(); e.preventDefault(); openSpeakingSheet(b.dataset.sp);
+      }, true);
+    }
+  }
+
+  // ---------- Speaking: phiếu tick trên màn hình (giống phiếu chấm in, chạm để tick; kết quả giống hệt khi quét phiếu) ----------
+  const SP_CRIT = { GV: 'Grammar & Vocabulary', DM: 'Discourse Management', P: 'Pronunciation', IC: 'Interactive Communication', GA: 'Global Achievement' };
+  function spInjectCss() {
+    if (document.getElementById('spkCss')) return;
+    const st = document.createElement('style'); st.id = 'spkCss';
+    st.textContent = `.spk{position:fixed;inset:0;z-index:70;background:#F4F6FA;overflow:auto;-webkit-overflow-scrolling:touch}
+.spk-top{position:sticky;top:0;z-index:2;background:#9E1B32;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px}
+.spk-top b{font-size:16px}.spk-top small{opacity:.85}.spk-top .x{margin-left:auto;background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:8px;padding:8px 12px;font:inherit;font-weight:600}
+.spk-body{max-width:760px;margin:0 auto;padding:12px 12px 130px}
+.spk-sec{background:#fff;border:1px solid #D5DAE3;border-radius:12px;padding:0 12px 10px;margin:0 0 12px}
+.spk-sec legend{float:left;width:calc(100% + 24px);margin:0 -12px 8px;padding:9px 12px;background:#E3E6EC;border-radius:11px 11px 0 0;font-weight:700;font-size:14px;letter-spacing:.2px;text-transform:uppercase}
+.spk-sec legend i{font-style:normal;font-weight:600;opacity:.7;text-transform:none;margin-left:6px}
+.spk-row{clear:both;padding:8px 0;border-top:1px solid #EEF0F4}.spk-row:first-of-type{border-top:0}
+.spk-lab{display:block;font-size:13px;font-weight:700;margin-bottom:6px}.spk-lab em{font-style:normal;font-weight:500;color:#6B7487;margin-left:6px;font-size:12px}
+.spk-opts{display:flex;flex-wrap:wrap;gap:8px}
+.spk-o{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:6px 12px 6px 8px;border:1.5px solid #C7CDD8;border-radius:22px;background:#fff;font:inherit;font-size:14px;color:#1B2437;cursor:pointer}
+.spk-o i{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid #4A5468;background:#fff}
+.spk-o[aria-pressed=true]{border-color:#9E1B32;background:#FBEFF1;font-weight:600}.spk-o[aria-pressed=true] i{background:#9E1B32;border-color:#9E1B32;box-shadow:inset 0 0 0 3px #fff}
+.spk-band .spk-o{padding:6px 14px 6px 8px;font-weight:700}
+.spk-foot{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #D5DAE3;padding:10px 14px calc(10px + env(safe-area-inset-bottom));z-index:3}
+.spk-sum{max-width:760px;margin:0 auto 8px;font-size:13px;color:#4A5468}.spk-sum b{color:#1B2437}.spk-sum .miss{color:#B42318;font-weight:700}
+.spk-acts{max-width:760px;margin:0 auto;display:flex;gap:8px;flex-wrap:wrap}.spk-acts .btn.primary{flex:1;min-width:140px}
+.spk-old{max-width:760px;margin:6px auto 0;font-size:12.5px;text-align:center}.spk-old a{color:#6B7487;text-decoration:underline;cursor:pointer}`;
+    document.head.appendChild(st);
+  }
+  function spLayout() {
+    const T = TPL.pages[S.level + '-speaking'], secs = []; let cur = null, weak = null;
+    for (const q of T.questions) {
+      if (/^BAND-/.test(q.code)) { cur = { crit: q.code.slice(5), band: q, rows: [] }; secs.push(cur); }
+      else if (q.code === 'Notably weak part') weak = q;
+      else if (cur) cur.rows.push(q);
+    }
+    return { T, secs, weak };
+  }
+  function openSpeakingSheet(key) {
+    const stu = stuByKey(key); if (!stu) return;
+    spInjectCss();
+    const { secs, weak } = spLayout(), B = (window.SPEAKING_BANK || {})[S.level] || {}, W = window.SpeakingScore.WEIGHT[S.level], MAX = window.SpeakingScore.MAX[S.level];
+    const old = (S.speaking || {})[key], tick = {};
+    const set = (q, l) => { (tick[q] = tick[q] || new Set()).add(l); };
+    if (old) {   // điền sẵn từ kết quả đã có (quét phiếu hoặc nhập trước đó)
+      secs.forEach(sec => {
+        if (old.bands && old.bands[sec.crit]) set(sec.band.q, String(old.bands[sec.crit]));
+        sec.rows.forEach(q => {
+          const saved = old.rows && old.rows[q.code];
+          if (saved) saved.forEach(l => set(q.q, l));
+          else if (!old.rows && old.evidence) q.options.forEach(o => { const k = window.SpeakingScan.match(B, q.code, o.label); if (k && old.evidence.includes(k)) set(q.q, o.label); });
+        });
+      });
+      if (old.weakPart && weak) set(weak.q, old.weakPart);
+    }
+    const ov = document.createElement('div'); ov.className = 'spk'; ov.setAttribute('role', 'dialog');
+    const optBtn = (q, o, multi) => `<button type="button" class="spk-o" data-q="${q.q}" data-l="${esc(o.label)}" data-m="${multi ? 1 : 0}" aria-pressed="false"><i></i>${esc(o.label)}</button>`;
+    ov.innerHTML = `<div class="spk-top"><b>${esc(stu.name)}</b><small>${esc(stu.code)} · Speaking ${S.level}</small><button class="x" data-x>Đóng</button></div><div class="spk-body">
+      <p class="hint" style="margin:2px 2px 10px">Chạm vào ô để tick, giống phiếu chấm in. Mỗi tiêu chí chọn <b>một band</b>. Dòng có dấu ✱ được tick nhiều ô. Chạm lần nữa để bỏ tick.</p>
+      ${secs.map(sec => `<fieldset class="spk-sec"><legend>${esc(SP_CRIT[sec.crit] || sec.crit)}<i>band × ${W[sec.crit] || 1}</i></legend>
+        <div class="spk-row spk-band"><span class="spk-lab">BAND</span><div class="spk-opts">${sec.band.options.map(o => optBtn(sec.band, o, false)).join('')}</div></div>
+        ${sec.rows.map(q => `<div class="spk-row"><span class="spk-lab">${esc(q.row || q.code)}${q.multi ? '<em>✱ tick nhiều ô</em>' : ''}</span><div class="spk-opts">${q.options.map(o => optBtn(q, o, q.multi)).join('')}</div></div>`).join('')}
+      </fieldset>`).join('')}
+      ${weak ? `<fieldset class="spk-sec"><legend>Notably weak part</legend><div class="spk-row"><div class="spk-opts">${weak.options.map(o => optBtn(weak, o, true)).join('')}</div></div></fieldset>` : ''}
+      </div><div class="spk-foot"><div class="spk-sum" id="spkSum"></div><div class="spk-acts"><button class="btn primary" data-save>Lưu Speaking</button><button class="btn" data-clear>Xoá hết tick</button><button class="btn ghost" data-x>Huỷ</button></div>
+      <div class="spk-old"><a data-old>Nhập bằng danh sách chọn (cách cũ)</a></div></div>`;
+    document.body.appendChild(ov); document.body.style.overflow = 'hidden';
+    const bandsNow = () => { const b = {}; secs.forEach(sec => { const s = tick[sec.band.q]; if (s && s.size === 1) b[sec.crit] = +[...s][0]; }); return b; };
+    const paint = () => {
+      ov.querySelectorAll('.spk-o').forEach(b => b.setAttribute('aria-pressed', tick[b.dataset.q] && tick[b.dataset.q].has(b.dataset.l) ? 'true' : 'false'));
+      const b = bandsNow(), miss = Object.keys(W).filter(c => !b[c]), tot = miss.length ? null : window.SpeakingScore.total(S.level, b);
+      $('#spkSum').innerHTML = Object.keys(W).map(c => `${c} <b>${b[c] || '–'}</b>`).join(' · ') + (miss.length ? ` · <span class="miss">còn thiếu band ${miss.join(', ')}</span>` : ` · điểm <b>${tot}/${MAX}</b>`);
+    };
+    const close = () => { ov.remove(); document.body.style.overflow = ''; };
+    ov.addEventListener('click', e => {
+      const o = e.target.closest('.spk-o');
+      if (o) {
+        const q = o.dataset.q, l = o.dataset.l, multi = o.dataset.m === '1', s = tick[q] = tick[q] || new Set();
+        if (s.has(l)) s.delete(l);
+        else {
+          if (!multi) s.clear();
+          if (multi && /^(none)$/i.test(l)) s.clear();                       // "none" loại trừ các Part
+          if (multi && /^P\d$/.test(l)) s.delete('none');
+          s.add(l);
+        }
+        paint(); return;
+      }
+      if (e.target.closest('[data-x]')) { close(); return; }
+      if (e.target.closest('[data-clear]')) { if (confirm('Xoá hết tick của phiếu này?')) { Object.keys(tick).forEach(k => delete tick[k]); paint(); } return; }
+      if (e.target.closest('[data-old]')) { close(); const root = $('#spBox'), btn = root.querySelector(`[data-sp="${key}"]`); if (btn) { root.__old = true; btn.click(); root.__old = false; } return; }
+      if (e.target.closest('[data-save]')) {
+        const res = { page: S.level + '-speaking', mcq: {} };
+        TPL.pages[res.page].questions.forEach(q => { res.mcq[q.q] = { opts: q.options.map(op => ({ label: op.label, cov: tick[q.q] && tick[q.q].has(op.label) ? 1 : 0 })) }; });
+        const d = window.SpeakingScan.fromResult(S.level, res, TPL), miss = Object.keys(W).filter(c => !d.bands[c]);
+        if (!Object.keys(d.bands).length && !d.evidence.length && !d.weakPart) { alert('Chưa tick gì. Hãy tick ít nhất band của các tiêu chí.'); return; }
+        if (miss.length && !confirm(`Còn thiếu band: ${miss.join(', ')}. Vẫn lưu (chưa tính được điểm Speaking)?`)) return;
+        S.speaking = S.speaking || {};
+        S.speaking[key] = { bands: d.bands, evidence: d.evidence, weakPart: d.weakPart, rows: d.rows || {}, at: Date.now(), scan: false, tick: true, flags: d.flags.map(f => f.text) };
+        save(); close(); renderSpeaking();
+        const note = document.createElement('div'); note.className = 'notice info'; note.innerHTML = `Đã lưu Speaking cho <b>${esc(stu.name)}</b>.`;
+        $('#spBox').prepend(note); setTimeout(() => note.remove(), 4000);
+      }
+    });
+    paint(); ov.scrollTop = 0;
   }
 
   // ---------- Speaking: nhập bằng JSON (cùng cách với Writing); quét phiếu hoặc nhập tay vẫn dùng được ----------
