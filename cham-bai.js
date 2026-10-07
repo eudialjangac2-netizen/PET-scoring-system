@@ -1592,7 +1592,7 @@
     if (hp) skills.forEach(k => { k.d = k.scale != null && hp.prev.s[k.id] != null ? k.scale - hp.prev.s[k.id] : null; });
     const od = hp && hp.comparable && ov != null ? ov - avgOf(hp.prev.s, Object.keys(hp.prev.s)) : null;
     const m = {
-      first: !hp, level: S.level, exam: S.testTitle, date: day,
+      first: !hp, level: S.level, exam: S.testTitle, date: day, mockNo: isDaily() ? '' : (S.dot || (hp ? hp.hist.length + 1 : 1)), monthYear: new Date(dates.length ? Math.max(...dates) : Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
       student: { name: r.s.name, id: r.s.code, cls: r.s.vh },
       skills, overall: { scale: ov, d: od, partial: sc.length < skills.length || sel.size < allSkillIds().length },
       history: [...(hp ? hp.hist : []), { label: 'Mock ' + (S.dot || (hp ? hp.hist.length + 1 : 1)), s: s1, overall: ov }],

@@ -38,7 +38,7 @@
   }
   function styleVars(m) { var t = THEME[m.level]; return '--a:' + t.a + ';--d:' + t.d + ';--soft:' + t.soft; }
   function head(m, title) {
-    return '<div class="pt-head"><div><small>RUBY SCHOOL · CAMBRIDGE ' + esc(m.level) + '</small><h1>' + ttl(title[0], title[1]) + '</h1></div><div class="pt-ex">' + esc(m.exam) + '<span>Graded ' + esc(m.date) + '</span></div></div>'
+    return '<div class="pt-head"><div><small>RUBY SCHOOL · CAMBRIDGE ' + esc(m.level) + '</small><h1>' + ttl(title[0], title[1]) + '</h1></div><div class="pt-ex">' + (m.mockNo ? 'MOCK TEST ' + esc(m.mockNo) + '<span>' + esc(m.monthYear || '') + '</span>' : esc(m.exam) + '<span>Graded ' + esc(m.date) + '</span>') + '</div></div>'
       + '<div class="pt-who"><div><span>Student</span><b>' + esc(m.student.name) + '</b></div><div><span>Student ID</span><b>' + esc(m.student.id) + '</b></div><div><span>Class</span><b>' + esc(m.student.cls) + '</b></div></div>';
   }
   function foot(m, n) { return '<div class="pt-foot"><span>Scores use the Cambridge English Scale for ' + esc(m.level) + '. Grade A/B/C is based on Scale. Page ' + n + '/' + (m.totalPages || 4) + '</span><span>Ruby School</span></div>'; }
