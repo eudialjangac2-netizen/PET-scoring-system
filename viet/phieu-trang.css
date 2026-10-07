@@ -90,3 +90,6 @@
 .pt-tight .pt-ca .pt-sub { display: none; }
 .pt-tight .pt-ca p { margin: 0 0 3px; } .pt-tight .pt-ca h4 { margin: 0 0 2px; }
 .pt-tight .pt-wrs { gap: 4px 8px; } .pt-tight .pt-wq .chip { font-size: 10px; padding: 0 7px; margin: 0 3px 3px 0; }
+
+.pt-wq h5 small { font-weight: 400; color: #5B6576; }
+.pt-wn { margin: 0 0 4px; font-size: 11px; line-height: 1.5; color: #172033; overflow-wrap: anywhere; }

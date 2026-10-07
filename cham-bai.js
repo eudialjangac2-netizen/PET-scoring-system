@@ -1579,14 +1579,8 @@
     const wrong = [];
     for (const sec of L.phan) {
       const g = r.secs[sec.id]; if (!g || g.incomplete || !sel.has(sec.id)) continue;
-      const items = g.items.filter(i => !i.ok).map(i => {
-        const key = i.key ?? [].concat(KEY[sec.giay][i.q]).join(' / ');
-        const what = i.type === 'write' ? (i.shown === '' ? 'blank' : i.marks > 0 ? `${i.marks}/${i.maxMarks}` : (i.reason || 'incorrect')) : (i.bad && !i.chosen ? 'mark unclear' : (i.chosen || 'blank'));
-        return `Q${i.q}: ${what}, ${key}`;
-      });
-      const nCards = causes.length + (sel.has('speaking') && (S.speaking || {})[r.s.key] ? 1 : 0), cap = nCards >= 5 ? 4 : nCards >= 4 ? 10 : 16;
-      const shown = items.slice(0, cap); if (items.length > cap) shown.push(`+${items.length - cap} more`);
-      wrong.push({ skill: sec.id, name: sec.ten, items: shown.length ? shown : ['No wrong answers'] });
+      const nums = g.items.filter(i => !i.ok).map(i => 'Q' + i.q);   // chỉ ghi số câu sai: luôn gọn, không tràn trang
+      wrong.push({ skill: sec.id, name: sec.ten, count: nums.length, items: nums.length ? [nums.join(', ')] : ['No wrong answers'] });
     }
     const hp = isDaily() ? null : histFor(r.s.code, skills);   // đợt Mock trước (nếu có) → mũi tên ▲▼ và biểu đồ tiến bộ
     if (hp) skills.forEach(k => { k.d = k.scale != null && hp.prev.s[k.id] != null ? k.scale - hp.prev.s[k.id] : null; });
