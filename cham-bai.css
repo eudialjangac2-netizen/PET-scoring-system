@@ -257,3 +257,20 @@ td.nm-cell .nm-in { display: flex; gap: 8px; align-items: center; justify-conten
   .modal-tools details[open] > .modal-pick, .modal-tools details[open] > .modal-comment { max-height: none; }
   .modal-acts { grid-column: 1 / -1; }
 }
+
+/* Bảng kết quả: cố định dòng tiêu đề và 3 cột STT / Mã / Họ tên khi cuộn */
+.tablewrap.freeze { overflow: auto; max-height: calc(100vh - 150px); }
+.tablewrap.freeze table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; }
+.tablewrap.freeze thead th { position: sticky; top: 0; z-index: 3; background: var(--paper); box-shadow: inset 0 -1px 0 var(--line); }
+.tablewrap.freeze tbody td { background: #fff; }
+.tablewrap.freeze tr.missing td { background: #fff; }
+.tablewrap.freeze th:nth-child(-n+3), .tablewrap.freeze td:nth-child(-n+3) { position: sticky; z-index: 2; }
+.tablewrap.freeze thead th:nth-child(-n+3) { z-index: 4; }
+.tablewrap.freeze th:nth-child(1), .tablewrap.freeze td:nth-child(1) { left: 0; min-width: 52px; max-width: 52px; }
+.tablewrap.freeze th:nth-child(2), .tablewrap.freeze td:nth-child(2) { left: 52px; min-width: 116px; max-width: 116px; }
+.tablewrap.freeze th:nth-child(3), .tablewrap.freeze td:nth-child(3) { left: 168px; min-width: 310px; box-shadow: inset -1px 0 0 var(--line), inset 0 -1px 0 var(--line); }
+@media (max-width: 640px) {
+  .tablewrap.freeze th:nth-child(1), .tablewrap.freeze td:nth-child(1) { display: none; }
+  .tablewrap.freeze th:nth-child(2), .tablewrap.freeze td:nth-child(2) { left: 0; }
+  .tablewrap.freeze th:nth-child(3), .tablewrap.freeze td:nth-child(3) { left: 116px; min-width: 200px; }
+}
