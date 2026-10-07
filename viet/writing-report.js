@@ -110,8 +110,8 @@
     return '<div class="wr-sec"><h3><div>Rubric Scores<small class="vi">Điểm theo từng tiêu chí</small></div> <span>0-5 per criterion</span></h3><table class="wr-crit">' + c.cr.map(function (x) {
       var nm = critName(x.id);
       return '<tr><td class="n">' + esc(nm[1]) + '<small>' + esc(nm[0]) + '</small><div style="margin-top:3px">' + dots(x.band, x.max, c.mau) + esc(x.band) + '/' + esc(x.max) + '</div></td><td>' + esc(x.comment)
-        + (x.to_move_up ? '<div class="up"><b>To move up:</b> ' + esc(x.to_move_up) + '</div>' : '')
-        + (full && x.key_takeaway ? '<div class="kt"><b>Key takeaway:</b> ' + esc(x.key_takeaway) + '</div>' : '') + '</td></tr>';
+        + (x.to_move_up ? '<div class="up"><b style="color:' + c.mau + '">To move up:</b> ' + esc(x.to_move_up) + '</div>' : '')
+        + (full && x.key_takeaway ? '<div class="kt"><b style="color:' + c.mau + '">Key takeaway:</b> ' + esc(x.key_takeaway) + '</div>' : '') + '</td></tr>';
     }).join('') + '</table></div>';
   }
   function secTwo(c) {
