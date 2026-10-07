@@ -97,7 +97,11 @@
       if (!(await exportXlsx())) return;
       if ($('#xPhieu').checked) setTimeout(exportPhieu, 600);   // cách 0,6 giây để trình duyệt nhận 2 lần tải
     };
-    $('#btnPhieu').onclick = exportPhieu; $('#btnCsv').onclick = exportCsv;
+    $('#btnPhieu').onclick = exportPhieu;
+    document.querySelectorAll('#rvTabs button').forEach(b => b.onclick = () => setRvTab(b.dataset.t));
+    $('#rvStu').onchange = e => { rv.stu = e.target.value; rv.page = ''; renderRvAll(); };
+    $('#rvPage').onchange = e => { rv.page = e.target.value; renderRvAll(); };
+    $('#rvReset').onclick = rvReset; $('#btnCsv').onclick = exportCsv;
     $('#btnClear').onclick = clearSession;
     $('#btnScan').onclick = startScanner; $('#scanStop').onclick = stopScanner;
     document.addEventListener('visibilitychange', () => { if (document.hidden && cam.running) stopScanner(); });
@@ -463,7 +467,7 @@
   }
   // <<annot
   // Vẽ phiếu đã chấm: xanh lá = tô đúng · đỏ = tô sai · vòng xanh lá = đáp án đúng (khi sai/bỏ trống) · vàng = tô chưa chuẩn · xanh dương = ô câu viết
-  const ANN = { ok: [30, 170, 90], bad: [225, 50, 45], warn: [245, 190, 20], write: [60, 150, 240] };
+  const ANN = { ok: [30, 170, 90], bad: [225, 50, 45], warn: [245, 190, 20], write: [60, 150, 240], edit: [40, 90, 220] };
   const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
   function drawAnnotated(img, sh, p, head) {
     const K = img.width / 210, bh = Math.round(K * 15.5), W = img.width, H = img.height + bh;
@@ -499,6 +503,7 @@
         for (const L of String(m.answer)) { const ps = at(L); if (ps) dot(ps[0], ps[1], ANN.warn, false); }
       }
       if (typeof key === 'string' && it.chosen !== key) { const ps = at(key); if (ps) dot(ps[0], ps[1], ANN.ok, true); }
+      if (o && o.manual && o.accept) { const ps = at(o.accept); if (ps) { g.beginPath(); g.arc(ps[0], ps[1] + bh, R * 1.45, 0, Math.PI * 2); g.lineWidth = lw * 1.2; g.strokeStyle = rgba(ANN.edit, 1); g.stroke(); } }
     }
     // dải thông tin phía trên
     g.fillStyle = '#F4F6FA'; g.fillRect(0, 0, W, bh); g.fillStyle = '#D5DAE3'; g.fillRect(0, bh - 2, W, 2);
@@ -507,12 +512,13 @@
     g.fillText(head.title, K * 6, K * 5.6);
     g.font = `400 ${Math.round(K * 3.1)}px "Be Vietnam Pro", Arial, sans-serif`; g.fillStyle = '#4A5468';
     g.fillText(head.sub + `  ·  ${got}/${max} điểm`, K * 6, K * 10);
-    const leg = [['ok', 'tô đúng'], ['bad', 'tô sai'], ['ring', 'đáp án đúng'], ['warn', 'tô chưa chuẩn'], ['write', 'câu viết']];
+    const leg = [['ok', 'tô đúng'], ['bad', 'tô sai'], ['ring', 'đáp án đúng'], ['warn', 'tô chưa chuẩn / mờ'], ['write', 'câu viết'], ['edit', 'GV đã sửa']];
     let lx = K * 6; const ly = K * 13.8;
     g.font = `400 ${Math.round(K * 2.7)}px "Be Vietnam Pro", Arial, sans-serif`;
     for (const [k, t] of leg) {
       g.beginPath(); g.arc(lx + K * 1.3, ly - K * 0.9, K * 1.2, 0, Math.PI * 2);
       if (k === 'ring') { g.lineWidth = lw; g.strokeStyle = rgba(ANN.ok, 1); g.stroke(); }
+      else if (k === 'edit') { g.lineWidth = lw; g.strokeStyle = rgba(ANN.edit, 1); g.stroke(); }
       else if (k === 'write') { g.fillStyle = rgba(ANN.write, 0.5); g.fillRect(lx, ly - K * 2.1, K * 2.8, K * 2.4); }
       else { g.fillStyle = rgba(ANN[k], 0.7); g.fill(); }
       g.fillStyle = '#4A5468'; g.fillText(t, lx + K * 3.6, ly); lx += K * 3.6 + g.measureText(t).width + K * 3.2;
@@ -560,7 +566,7 @@
     } catch (e) { console.error(e); delete sh.pgk; }
     for (const [q, m] of Object.entries(res.mcq)) {
       sh.mcq[q] = { answer: m.answer, status: m.status };
-      if (m.status === 'nonstd' || m.status === 'multi')
+      if (m.status === 'nonstd' || m.status === 'multi' || m.status === 'faint')
         sh.mcq[q].img = crop(res, m.row.x0 - 9, m.row.y - 5.5, m.row.x1 + 2, m.row.y + 5.5, 0.6);
     }
     for (const [q, w] of Object.entries(res.write)) {
@@ -599,7 +605,7 @@
     }
     renderScan(); save(); return true;
   }
-  const isFlag = m => m.status === 'nonstd' || m.status === 'multi';
+  const isFlag = m => m.status === 'nonstd' || m.status === 'multi' || m.status === 'faint';
   const flagCount = sh => Object.values(sh.mcq).filter(isFlag).length;
   const pendingFlags = sh => Object.entries(sh.mcq).filter(([q, m]) => isFlag(m) && !sh.over[q]).length;
 
@@ -773,7 +779,64 @@
   }
 
   // ---------- duyệt ----------
+  // ---- Xem lại cả phiếu: ảnh phiếu đã tô màu, chạm vào ô để sửa đáp án trước khi chốt ----
+  const rv = { tab: 'flag', stu: '', page: '', geo: null, canvas: null };
+  async function renderRvAll() {
+    const stus = students().filter(s => Object.keys(S.sheets[s.key] || {}).length);
+    const selS = $('#rvStu'), selP = $('#rvPage'), box = $('#rvBox'), info = $('#rvInfo');
+    if (!stus.length) { box.innerHTML = '<div class="empty">Chưa có phiếu nào được quét.</div>'; selS.innerHTML = selP.innerHTML = ''; return; }
+    if (!stus.some(s => s.key === rv.stu)) rv.stu = stus[0].key;
+    selS.innerHTML = stus.map(s => `<option value="${s.key}">${esc(s.name)} (${esc(s.code)})${Object.keys(S.sheets[s.key]).some(pk => Object.values(S.sheets[s.key][pk].over || {}).some(o => o.manual)) ? ' ✎' : ''}</option>`).join('');
+    selS.value = rv.stu;
+    const pks = pagesOf(S.level).filter(pk => S.sheets[rv.stu]?.[pk] && TPL.pages[pk].skill !== 'speaking');
+    if (!pks.includes(rv.page)) rv.page = pks[0] || '';
+    selP.innerHTML = pks.map(pk => `<option value="${pk}">${esc(pageName(pk))}</option>`).join(''); selP.value = rv.page;
+    const sh = S.sheets[rv.stu]?.[rv.page];
+    if (!sh) { box.innerHTML = '<div class="empty">Học sinh này chưa có phiếu Reading / Listening.</div>'; return; }
+    const data = sh.pgk && sh.geo ? await idb.get(sh.pgk).catch(() => null) : null;
+    if (!data) { box.innerHTML = '<div class="empty">Phiếu này được quét trước khi app lưu ảnh nên không xem lại được cả phiếu. Xoá phiếu rồi quét lại để xem; các câu tô không chuẩn vẫn duyệt được ở tab bên cạnh.</div>'; rv.geo = null; return; }
+    const stu = stuByKey(rv.stu), p = TPL.pages[rv.page].skill;
+    const c = drawAnnotated(await loadImg(data), sh, p, { title: `${stu.name}  (${stu.code})  ·  ${S.cls}`, sub: `${S.testTitle}  ·  ${pageName(rv.page)}` });
+    c.style.cssText = 'width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:8px;touch-action:manipulation';
+    c.onclick = ev => rvTap(ev, c, sh, p);
+    box.innerHTML = ''; box.appendChild(c); rv.canvas = c; rv.geo = { sh, p, K: c.width / 210, bh: Math.round((c.width / 210) * 15.5) };
+    const edits = Object.values(sh.over || {}).filter(o => o.manual).length;
+    info.textContent = edits ? `Đã sửa ${edits} câu trên phiếu này.` : '';
+  }
+  function rvTap(ev, c, sh, p) {
+    const r = c.getBoundingClientRect(), k = c.width / r.width, g = rv.geo;
+    const x = (ev.clientX - r.left) * k / g.K, y = ((ev.clientY - r.top) * k - g.bh) / g.K;
+    let best = null;
+    for (const [q, opts] of Object.entries(sh.geo.m)) for (const [L, ox, oy] of opts) {
+      const d = Math.hypot(ox - x, oy - y); if (d <= Math.max(3, sh.geo.rb * 1.7) && (!best || d < best.d)) best = { q, L, d };
+    }
+    if (!best) return;
+    const { q, L } = best, o = sh.over[q], m = sh.mcq[q], key = KEY[p][q];
+    const was = o ? o.accept : (m.status === 'ok' ? m.answer : '');
+    if (!o && was === L) { $('#rvInfo').textContent = `Câu ${q}: app đã đọc là ${L} rồi, không cần sửa.`; return; }
+    if (o && o.manual && o.accept === L) delete sh.over[q];            // chạm lại ô đã sửa = trả về cách đọc của app
+    else sh.over[q] = { accept: L, manual: true };
+    const now = gradeQ(p, +q, sh);
+    $('#rvInfo').textContent = !sh.over[q] ? `Câu ${q}: đã trả về cách đọc của app (${now.chosen || 'bỏ trống'}).`
+      : `Câu ${q}: đổi ${was || 'bỏ trống'} → ${L} (đáp án ${key}) → ${L === key ? 'đúng' : 'sai'}. Chạm lại ô ${L} để hoàn tác.`;
+    save(); updateBadges();
+    const keep = $('#rvInfo').textContent; renderRvAll().then(() => { $('#rvInfo').textContent = keep; });
+  }
+  function rvReset() {
+    const sh = S.sheets[rv.stu]?.[rv.page]; if (!sh) return;
+    const n = Object.values(sh.over).filter(o => o.manual).length;
+    if (!n || !confirm(`Bỏ ${n} chỗ giáo viên đã sửa trên phiếu này và trả về cách đọc của app?`)) return;
+    for (const [q, o] of Object.entries(sh.over)) if (o.manual) delete sh.over[q];
+    save(); updateBadges(); renderRvAll();
+  }
+  function setRvTab(t) {
+    rv.tab = t;
+    document.querySelectorAll('#rvTabs button').forEach(b => b.classList.toggle('primary', b.dataset.t === t));
+    renderReview();
+  }
   function renderReview() {
+    $('#rvAll').hidden = rv.tab !== 'all'; $('#reviewList').hidden = rv.tab === 'all'; $('#rvHint').hidden = rv.tab === 'all';
+    if (rv.tab === 'all') { renderRvAll(); return; }
     const items = [];
     for (const s of students()) for (const pk of pagesOf(S.level)) {
       const sh = S.sheets[s.key]?.[pk]; if (!sh) continue;
@@ -784,14 +847,14 @@
     items.sort((a, b) => !!a.sh.over[a.q] - !!b.sh.over[b.q]);
     $('#reviewList').innerHTML = items.map((it, i) => {
       const o = it.sh.over[it.q], k = KEY[it.paper][it.q];
-      const why = it.m.status === 'multi' ? `Tô ${it.m.answer.length} ô (${it.m.answer.split('').join(', ')})` : `Tô không chuẩn ở ô ${it.m.answer}`;
+      const why = it.m.status === 'multi' ? `Tô ${it.m.answer.length} ô (${it.m.answer.split('').join(', ')})` : it.m.status === 'faint' ? `Có nét tô rất mờ ở ô ${it.m.answer} — app chưa chắc học sinh đã chọn` : `Tô không chuẩn ở ô ${it.m.answer}`;
       const state = !o ? '<span class="pill flag">Chưa duyệt — đang tính sai</span>'
         : o.accept ? `<span class="pill ${o.accept === k ? 'ok' : 'bad'}">Đã chấp nhận ${o.accept} → ${o.accept === k ? 'đúng' : 'sai'}</span>`
         : '<span class="pill bad">Giữ sai</span>';
       const acc = it.m.answer.split('').map(l => `<button class="btn small" data-i="${i}" data-a="${l}">Chấp nhận ${l}</button>`).join('');
       return `<div class="card ${o ? 'done' : ''}"><div class="meta"><span><b>${esc(it.s.name)}</b> · ${PAPER_SHORT[it.paper] === 'R' ? 'Reading' : 'Listening'} câu ${it.q} · đáp án ${k}</span>
         <span class="why">${why}</span></div><img src="${it.m.img}" alt="Ảnh câu ${it.q}">
-        <div class="acts">${state}<button class="btn small" data-i="${i}" data-a="">Giữ sai</button>${acc}</div></div>`;
+        <div class="acts">${state}<button class="btn small" data-i="${i}" data-a="">${it.m.status === 'faint' ? 'Coi là bỏ trống (sai)' : 'Giữ sai'}</button>${acc}</div></div>`;
     }).join('');
     $('#reviewList').querySelectorAll('[data-i]').forEach(b => b.onclick = () => {
       const it = items[+b.dataset.i]; it.sh.over[it.q] = { accept: b.dataset.a || null };
