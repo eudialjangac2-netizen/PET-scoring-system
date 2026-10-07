@@ -96,9 +96,19 @@
 
   <!-- 3. Duyệt -->
   <section class="view" id="v-review">
-    <h2>Duyệt câu tô không chuẩn</h2>
-    <p class="hint">Tick, dấu X, tô không kín, tô mờ hoặc tô 2 ô được tính <b>SAI</b>. Xem ảnh và quyết định giữ sai hay chấp nhận.</p>
+    <h2>Duyệt và xem lại bài</h2>
+    <div class="row" id="rvTabs" style="margin-bottom:12px">
+      <button class="btn primary" data-t="flag">Câu cần duyệt</button>
+      <button class="btn" data-t="all">Xem lại cả phiếu</button>
+    </div>
+    <p class="hint" id="rvHint">Tick, dấu X, tô không kín, <b>tô mờ</b> hoặc tô 2 ô được tính <b>SAI</b> cho đến khi giáo viên duyệt. Xem ảnh và quyết định giữ sai hay chấp nhận.</p>
     <div id="reviewList"></div>
+    <div id="rvAll" hidden>
+      <p class="hint">Xem lại phiếu của từng học sinh như app đã chấm: <b>xanh lá</b> đúng, <b>đỏ</b> sai, <b>vòng xanh lá</b> là đáp án đúng, <b>vàng</b> là tô chưa chuẩn hoặc tô mờ. Thấy app đọc sai thì <b>chạm vào ô học sinh đã tô</b> để sửa; chạm lại ô đó để hoàn tác (vòng xanh dương = giáo viên đã sửa).</p>
+      <div class="row" style="margin-bottom:10px"><select id="rvStu" style="flex:1;min-width:180px"></select><select id="rvPage"></select></div>
+      <div id="rvBox"></div>
+      <div class="row" style="margin-top:10px;align-items:center"><button class="btn small" id="rvReset">Bỏ các chỗ đã sửa (phiếu này)</button><span class="hint" id="rvInfo" style="margin:0"></span></div>
+    </div>
   </section>
 
   <!-- 4. Câu viết -->
@@ -233,8 +243,8 @@
 <script src="viet/nhap-may.js?v=20261002"></script>
 <script src="viet/phieu-trang.js?v=20261002"></script>
 <script src="viet/writing-report.js?v=20261001"></script>
-<script src="omr-engine.js?v=20261002"></script>
-<script src="cham-bai.js?v=20261006b"></script>
+<script src="omr-engine.js?v=20261007"></script>
+<script src="cham-bai.js?v=20261007"></script>
 <script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"></script>
 </body>
 </html>
