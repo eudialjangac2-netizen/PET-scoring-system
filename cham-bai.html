@@ -6,7 +6,7 @@
 <title>Chấm phiếu Cambridge — Ruby School</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="cham-bai.css?v=20261007">
+<link rel="stylesheet" href="cham-bai.css?v=20261008d">
 <link rel="stylesheet" href="viet/phieu-font.css">
 <link rel="stylesheet" href="viet/phieu-trang.css?v=20261007">
 <link rel="stylesheet" href="viet/writing-report.css?v=20261001">
@@ -190,6 +190,8 @@
     </div>
     <label class="hint noview" style="display:flex;gap:8px;align-items:center;margin:-4px 0 14px"><input type="checkbox" id="xPhieu" checked><span>Khi tải Excel, tải kèm <b>phiếu làm bài đã tô màu</b> (PDF) để giáo viên kiểm tra</span></label>
     <p class="hint" id="rpHint">Bấm <b>Phiếu</b> ở từng dòng để xem, tải hoặc gửi phiếu kết quả của một học sinh. Trong phiếu có thể <b>chọn kỹ năng</b> đưa vào (một kỹ năng bất kỳ hoặc tất cả). Học sinh chỉ cần có điểm ít nhất một kỹ năng, kể cả chỉ Writing hoặc chỉ Speaking nhập bằng JSON.</p>
+    <div class="tablewrap freeze"><table id="resTable"></table></div>
+    <div class="rescards" id="resCards"></div>
     <div class="card noview" style="margin:0 0 14px">
       <b>Chấm trên nhiều thiết bị?</b>
       <p class="hint" style="margin:6px 0 10px">Ví dụ quét Reading, Listening, Speaking bằng điện thoại và nhập Writing trên máy tính. Xuất dữ liệu ở một máy, nhập vào máy kia (cùng đề, cùng lớp) để phiếu báo điểm có đủ các kỹ năng. Nên gộp xong rồi mới bấm tải Excel hoặc sao lưu Google Sheet ở máy cuối.</p>
@@ -197,7 +199,6 @@
       <label class="btn" for="fileMerge">Nhập dữ liệu từ máy khác</label><input type="file" id="fileMerge" accept=".json,application/json" hidden></div>
       <div id="mergeMsg" style="margin-top:10px"></div>
     </div>
-    <div class="tablewrap freeze"><table id="resTable"></table></div>
     <button class="btn ghost noview" id="btnClear">Xoá toàn bộ kết quả của đề + lớp này</button>
   </section>
 </main>
@@ -267,7 +268,7 @@
 <script src="viet/phieu-trang.js?v=20261007b"></script>
 <script src="viet/writing-report.js?v=20261007"></script>
 <script src="omr-engine.js?v=20261008"></script>
-<script src="cham-bai.js?v=20261008c"></script>
+<script src="cham-bai.js?v=20261008d"></script>
 <script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"></script>
 </body>
 </html>
