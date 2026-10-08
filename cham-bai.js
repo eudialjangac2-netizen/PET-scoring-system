@@ -29,7 +29,7 @@
   const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   let saveTimer;
   const save = (dirty = true) => {
-    if (!S) return;
+    if (!S || S.view) return;   // chế độ xem của quản lý: không ghi gì vào máy
     if (dirty) S.dirty = true;
     const snap = S;
     clearTimeout(saveTimer);
@@ -71,7 +71,7 @@
     FILLR = await fetch('ly-do-cau-dien.json').then(r => r.ok ? r.json() : null).catch(() => null);   // lời khuyên theo lý do câu điền sai
     CFG = await fetch('cau-hinh.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
     CFG.on = /^https:\/\/script\.google\.com\//.test(CFG.sheetUrl || '');
-    $('#sheetBox').hidden = !CFG.on; $('#fileBox').open = !CFG.on;
+    $('#sheetBox').hidden = !CFG.on; $('#cloudBox').hidden = !(CFG.on && CFG.dongBoPhien !== false); $('#fileBox').open = !CFG.on;
     $('#tCode').value = lsGet('omr-tcode', '');
     bindSpeakingJson();
     $('#tCodeEye').onclick = () => {   // hiện / ẩn mã giáo viên
@@ -103,6 +103,12 @@
     $('#rvPage').onchange = e => { rv.page = e.target.value; renderRvAll(); };
     $('#rvReset').onclick = rvReset; $('#btnCsv').onclick = exportCsv;
     $('#btnClear').onclick = clearSession;
+    $('#btnMergeOut').onclick = exportData;
+    $('#btnSessions').onclick = listCloud; $('#viewExit').onclick = closeView;
+    $('#lkStu').onchange = e => { lk.stu = e.target.value; renderLook(); };
+    $('#lkPrev').onclick = () => { const o = [...$('#lkStu').options], i = o.findIndex(x => x.value === lk.stu); if (i > 0) { lk.stu = o[i - 1].value; renderLook(); window.scrollTo(0, 0); } };
+    $('#lkNext').onclick = () => { const o = [...$('#lkStu').options], i = o.findIndex(x => x.value === lk.stu); if (i < o.length - 1) { lk.stu = o[i + 1].value; renderLook(); window.scrollTo(0, 0); } };
+    $('#fileMerge').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) importData(f); };
     $('#btnScan').onclick = startScanner; $('#scanStop').onclick = stopScanner;
     document.addEventListener('visibilitychange', () => { if (document.hidden && cam.running) stopScanner(); });
     $('#reportClose').onclick = () => $('#reportModal').hidden = true;
@@ -119,7 +125,7 @@
     document.querySelectorAll('section.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
     document.querySelectorAll('[data-go]').forEach(b => b.setAttribute('aria-current', b.dataset.go === v));
     $('#dock').hidden = v !== 'scan';
-    ({ scan: renderScan, review: renderReview, write: renderWrite, writing: renderWriting, speaking: renderSpeaking, online: renderOnline, export: renderExport })[v]?.();
+    ({ scan: renderScan, review: renderReview, write: renderWrite, writing: renderWriting, speaking: renderSpeaking, online: renderOnline, export: renderExport, look: renderLook })[v]?.();
     window.scrollTo(0, 0);
   }
 
@@ -307,11 +313,13 @@
     const hist = list.map(h => ({ label: 'Mock ' + h.dot, s: h.s, overall: idsOf(h.s) === set ? avgOf(h.s, Object.keys(h.s)) : null }));
     return { prev: list[list.length - 1], hist, comparable: idsOf(list[list.length - 1].s) === set };
   }
-  async function pushResults(loud) {
+  async function pushResults(loud, only) {
     if (!CFG.on || syncing || !S) return;
     const code = lsGet('omr-tcode', '');
     if (!code) { if (loud) alert('Chưa có mã giáo viên. Nhập ở bước 1 để sao lưu lên Google Sheet.'); return; }
-    const { header, rows } = sheetRows();
+    if (cloudOn() && !S.view) await pullSession(!loud).catch(() => {});   // lấy phần máy khác đã sao lưu trước, tránh ghi đè mất kỹ năng
+    let { header, rows } = sheetRows();
+    if (only) rows = rows.filter(r => only.includes(r['Mã HS']));
     if (!rows.length) { if (loud) alert('Chưa có phiếu nào để sao lưu.'); return; }
     syncing = true; renderSync('Đang sao lưu…');
     try {
@@ -319,6 +327,7 @@
         body: JSON.stringify({ action: 'results', code, sheet: sheetTab(), header, rows }) }).then(x => x.json());
       if (!r.ok) throw new Error(r.error || 'Google Sheet từ chối');
       S.dirty = false; S.syncedAt = new Date().toISOString(); S.syncError = ''; save(false);
+      if (cloudOn()) await pushSession(loud);
     } catch (e) {
       S.syncError = String(e.message || e);
       if (loud) alert('Chưa sao lưu được: ' + S.syncError + '\nKết quả vẫn lưu trên máy; app sẽ thử lại khi có thay đổi.');
@@ -328,11 +337,202 @@
     const el = $('#syncStatus'); if (!el) return;
     if (!CFG.on || !S) { el.hidden = true; return; }
     el.hidden = false;
+    if (S.view && !msg) { el.hidden = false; el.innerHTML = `<span>Chế độ xem của quản lý: chỉ đọc. Nhận xét bạn sửa được lưu lên Google Sheet khi bấm "Lưu & cập nhật phiếu"${S.cloudErr ? ' (' + esc(S.cloudErr) + ')' : ''}.</span>`; return; }
     const txt = msg || (!lsGet('omr-tcode', '') ? 'Chưa nhập mã giáo viên — kết quả chỉ lưu trên máy này.'
       : !S.dirty && S.syncedAt ? `☁️ Đã sao lưu lên Google Sheet (tab "${sheetTab()}") lúc ${hhmm(new Date(S.syncedAt))}.`
       : S.syncedAt ? `Có thay đổi chưa sao lưu (lần trước: ${hhmm(new Date(S.syncedAt))}).` : 'Chưa sao lưu lên Google Sheet.');
-    el.innerHTML = `<span>${esc(txt)}</span>${msg ? '' : '<button class="btn small" id="btnPush">Sao lưu ngay</button>'}`;
+    const warn = !msg && lsGet('omr-tcode', '') && (S.dirty || !S.syncedAt) ? '<br><b>Kết quả chỉ được cập nhật lên Google Sheet khi sao lưu.</b> Hãy bấm "Sao lưu ngay" trước khi đổi máy hoặc để quản lý xem.' : '';
+    const cl = !msg && cloudOn() ? `<br><small>${S.cloudErr ? '⚠️ ' + esc(S.cloudErr) : S.cloudAt ? '☁️ Dữ liệu phiên (phiếu, Speaking, Writing) sao lưu lúc ' + hhmm(new Date(S.cloudAt)) + '.' : 'Dữ liệu phiên chưa sao lưu.'}</small>` : '';
+    el.innerHTML = `<span>${esc(txt)}${warn}${cl}</span>${msg ? '' : '<button class="btn small" id="btnPush">Sao lưu ngay</button>'}`;
     const b = $('#btnPush'); if (b) b.onclick = () => pushResults(true);
+  }
+
+
+  // ---------- Dữ liệu phiên trên Google Sheet (tab "_Phiên"): đổi thiết bị và quản lý xem lại ----------
+  // Chỉ thêm / ghi đè mục có giờ lưu mới hơn, không bao giờ xoá: xoá trên máy này không ảnh hưởng Google Sheet.
+  // Ảnh phiếu và nhận xét tự động không đồng bộ. Nhận xét / ưu tiên đã sửa tay thì đồng bộ (mục "cm").
+  const cloudOn = () => CFG.on && CFG.dongBoPhien !== false && !!lsGet('omr-tcode', '');
+  const sheetPost = body => fetch(CFG.sheetUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) }).then(x => x.json());
+  const CLOUD_OLD = 'Apps Script chưa cập nhật bản mới (thao tác putSession). Kết quả vẫn lưu bình thường; dùng "Xuất / Nhập dữ liệu" để chuyển giữa các máy.';
+  function cloudData(key, part) {   // dữ liệu một mục, đúng dạng gửi lên Sheet
+    if (part.startsWith('sheet:')) { const sh = (S.sheets[key] || {})[part.slice(6)]; if (!sh) return null; const c = { ...sh }; delete c.head; delete c.geo; delete c.pgk;   // bỏ ảnh (ảnh chỉ ở máy đã quét): chỉ giữ kết quả đọc
+      for (const f of ['mcq', 'write']) if (c[f]) { c[f] = {}; for (const [q, v] of Object.entries(sh[f])) { const o = { ...v }; delete o.img; c[f][q] = o; } }
+      return c; }
+    if (part === 'writing') return (S.writing || {})[key] || null;
+    if (part === 'speaking') return (S.speaking || {})[key] || null;
+    if (part === 'online') return (S.online || {})[key] || null;
+    if (part === 'cm') return (S.cmAt || {})[key] ? { comment: S.comments[key], priorities: (S.priorities || {})[key], pick: (S.pick || {})[key] } : null;
+    return null;
+  }
+  function cloudItems() {   // mọi mục hiện có trên máy, kèm giờ lưu; mục đổi nội dung kể từ lần trước thì giờ lưu = bây giờ
+    const cache = (S.cloud ||= {}), out = [];
+    const keys = new Set([...Object.keys(S.sheets || {}), ...Object.keys(S.writing || {}), ...Object.keys(S.speaking || {}), ...Object.keys(S.online || {}), ...Object.keys(S.cmAt || {})]);
+    const add = (key, part, nat, fixed) => {
+      const data = cloudData(key, part); if (data == null) return;
+      const k = key + '|' + part, j = JSON.stringify(data), c = cache[k];
+      let at; if (fixed) at = nat; else if (!c) at = nat || 1; else if (c.j === j) at = c.at; else at = Date.now();
+      if (!c || c.j !== j || c.at !== at) cache[k] = { j, at, sent: false };
+      out.push({ k, key, part, at, json: j, sent: cache[k].sent });
+    };
+    for (const key of keys) {
+      for (const pk of Object.keys(S.sheets[key] || {})) add(key, 'sheet:' + pk, +S.sheets[key][pk].at || 1);
+      add(key, 'writing', +((S.writing || {})[key] || {}).at || 1); add(key, 'speaking', +((S.speaking || {})[key] || {}).at || 1);
+      add(key, 'online', 1, true); add(key, 'cm', +(S.cmAt || {})[key] || 0, true);
+    }
+    return out;
+  }
+  function cloudMeta() {
+    const ids = String(S.test).split('+');
+    return { id: S.id, mode: S.mode, label: S.label, dot: S.dot, test: S.test, tid: ids[0], tidL: ids[1] || ids[0], testTitle: S.testTitle, mixed: !!S.mixed, level: S.level, cls: S.cls, writeDone: S.writeDone || {} };
+  }
+  async function pushSession(loud, onlyParts) {
+    if (!cloudOn() || !S) return;
+    try {
+      const items = cloudItems().filter(i => !i.sent && (!onlyParts || onlyParts.includes(i.part)));
+      if (!items.length) { S.cloudErr = ''; return; }
+      const wire = items.map(i => ({ key: i.key, part: i.part, at: i.at, json: i.json }));
+      if (!S.view) wire.push({ key: '', part: 'meta', at: Date.now(), json: JSON.stringify(cloudMeta()) });
+      const r = await sheetPost({ action: 'putSession', code: lsGet('omr-tcode', ''), session: { id: S.id, cls: S.cls, level: S.level }, items: wire });
+      if (!r.ok) throw new Error(/hợp lệ/.test(r.error || '') ? CLOUD_OLD : (r.error || 'Google Sheet từ chối'));
+      const skip = new Set(r.skipped || []);
+      items.forEach(i => { if (!skip.has(i.key + '|' + i.part) && S.cloud[i.k]) S.cloud[i.k].sent = true; });
+      S.cloudAt = new Date().toISOString(); S.cloudErr = skip.size ? `${skip.size} mục quá dài nên chưa sao lưu được.` : '';
+      save(false);
+    } catch (e) {
+      S.cloudErr = String(e.message || e);
+      if (loud) alert('Chưa sao lưu được dữ liệu phiên: ' + S.cloudErr);
+    } finally { renderSync(); }
+  }
+  let pulledAt = 0;
+  async function pullSession(quiet) {
+    if (!cloudOn() || !S) return 0;
+    if (quiet && Date.now() - pulledAt < 15000) return 0;
+    pulledAt = Date.now();
+    let n = 0;
+    try {
+      const r = await sheetPost({ action: 'getSession', code: lsGet('omr-tcode', ''), id: S.id, cls: S.cls });
+      if (!r.ok) throw new Error(/hợp lệ/.test(r.error || '') ? CLOUD_OLD : (r.error || 'Google Sheet từ chối'));
+      const local = {}; if (!S.view) cloudItems().forEach(i => { local[i.k] = i; });
+      for (const it of r.items) {
+        if (it.part === 'meta') { try { Object.assign(S.writeDone, JSON.parse(it.json).writeDone || {}); } catch {} continue; }
+        if (!it.key || !stuByKey(it.key)) continue;
+        const k = it.key + '|' + it.part, l = local[k];
+        if (l && !(it.at > l.at)) continue;
+        let d; try { d = JSON.parse(it.json); } catch { continue; }
+        if (it.part.startsWith('sheet:')) {
+          const pk = it.part.slice(6), old = (S.sheets[it.key] ||= {})[pk];
+          if (old && +old.at === +d.at) {   // cùng một lần quét: giữ ảnh đang có trên máy này (mục đồng bộ không kèm ảnh)
+            for (const f of ['head', 'geo', 'pgk']) if (old[f]) d[f] = old[f];
+            for (const f of ['mcq', 'write']) for (const q of Object.keys(d[f] || {})) if (old[f] && old[f][q] && old[f][q].img) d[f][q].img = old[f][q].img;
+          } else if (old && old.pgk) idb.del(old.pgk).catch(() => {});
+          S.sheets[it.key][pk] = d;
+        }
+        else if (it.part === 'writing') S.writing[it.key] = d;
+        else if (it.part === 'speaking') S.speaking[it.key] = d;
+        else if (it.part === 'online') (S.online ||= {})[it.key] = d;
+        else if (it.part === 'cm') { S.comments[it.key] = d.comment; (S.priorities ||= {})[it.key] = d.priorities; if (d.pick) (S.pick ||= {})[it.key] = d.pick; (S.cmAt ||= {})[it.key] = it.at; }
+        else continue;
+        (S.cloud ||= {})[k] = { j: JSON.stringify(cloudData(it.key, it.part)), at: it.at, sent: true }; n++;
+      }
+      S.cloudErr = '';
+      if (n) { save(); renderRoster(); renderUnknown(); updateBadges(); }
+    } catch (e) { S.cloudErr = String(e.message || e); if (!quiet) alert('Chưa lấy được dữ liệu từ Google Sheet: ' + S.cloudErr); }
+    renderSync();
+    return n;
+  }
+  // nhận xét / ưu tiên / kỹ năng đưa vào phiếu vừa được sửa → ghi giờ sửa; quản lý (chế độ xem) thì lưu thẳng lên Sheet
+  const viewDirty = new Set(); let viewTimer;
+  function touchCm(key) {
+    (S.cmAt ||= {})[key] = Date.now();
+    if (!S.view) return;
+    viewDirty.add(key); clearTimeout(viewTimer);
+    viewTimer = setTimeout(async () => {
+      const keys = [...viewDirty]; viewDirty.clear();
+      await pushSession(true, ['cm']);
+      await pushResults(false, keys.map(k => (stuByKey(k) || {}).code).filter(Boolean));
+    }, 600);
+  }
+
+  // ---------- danh sách phiên trên Sheet + chế độ xem của quản lý ----------
+  const isAdmin = () => !!lsGet('omr-teacher', {}).admin;
+  async function listCloud() {
+    const box = $('#sessList'); box.innerHTML = '<p class="hint">Đang lấy danh sách…</p>';
+    try {
+      const r = await sheetPost({ action: 'listSessions', code: lsGet('omr-tcode', '') });
+      if (!r.ok) throw new Error(/hợp lệ/.test(r.error || '') ? CLOUD_OLD : (r.error || 'Google Sheet từ chối'));
+      const list = r.sessions.map(s => { let m = {}; try { m = JSON.parse(s.json); } catch {} return { ...s, m }; }).filter(s => s.m.level);
+      box.innerHTML = list.length ? list.map((s, i) => `<div class="card"><div><b>${esc(s.m.testTitle || s.id)}</b> · ${s.m.mode === 'daily' ? 'Hằng ngày' + (s.m.label ? ' (' + esc(s.m.label) + ')' : '') : 'Mock ' + esc(s.m.dot)} · ${esc(s.cls)}</div>
+          <div class="hint" style="margin:4px 0 8px">${s.students} học sinh · giáo viên ${esc(s.who)} · cập nhật ${new Date(s.at).toLocaleString('vi-VN')}</div>
+          <div class="row">${isAdmin() ? `<button class="btn small primary" data-sv="${i}">Xem bài (chỉ đọc)</button>` : ''}<button class="btn small" data-su="${i}">Chọn để chấm tiếp</button></div></div>`).join('')
+        : '<p class="hint">Chưa có phiên nào được sao lưu lên Google Sheet.</p>';
+      box.querySelectorAll('[data-sv]').forEach(b => b.onclick = () => openView(list[+b.dataset.sv]));
+      box.querySelectorAll('[data-su]').forEach(b => b.onclick = () => useSession(list[+b.dataset.su]));
+    } catch (e) { box.innerHTML = `<div class="notice err">${esc(e.message || e)}</div>`; }
+  }
+  function useSession(s) {   // điền sẵn lớp / đề / đợt ở bước 1 để chấm tiếp trên máy này
+    const m = s.m;
+    if (!rosters()[s.cls]) { alert('Máy này chưa có danh sách lớp ' + s.cls + '. Bấm "Cập nhật danh sách lớp" rồi thử lại.'); return; }
+    setMode(m.mode === 'daily' ? 'daily' : 'mock');
+    $('#selClass').value = s.cls; fillTests();
+    $('#selTest').value = m.tid || String(m.test).split('+')[0];
+    const mixed = !!m.mixed; $('#mixOn').checked = mixed; setMix(); if (mixed) $('#selTestL').value = m.tidL;
+    if (m.dot) $('#selDot').value = m.dot; if (m.label) $('#dayLabel').value = m.label;
+    $('#btnStart').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    alert('Đã chọn sẵn lớp và đề của phiên này. Bấm "Bắt đầu chấm"; dữ liệu trên Google Sheet được lấy về khi bạn sao lưu hoặc xuất kết quả.');
+  }
+  async function openView(s) {
+    const m = s.m, R = rosters()[s.cls];
+    if (!R) { alert('Máy này chưa có danh sách lớp ' + s.cls + '. Bấm "Cập nhật danh sách lớp" rồi thử lại.'); return; }
+    const ids = String(m.test).split('+'), t = TESTS.find(x => x.id === ids[0]), tL = TESTS.find(x => x.id === (ids[1] || ids[0]));
+    if (!t || !tL || !LV[m.level]) { alert('Đề của phiên này không có trong kho đề của app.'); return; }
+    const loadKey = tt => fetch('de-thi/' + tt.file).then(r => r.json());
+    const KR = await loadKey(t), KL = ids[1] ? await loadKey(tL) : KR;
+    KEY = ids[1] ? { ...KR, listening: KL.listening } : KR;
+    S = { id: s.id, mode: m.mode || 'mock', label: m.label || '', dot: m.dot, test: m.test, testTitle: m.testTitle, mixed: !!m.mixed, level: m.level, cls: s.cls,
+      sheets: {}, unknown: [], writeDone: m.writeDone || {}, comments: {}, priorities: {}, writing: {}, speaking: {}, online: {}, view: true, grader: s.who };
+    document.documentElement.style.setProperty('--ruby', LV[S.level].mau);
+    document.body.classList.add('view-mode');
+    $('#ctx').textContent = `XEM · ${S.testTitle}${isDaily() ? ' · Hằng ngày' : ` · Mock ${S.dot}`} · ${S.cls}`;
+    $('#viewWho').textContent = `Giáo viên chấm: ${s.who}`;
+    pulledAt = 0; const n = await pullSession(false);
+    loadHistory(); lk.stu = '';
+    if (!n) alert('Phiên này chưa có dữ liệu học sinh trên Google Sheet.');
+    go('look');
+  }
+  function closeView() {
+    S = null; document.body.classList.remove('view-mode'); $('#ctx').textContent = ''; go('setup');
+  }
+  // ---------- "Xem bài": lướt từng học sinh như giáo viên đã chấm (không có ảnh phiếu) ----------
+  const lk = { stu: '' };
+  function renderLook() {
+    const rs = results().filter(r => r.any), L = lvl();
+    if (!rs.length) { $('#lkBody').innerHTML = '<div class="empty">Chưa có học sinh nào có bài.</div>'; $('#lkStu').innerHTML = ''; return; }
+    if (!rs.some(r => r.s.key === lk.stu)) lk.stu = rs[0].s.key;
+    $('#lkStu').innerHTML = rs.map(r => `<option value="${r.s.key}">${esc(r.s.name)} (${esc(r.s.code)})</option>`).join(''); $('#lkStu').value = lk.stu;
+    const i = rs.findIndex(r => r.s.key === lk.stu), r = rs[i];
+    $('#lkPrev').disabled = i <= 0; $('#lkNext').disabled = i >= rs.length - 1;
+    let h = `<h3 style="margin:8px 0">${esc(r.s.name)} <small class="hint">${esc(r.s.code)} · ${esc(r.s.vh)}</small></h3>`;
+    for (const sec of L.phan) {
+      const g = r.secs[sec.id], p = sec.giay;
+      h += `<div class="card"><b>${esc(sec.ten)}</b> ${g ? (g.incomplete ? '<span class="hint">chưa đủ trang</span>' : `<b>${g.raw}/${g.max}</b> · ${isDaily() ? pctTxt(g.raw, g.max) : 'thang ' + esc(scaleText(g.scale)) + ' · ' + esc(g.cefr)}`) : '<span class="hint">chưa có bài</span>'}`;
+      if (g && !g.incomplete) {
+        h += '<div class="lkgrid">' + secQs(S.level, sec).map(q => {
+          const it = r.items[p].find(x => x && x.q === q); if (!it) return '';
+          const sh = (S.sheets[r.s.key] || {})[QMAP[S.level][p][q].page], ed = sh && sh.over && sh.over[q];
+          const cls = it.flag ? 'warn' : it.ok ? 'ok' : 'bad', ans = it.type === 'write' ? it.shown : (it.chosen || '—') + (it.ok ? '' : '→' + (it.key || (KEY[p] || {})[q] || '?'));
+          return `<span class="lk ${cls}${ed ? ' edit' : ''}" title="${ed ? 'Giáo viên đã sửa' : ''}">${q}<small>${esc(ans)}</small></span>`;
+        }).join('') + '</div><p class="hint" style="margin:6px 0 0">Xanh: đúng · Đỏ: sai (học sinh chọn → đáp án) · Vàng: chưa duyệt · Viền xanh dương: giáo viên đã sửa</p>';
+      }
+      h += '</div>';
+    }
+    const w = writingOf(r.s);
+    if (w) h += `<div class="card"><b>Writing</b> ${w.total.raw}/${w.total.raw_max} · thang ${esc(wrScaleText(w))}` + (w.parts || []).map(pt => `<details style="margin-top:8px"><summary><b>Part ${pt.part}</b> · ${pt.raw}/${pt.raw_max} · ${pt.word_count || '?'} từ — ${esc(pt.short_comment || pt.general_feedback || '')}</summary>
+      <div class="hint" style="margin:6px 0">${(pt.criteria || []).map(c => `${esc(c.id)}: ${c.band}/${c.max}`).join(' · ')}</div><div style="white-space:pre-wrap;font-size:14px">${esc(pt.text || '')}</div></details>`).join('') + '</div>';
+    const sp = (S.speaking || {})[r.s.key];
+    if (sp) { const v = spVals(r); h += `<div class="card"><b>Speaking</b> ${v[0] === '' ? '' : v[0] + '/' + v[1] + ' · ' + (isDaily() ? '' : 'thang ') + esc(String(v[2]))}<div class="hint" style="margin-top:6px">${Object.entries(sp.bands || {}).map(([c, b]) => `${esc(c)}: ${b}`).join(' · ')}${sp.weakPart ? ' · Part yếu: ' + esc([].concat(sp.weakPart).join(', ')) : ''}</div></div>`; }
+    if (!isDaily()) h += '<div class="row" style="margin-top:12px"><button class="btn primary" id="lkRp">Xem phiếu báo điểm và sửa nhận xét</button></div>';
+    $('#lkBody').innerHTML = h;
+    const rp = $('#lkRp'); if (rp) rp.onclick = () => studentReport(r.s.key);
   }
 
   // ---------- phiên chấm ----------
@@ -361,6 +561,7 @@
     $('#ctx').textContent = `${S.testTitle}${isDaily() ? ' · Hằng ngày' + (S.label ? ` (${S.label})` : '') : ` · Mock ${S.dot}`} · ${cls}`;
     loadHistory();
     go('scan');
+    pulledAt = 0; pullSession(true);   // phiên đã có trên Google Sheet (chấm ở máy khác) thì lấy về
   }
   const students = () => rosters()[S.cls]?.students || [];
   const stuByKey = k => students().find(s => s.key === k);
@@ -853,7 +1054,7 @@
         : '<span class="pill bad">Giữ sai</span>';
       const acc = it.m.answer.split('').map(l => `<button class="btn small" data-i="${i}" data-a="${l}">Chấp nhận ${l}</button>`).join('');
       return `<div class="card ${o ? 'done' : ''}"><div class="meta"><span><b>${esc(it.s.name)}</b> · ${PAPER_SHORT[it.paper] === 'R' ? 'Reading' : 'Listening'} câu ${it.q} · đáp án ${k}</span>
-        <span class="why">${why}</span></div><img src="${it.m.img}" alt="Ảnh câu ${it.q}">
+        <span class="why">${why}</span></div>${it.m.img ? `<img src="${it.m.img}" alt="Ảnh câu ${it.q}">` : '<div class="hint">Ảnh chỉ có ở máy đã quét phiếu.</div>'}
         <div class="acts">${state}<button class="btn small" data-i="${i}" data-a="">${it.m.status === 'faint' ? 'Coi là bỏ trống (sai)' : 'Giữ sai'}</button>${acc}</div></div>`;
     }).join('');
     $('#reviewList').querySelectorAll('[data-i]').forEach(b => b.onclick = () => {
@@ -898,7 +1099,7 @@
       <div class="wgrid">${items.map((it, i) => { const wrong = writeMarks(p, q, it.w) < weightOf(secOfQ(S.level, p, q), QMAP[S.level][p][q].part);
         return `<div class="wcell ${cls(it.w)}"><button type="button" class="wtog" data-i="${i}">
         <div class="who"><span>${esc(it.s.name)}</span><span>${label(it.w)}${it.w.blank ? ' · bỏ trống' : ''}</span></div>
-        <img src="${it.w.img}" alt="Câu trả lời của ${esc(it.s.name)}"></button>
+        ${it.w.img ? `<img src="${it.w.img}" alt="Câu trả lời của ${esc(it.s.name)}">` : '<span class="hint">Ảnh chỉ có ở máy đã quét phiếu.</span>'}</button>
         ${wrong ? `<select class="wreason" data-i="${i}" aria-label="Lý do sai"><option value="">Lý do: điền chưa đúng</option>${WRITE_REASONS.map(r => `<option${effReason(it.w) === r ? ' selected' : ''}>${r}</option>`).join('')}</select>` : ''}</div>`; }).join('')}</div>
       <div class="row" style="margin-top:14px"><button class="btn primary" id="wDone">${S.writeDone[curWrite] ? 'Đã xong ✓ — sang câu tiếp' : 'Xong câu này'}</button></div>`;
     $('#wBody').querySelectorAll('.wtog').forEach(b => b.onclick = () => {
@@ -1019,8 +1220,7 @@
     const d = r.data;
     if (d.level !== S.level) return { ok: false, html: wrBox('err', `${pre}JSON là bài ${esc(d.level)}, nhưng lớp này chấm ${esc(S.level)}.`) };
     const warn = r.canhBao.length ? '<br>Cảnh báo số liệu: ' + r.canhBao.map(esc).join(' ') : '';
-    if (d.test && d.test.id && !String(S.test).split('+').includes(d.test.id) && !confirm(`${label || 'JSON'}: test.id là "${d.test.id}" nhưng đề đang chấm là "${S.test}". Vẫn lưu?`))
-      return { ok: false, html: wrBox('warn', pre + 'Đã huỷ vì khác mã đề.') };
+    // mã đề trong JSON (nếu có) chỉ để tham khảo: đề Writing / Speaking không nằm trong de-thi nên không cần khớp với đề đang chấm
     const stu = wrFindStudent(d.student && d.student.id);
     if (!stu) {
       if (!allowPick) return { ok: false, html: wrBox('warn', `${pre}không tìm thấy học sinh có mã "${esc(d.student.id)}" trong lớp. Hãy dán riêng file này để chọn học sinh.`) };
@@ -1312,6 +1512,7 @@
   const pctTxt = (a, b) => b ? Math.round(100 * a / b) + '%' : '';
   function renderExport() {
     renderSync();
+    if (S && !S.view) pullSession(true).then(n => { if (n) renderExport(); });   // lấy phần máy khác đã sao lưu (nếu có) trước khi xem / xuất
     const w = warnings(), L = lvl(), daily = isDaily(), sp = hasSpeaking();
     $('#exportWarn').innerHTML = (w.length ? `<div class="notice warn">${w.map(esc).join('<br>')}</div>` : '')
       + (HIST_ERR && !daily ? `<div class="notice info">Chưa đọc được điểm các đợt Mock trước (${esc(HIST_ERR)}). Phiếu báo điểm hiện như đợt đầu, chưa có mũi tên tăng giảm.</div>` : '');
@@ -1342,6 +1543,58 @@
   function download(blob, name) {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+
+  // ---------- gộp dữ liệu giữa các thiết bị ----------
+  // Dữ liệu chấm nằm trong trình duyệt của từng máy. Máy A xuất file dữ liệu, máy B nhập vào: phiếu Reading/Listening, Speaking, Writing,
+  // nhận xét của từng học sinh được ghép lại. Cùng một mục có ở cả hai máy thì lấy bản mới hơn (theo giờ lưu). Ảnh phiếu không kèm theo.
+  function exportData() {
+    if (!S) { alert('Hãy mở phiên chấm trước.'); return; }
+    const copy = JSON.parse(JSON.stringify(S));
+    for (const st of Object.values(copy.sheets || {})) for (const sh of Object.values(st)) delete sh.pgk;
+    delete copy.dirty; delete copy.syncedAt; delete copy.syncError;
+    const pack = { app: 'cham-pet', v: 1, id: S.id, test: S.testTitle, cls: S.cls, exportedAt: new Date().toISOString(), S: copy };
+    const n = Object.keys(S.sheets).length, w = Object.keys(S.writing || {}).length, sp = Object.keys(S.speaking || {}).length;
+    download(new Blob([JSON.stringify(pack)], { type: 'application/json' }), `du-lieu_${(S.test + '_' + S.cls).replace(/[^\w.-]+/g, '-')}_${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.json`);
+    $('#mergeMsg').innerHTML = `<div class="notice info">Đã tải file dữ liệu: ${n} học sinh có phiếu Reading/Listening, ${sp} có Speaking, ${w} có Writing. Chuyển file sang máy kia (Zalo, Drive, email) rồi bấm "Nhập dữ liệu từ máy khác".</div>`;
+  }
+  function mergeData(pack) {
+    if (!pack || pack.app !== 'cham-pet' || !pack.S) throw new Error('Đây không phải file dữ liệu xuất từ app chấm bài.');
+    const inc = pack.S;
+    if (inc.id !== S.id) throw new Error(`File này thuộc phiên "${pack.test} · ${pack.cls}", còn máy này đang mở "${S.testTitle} · ${S.cls}". Hãy mở đúng đề và lớp ở bước 1 rồi nhập lại.`);
+    const st = { add: 0, upd: 0, keep: 0, skip: 0 }, ts = o => (o && +o.at) || 0;
+    const take = (loc, inn, onNew) => {
+      if (!loc) { st.add++; onNew && onNew(); return inn; }
+      if (ts(inn) > ts(loc)) { st.upd++; onNew && onNew(loc); return inn; }
+      st.keep++; return loc;
+    };
+    const inRoster = k => !!stuByKey(k);
+    for (const [key, pages] of Object.entries(inc.sheets || {})) {
+      if (!inRoster(key)) { st.skip++; continue; }
+      const dst = (S.sheets[key] ||= {});
+      for (const [pk, sh] of Object.entries(pages)) dst[pk] = take(dst[pk], sh, old => { if (old && old.pgk) idb.del(old.pgk).catch(() => {}); });
+    }
+    for (const f of ['writing', 'speaking']) {
+      S[f] = S[f] || {};
+      for (const [key, v] of Object.entries(inc[f] || {})) { if (!inRoster(key)) { st.skip++; continue; } S[f][key] = take(S[f][key], v); }
+    }
+    for (const f of ['comments', 'priorities', 'pick', 'online']) {
+      S[f] = S[f] || {};
+      for (const [key, v] of Object.entries(inc[f] || {})) if (inRoster(key) && S[f][key] === undefined) S[f][key] = v;
+    }
+    for (const k of Object.keys(inc.writeDone || {})) if (inc.writeDone[k]) S.writeDone[k] = true;
+    const have = new Set((S.unknown || []).map(u => String(u.id)));
+    for (const u of inc.unknown || []) if (!have.has(String(u.id))) S.unknown.push(u);
+    return st;
+  }
+  async function importData(file) {
+    const box = $('#mergeMsg');
+    try {
+      if (!S) throw new Error('Hãy mở phiên chấm (bước 1) đúng đề và lớp trước khi nhập.');
+      const st = mergeData(JSON.parse(await file.text()));
+      save(); renderRoster(); renderUnknown(); updateBadges(); renderExport();
+      box.innerHTML = `<div class="notice info">Đã gộp: thêm mới ${st.add}, cập nhật bản mới hơn ${st.upd}, giữ nguyên bản trên máy này ${st.keep}${st.skip ? `, bỏ qua ${st.skip} mục của học sinh không có trong lớp` : ''}. Phiếu quét ở máy kia chưa có ảnh nên không xem lại cả phiếu ở máy này được; kết quả và phiếu báo điểm vẫn đầy đủ.</div>`;
+    } catch (e) { box.innerHTML = `<div class="notice err">${esc(e.message || e)}</div>`; }
   }
   function confirmWarn() { const w = warnings(); return !w.length || confirm('Lưu ý:\n' + w.join('\n') + '\n\nVẫn tiếp tục?'); }
 
@@ -1690,20 +1943,14 @@
     const wrong = [];
     for (const sec of L.phan) {
       const g = r.secs[sec.id]; if (!g || g.incomplete || !sel.has(sec.id)) continue;
-      const items = g.items.filter(i => !i.ok).map(i => {
-        const key = i.key ?? [].concat(KEY[sec.giay][i.q]).join(' / ');
-        const what = i.type === 'write' ? (i.shown === '' ? 'blank' : i.marks > 0 ? `${i.marks}/${i.maxMarks}` : (i.reason || 'incorrect')) : (i.bad && !i.chosen ? 'mark unclear' : (i.chosen || 'blank'));
-        return `Q${i.q}: ${what}, ${key}`;
-      });
-      const nCards = causes.length + (sel.has('speaking') && (S.speaking || {})[r.s.key] ? 1 : 0), cap = nCards >= 5 ? 4 : nCards >= 4 ? 10 : 16;
-      const shown = items.slice(0, cap); if (items.length > cap) shown.push(`+${items.length - cap} more`);
-      wrong.push({ skill: sec.id, name: sec.ten, items: shown.length ? shown : ['No wrong answers'] });
+      const nums = g.items.filter(i => !i.ok).map(i => 'Q' + i.q);   // chỉ ghi số câu sai: luôn gọn, không tràn trang
+      wrong.push({ skill: sec.id, name: sec.ten, count: nums.length, items: nums.length ? [nums.join(', ')] : ['No wrong answers'] });
     }
     const hp = isDaily() ? null : histFor(r.s.code, skills);   // đợt Mock trước (nếu có) → mũi tên ▲▼ và biểu đồ tiến bộ
     if (hp) skills.forEach(k => { k.d = k.scale != null && hp.prev.s[k.id] != null ? k.scale - hp.prev.s[k.id] : null; });
     const od = hp && hp.comparable && ov != null ? ov - avgOf(hp.prev.s, Object.keys(hp.prev.s)) : null;
     const m = {
-      first: !hp, level: S.level, exam: S.testTitle, date: day,
+      first: !hp, level: S.level, exam: S.testTitle, date: day, mockNo: isDaily() ? '' : (S.dot || (hp ? hp.hist.length + 1 : 1)), monthYear: new Date(dates.length ? Math.max(...dates) : Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
       student: { name: r.s.name, id: r.s.code, cls: r.s.vh },
       skills, overall: { scale: ov, d: od, partial: sc.length < skills.length || sel.size < allSkillIds().length },
       history: [...(hp ? hp.hist : []), { label: 'Mock ' + (S.dot || (hp ? hp.hist.length + 1 : 1)), s: s1, overall: ov }],
@@ -1851,6 +2098,7 @@
       (S.pick ||= {})[key] = ids2;
       S.comments[key] = cm === oldAutoC ? suggestComment(r, nsel) : cm;
       (S.priorities ||= {})[key] = pr.join('\n') === oldAutoP ? suggestPriorities(r, nsel) : pr;
+      touchCm(key);
       save(); studentReport(key, true);
     };
     boxes.forEach(x => { x.onchange = () => { syncAll(); applyPick(boxes.filter(b => b.checked).map(b => b.dataset.sk)); }; });
@@ -1858,7 +2106,7 @@
     $('#pkScored').onclick = () => applyPick(scored);
     $('#reportComment').oninput = $('#reportPriorities').oninput = updateCounts; updateCounts();
     $('#reportSuggest').onclick = () => { $('#reportComment').value = suggestComment(r, sel); $('#reportPriorities').value = suggestPriorities(r, sel).join('\n'); updateCounts(); };
-    $('#reportUpdate').onclick = () => { S.comments[key] = $('#reportComment').value.trim(); (S.priorities ||= {})[key] = lines($('#reportPriorities').value); save(); studentReport(key, true); };
+    $('#reportUpdate').onclick = () => { S.comments[key] = $('#reportComment').value.trim(); (S.priorities ||= {})[key] = lines($('#reportPriorities').value); touchCm(key); save(); studentReport(key, true); };
     busy('Đang tạo phiếu kết quả…');
     try {
       await ensureLibs();
