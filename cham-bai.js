@@ -351,11 +351,13 @@
   // ---------- Dữ liệu phiên trên Google Sheet (tab "_Phiên"): đổi thiết bị và quản lý xem lại ----------
   // Chỉ thêm / ghi đè mục có giờ lưu mới hơn, không bao giờ xoá: xoá trên máy này không ảnh hưởng Google Sheet.
   // Ảnh phiếu và nhận xét tự động không đồng bộ. Nhận xét / ưu tiên đã sửa tay thì đồng bộ (mục "cm").
+  // xoá một mục trên máy này: ghi nhớ giờ xoá để bản cũ trên Google Sheet không bị trả về máy (Google Sheet vẫn giữ nguyên, quét / nhập lại sẽ ghi đè)
+  function tomb(key, part) { (S.cloudDel ||= {})[key + '|' + part] = Date.now(); if (S.cloud) delete S.cloud[key + '|' + part]; }
   const cloudOn = () => CFG.on && CFG.dongBoPhien !== false && !!lsGet('omr-tcode', '');
   const sheetPost = body => fetch(CFG.sheetUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) }).then(x => x.json());
   const CLOUD_OLD = 'Apps Script chưa cập nhật bản mới (thao tác putSession). Kết quả vẫn lưu bình thường; dùng "Xuất / Nhập dữ liệu" để chuyển giữa các máy.';
   function cloudData(key, part) {   // dữ liệu một mục, đúng dạng gửi lên Sheet
-    if (part.startsWith('sheet:')) { const sh = (S.sheets[key] || {})[part.slice(6)]; if (!sh) return null; const c = { ...sh }; delete c.head; delete c.geo; delete c.pgk;   // bỏ ảnh (ảnh chỉ ở máy đã quét): chỉ giữ kết quả đọc
+    if (part.startsWith('sheet:')) { const sh = (S.sheets[key] || {})[part.slice(6)]; if (!sh) return null; const c = { ...sh }; delete c.head; delete c.geo; delete c.pgk; delete c.fromCloud;   // bỏ ảnh (ảnh chỉ ở máy đã quét): chỉ giữ kết quả đọc
       for (const f of ['mcq', 'write']) if (c[f]) { c[f] = {}; for (const [q, v] of Object.entries(sh[f])) { const o = { ...v }; delete o.img; c[f][q] = o; } }
       return c; }
     if (part === 'writing') return (S.writing || {})[key] || null;
@@ -416,7 +418,8 @@
       for (const it of r.items) {
         if (it.part === 'meta') { try { Object.assign(S.writeDone, JSON.parse(it.json).writeDone || {}); } catch {} continue; }
         if (!it.key || !stuByKey(it.key)) continue;
-        const k = it.key + '|' + it.part, l = local[k];
+        const k = it.key + '|' + it.part, l = local[k], td = (S.cloudDel || {})[k];
+        if (td && it.at <= td) continue;   // đã xoá trên máy này sau lần lưu đó
         if (l && !(it.at > l.at)) continue;
         let d; try { d = JSON.parse(it.json); } catch { continue; }
         if (it.part.startsWith('sheet:')) {
@@ -425,6 +428,7 @@
             for (const f of ['head', 'geo', 'pgk']) if (old[f]) d[f] = old[f];
             for (const f of ['mcq', 'write']) for (const q of Object.keys(d[f] || {})) if (old[f] && old[f][q] && old[f][q].img) d[f][q].img = old[f][q].img;
           } else if (old && old.pgk) idb.del(old.pgk).catch(() => {});
+          if (!d.pgk) d.fromCloud = true;   // phiếu lấy từ Google Sheet: không có ảnh
           S.sheets[it.key][pk] = d;
         }
         else if (it.part === 'writing') S.writing[it.key] = d;
@@ -779,10 +783,11 @@
   function assign(key, page, sheet, auto) {
     const stu = stuByKey(key);
     S.sheets[key] = S.sheets[key] || {};
-    if (S.sheets[key][page] && auto)
+    const old = S.sheets[key][page], restored = !!old && old.fromCloud && !old.pgk;   // bản lấy từ Google Sheet (không ảnh): quét lại thì thay luôn
+    if (old && auto && !restored)
       return { cls: 'q-err', dup: true, html: `Đã có phiếu ${esc(pageName(page))} của ${esc(stu.name)} — bỏ qua. Muốn quét lại thì xoá phiếu cũ trước.`,
         short: `Đã có ${pageShort(page)} của ${stu.name} — bỏ qua` };
-    if (S.sheets[key][page] && !confirm(`Đã có phiếu ${pageName(page)} của ${stu.name}. Thay bằng phiếu mới?`))
+    if (old && !restored && !confirm(`Đã có phiếu ${pageName(page)} của ${stu.name}. Thay bằng phiếu mới?`))
       return { cls: 'q-err', html: `Giữ phiếu ${esc(pageName(page))} cũ của ${esc(stu.name)}.` };
     if (S.sheets[key][page]?.pgk) idb.del(S.sheets[key][page].pgk).catch(() => {});
     S.sheets[key][page] = sheet;
@@ -803,6 +808,7 @@
       if (!confirm(`Xoá phiếu ${pageName(ref.page)} của ${stu ? stu.name : ref.key}?`)) return false;
       if (st[ref.page].pgk) idb.del(st[ref.page].pgk).catch(() => {});
       delete st[ref.page]; if (!Object.keys(st).length) delete S.sheets[ref.key];
+      tomb(ref.key, 'sheet:' + ref.page);
     }
     renderScan(); save(); return true;
   }
@@ -995,7 +1001,7 @@
     const sh = S.sheets[rv.stu]?.[rv.page];
     if (!sh) { box.innerHTML = '<div class="empty">Học sinh này chưa có phiếu Reading / Listening.</div>'; return; }
     const data = sh.pgk && sh.geo ? await idb.get(sh.pgk).catch(() => null) : null;
-    if (!data) { box.innerHTML = '<div class="empty">Phiếu này được quét trước khi app lưu ảnh nên không xem lại được cả phiếu. Xoá phiếu rồi quét lại để xem; các câu tô không chuẩn vẫn duyệt được ở tab bên cạnh.</div>'; rv.geo = null; return; }
+    if (!data) { box.innerHTML = sh.fromCloud ? '<div class="empty">Phiếu này lấy từ Google Sheet (quét ở máy khác) nên không có ảnh trên máy này. Muốn xem ảnh, quét lại phiếu trên máy này, phiếu mới sẽ thay phiếu cũ.</div>' : '<div class="empty">Phiếu này được quét trước khi app lưu ảnh nên không xem lại được cả phiếu. Xoá phiếu rồi quét lại để xem; các câu tô không chuẩn vẫn duyệt được ở tab bên cạnh.</div>'; rv.geo = null; return; }
     const stu = stuByKey(rv.stu), p = TPL.pages[rv.page].skill;
     const c = drawAnnotated(await loadImg(data), sh, p, { title: `${stu.name}  (${stu.code})  ·  ${S.cls}`, sub: `${S.testTitle}  ·  ${pageName(rv.page)}` });
     c.style.cssText = 'width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:8px;touch-action:manipulation';
@@ -1252,7 +1258,7 @@
         <td class="num">${d ? esc(wrScaleText(d)) : '—'}</td><td>${d ? `<button class="btn small" data-wdel="${esc(s.key)}">Xoá</button>` : ''}</td></tr>`; });
     $('#wrTable').innerHTML = '<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Bài Writing</th><th>Điểm thô</th><th>Thang</th><th></th></tr></thead><tbody>' + rows.join('') + '</tbody>';
     $('#wrTable').querySelectorAll('[data-wdel]').forEach(b => b.onclick = () => {
-      const s = stuByKey(b.dataset.wdel); if (s && confirm(`Xoá bài Writing của ${s.name}?`)) { delete S.writing[s.key]; save(); renderWritingTable(); }
+      const s = stuByKey(b.dataset.wdel); if (s && confirm(`Xoá bài Writing của ${s.name}?`)) { delete S.writing[s.key]; tomb(s.key, 'writing'); save(); renderWritingTable(); }
     });
   }
   function renderWriting() {
@@ -1274,7 +1280,7 @@
     S.speaking = S.speaking || {};
     const root = $('#spBox');
     window.SpeakingEntry.mount({ root, level: S.level, students: students(), data: S.speaking,
-      onSave: (key, v) => { if (v) S.speaking[key] = v; else delete S.speaking[key]; save(); } });
+      onSave: (key, v) => { if (v) S.speaking[key] = v; else { delete S.speaking[key]; tomb(key, 'speaking'); } save(); } });
     // nút Nhập / Sửa mở phiếu tick trên màn hình (cách cũ bằng danh sách chọn vẫn dùng được trong phiếu: "Nhập bằng danh sách chọn")
     if (!root.__tick) {
       root.__tick = true;
@@ -1527,7 +1533,17 @@
           if (t) return `<td colspan="${daily ? 2 : 3}">${t}</td>`;
           return daily ? `<td class="num">${g.raw}</td><td class="num">${pctTxt(g.raw, g.max)}</td>` : `<td class="num">${g.raw}</td><td class="num">${scaleText(g.scale)}</td><td>${g.cefr}</td>`; }).join('')}
         ${hasWriting() ? wrCells(r) : ''}${sp ? spCells(r) : ''}<td class="num">${r.nonstd || ''}</td></tr>`).join('') + '</tbody>';
-    $('#resTable').querySelectorAll('[data-rp]').forEach(b => b.onclick = () => studentReport(b.dataset.rp));
+    $('#resCards').innerHTML = rs.map(r => {   // điện thoại: mỗi học sinh một thẻ (bảng quá rộng để xem điểm)
+      const row = [];
+      for (const sec of L.phan) { const g = r.secs[sec.id], t = secCell(g); row.push([sec.ten, t || (daily ? `${g.raw}/${g.max} · ${pctTxt(g.raw, g.max)}` : `${g.raw}/${g.max} · ${scaleText(g.scale)} · ${g.cefr}`)]); }
+      const fmt = v => v[0] === '' ? '—' : `${v[0]}/${v[1]}${v[2] === '' ? '' : ' · ' + v[2]}`;
+      if (hasWriting()) row.push(['Writing', fmt(wrVals(r))]);
+      if (sp) row.push(['Speaking', fmt(spVals(r))]);
+      if (r.nonstd) row.push(['Tô không chuẩn', r.nonstd + ' câu']);
+      return `<div class="rcard${r.any ? '' : ' missing'}"><div class="rc-h"><div><div class="rc-n">${esc(r.s.name)}</div><small>${esc(r.s.code)} · ${esc(r.s.vh)}</small></div>${canReport(r) ? `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>` : ''}</div>
+        ${r.any ? `<dl>${row.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : '<p class="hint" style="margin:8px 0 0">Chưa có bài</p>'}</div>`;
+    }).join('');
+    document.querySelectorAll('#resTable [data-rp], #resCards [data-rp]').forEach(b => b.onclick = () => studentReport(b.dataset.rp));
   }
   function note(r) {
     const n = [];
@@ -2146,9 +2162,10 @@
   }
   async function clearSession() {
     if (!confirm(`Xoá toàn bộ phiếu đã chụp của ${S.testTitle} – ${S.cls}? Không thể hoàn tác.`)) return;
+    const oldTomb = { ...(S.cloudDel || {}) }; if (cloudOn()) cloudItems().forEach(i => { oldTomb[i.k] = Date.now(); });
     await idb.del(S.id);
     for (const st of Object.values(S.sheets || {})) for (const sh of Object.values(st)) if (sh.pgk) idb.del(sh.pgk).catch(() => {});
-    S = { id: S.id, mode: S.mode, label: S.label, dot: S.dot, mixed: S.mixed, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {}, online: {} };
+    S = { id: S.id, mode: S.mode, label: S.label, dot: S.dot, mixed: S.mixed, test: S.test, testTitle: S.testTitle, level: S.level, cls: S.cls, sheets: {}, unknown: [], writeDone: {}, comments: {}, priorities: {}, writing: {}, speaking: {}, online: {}, cloudDel: oldTomb };
     go('scan');
   }
 
