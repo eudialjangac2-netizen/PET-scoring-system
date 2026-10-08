@@ -6,9 +6,9 @@
 <title>Chấm phiếu Cambridge — Ruby School</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="cham-bai.css?v=20261004">
+<link rel="stylesheet" href="cham-bai.css?v=20261007">
 <link rel="stylesheet" href="viet/phieu-font.css">
-<link rel="stylesheet" href="viet/phieu-trang.css?v=20261001">
+<link rel="stylesheet" href="viet/phieu-trang.css?v=20261007">
 <link rel="stylesheet" href="viet/writing-report.css?v=20261001">
 <link rel="stylesheet" href="viet/speaking-nhap.css?v=20261001">
 </head>
@@ -26,10 +26,12 @@
   <button data-go="writing"><b>5</b>Writing</button>
   <button data-go="speaking"><b>6</b>Speaking</button>
   <button data-go="online"><b>7</b>Bài làm máy</button>
+  <button data-go="look" class="vonly"><b>★</b>Xem bài</button>
   <button data-go="export"><b>8</b>Kết quả</button>
 </div></nav>
 
 <main class="wrap">
+  <div class="viewbar" id="viewBar"><span><b>Chế độ xem (quản lý)</b> · chỉ đọc · <span id="viewWho"></span></span><button class="btn small" id="viewExit">Thoát chế độ xem</button></div>
   <!-- 1. Chọn đề & lớp -->
   <section class="view" id="v-setup">
     <h2>Chọn lớp và đề</h2>
@@ -66,6 +68,12 @@
       <label class="chk" style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-weight:400"><input type="checkbox" id="mixOn" style="margin-top:3px"><span>Reading và Listening lấy từ <b>hai đề khác nhau</b> <span class="hint">(vd Reading Test 1, Listening Test 2). Phiếu giấy vẫn dùng chung, app chỉ ghép đáp án của hai đề.</span></span></label>
       <div id="mixSel" hidden style="margin-top:8px"><label for="selTestL">Đề dùng cho <b>Listening</b></label><select id="selTestL"></select></div>
     </div>
+    <details class="fallback" id="cloudBox" hidden>
+      <summary>Phiên đã sao lưu trên Google Sheet</summary>
+      <p class="hint">Xem các lớp đã chấm và sao lưu (từ bất kỳ máy nào). Giáo viên chọn để chấm tiếp trên máy này; tài khoản quản lý còn có thể xem bài (chỉ đọc), chỉnh nhận xét và xuất phiếu.</p>
+      <button class="btn" id="btnSessions">Xem danh sách phiên</button>
+      <div id="sessList" style="margin-top:10px"></div>
+    </details>
     <details class="fallback" id="fileBox">
       <summary>Dự phòng: tải danh sách lớp từ file</summary>
       <p class="hint">Chỉ dùng khi không lấy được danh sách từ Google Sheet. Dùng file xuất từ tab DANH SÁCH (có các cột STUDENT ID, FULL NAME, CLASS, LEVEL, BATCH, TEACHER), app tự chia lớp như Google Sheet.</p>
@@ -162,6 +170,14 @@
     <div id="onBox"></div>
   </section>
 
+  <!-- Xem bài (quản lý) -->
+  <section class="view" id="v-look">
+    <h2>Xem bài đã chấm</h2>
+    <p class="hint">Xem lại từng học sinh đúng như giáo viên đã chấm (không có ảnh phiếu vì ảnh chỉ nằm ở máy đã quét). Quản lý chỉ xem, không sửa đáp án; có thể mở phiếu báo điểm để chỉnh nhận xét và xuất phiếu.</p>
+    <div class="row" style="margin-bottom:10px"><button class="btn" id="lkPrev">‹ Trước</button><select id="lkStu" style="flex:1;min-width:160px"></select><button class="btn" id="lkNext">Sau ›</button></div>
+    <div id="lkBody"></div>
+  </section>
+
   <!-- 8. Kết quả -->
   <section class="view" id="v-export">
     <h2>Kết quả</h2>
@@ -170,12 +186,19 @@
     <div class="row" style="margin-bottom:14px">
       <button class="btn primary" id="btnXlsx">Tải file Excel</button>
       <button class="btn" id="btnCsv">Tải file CSV</button>
-      <button class="btn" id="btnPhieu">Chỉ tải phiếu làm bài (PDF)</button>
+      <button class="btn noview" id="btnPhieu">Chỉ tải phiếu làm bài (PDF)</button>
     </div>
-    <label class="hint" style="display:flex;gap:8px;align-items:center;margin:-4px 0 14px"><input type="checkbox" id="xPhieu" checked> Khi tải Excel, tải kèm <b>phiếu làm bài đã tô màu</b> (PDF) để giáo viên kiểm tra</label>
+    <label class="hint noview" style="display:flex;gap:8px;align-items:center;margin:-4px 0 14px"><input type="checkbox" id="xPhieu" checked><span>Khi tải Excel, tải kèm <b>phiếu làm bài đã tô màu</b> (PDF) để giáo viên kiểm tra</span></label>
     <p class="hint" id="rpHint">Bấm <b>Phiếu</b> ở từng dòng để xem, tải hoặc gửi phiếu kết quả của một học sinh. Trong phiếu có thể <b>chọn kỹ năng</b> đưa vào (một kỹ năng bất kỳ hoặc tất cả). Học sinh chỉ cần có điểm ít nhất một kỹ năng, kể cả chỉ Writing hoặc chỉ Speaking nhập bằng JSON.</p>
-    <div class="tablewrap"><table id="resTable"></table></div>
-    <button class="btn ghost" id="btnClear">Xoá toàn bộ kết quả của đề + lớp này</button>
+    <div class="card noview" style="margin:0 0 14px">
+      <b>Chấm trên nhiều thiết bị?</b>
+      <p class="hint" style="margin:6px 0 10px">Ví dụ quét Reading, Listening, Speaking bằng điện thoại và nhập Writing trên máy tính. Xuất dữ liệu ở một máy, nhập vào máy kia (cùng đề, cùng lớp) để phiếu báo điểm có đủ các kỹ năng. Nên gộp xong rồi mới bấm tải Excel hoặc sao lưu Google Sheet ở máy cuối.</p>
+      <div class="row"><button class="btn" id="btnMergeOut">Xuất dữ liệu máy này</button>
+      <label class="btn" for="fileMerge">Nhập dữ liệu từ máy khác</label><input type="file" id="fileMerge" accept=".json,application/json" hidden></div>
+      <div id="mergeMsg" style="margin-top:10px"></div>
+    </div>
+    <div class="tablewrap freeze"><table id="resTable"></table></div>
+    <button class="btn ghost noview" id="btnClear">Xoá toàn bộ kết quả của đề + lớp này</button>
   </section>
 </main>
 
@@ -241,10 +264,10 @@
 <script src="viet/speaking-nhap.js?v=20261001"></script>
 <script src="viet/yeu-cau-part.js?v=20261002"></script>
 <script src="viet/nhap-may.js?v=20261002"></script>
-<script src="viet/phieu-trang.js?v=20261002"></script>
-<script src="viet/writing-report.js?v=20261001"></script>
-<script src="omr-engine.js?v=20261007"></script>
-<script src="cham-bai.js?v=20261007"></script>
+<script src="viet/phieu-trang.js?v=20261007b"></script>
+<script src="viet/writing-report.js?v=20261007"></script>
+<script src="omr-engine.js?v=20261008"></script>
+<script src="cham-bai.js?v=20261008c"></script>
 <script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"></script>
 </body>
 </html>
