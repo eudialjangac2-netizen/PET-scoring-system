@@ -1292,8 +1292,14 @@
     const rows = students().map((s, i) => { const d = writingOf(s);
       return `<tr class="${d ? '' : 'missing'}"><td class="num">${i + 1}</td><td>${esc(s.code)}</td><td>${esc(s.name)}</td>
         <td>${d ? `${esc(d.level)} · ${d.parts.length} Part` : 'Chưa có'}</td><td class="num">${d ? d.total.raw + '/' + d.total.raw_max : '—'}</td>
-        <td class="num">${d ? esc(wrScaleText(d)) : '—'}</td><td>${d ? `<button class="btn small" data-wdel="${esc(s.key)}">Xoá</button>` : ''}</td></tr>`; });
+        <td class="num">${d ? esc(wrScaleText(d)) : '—'}</td><td style="white-space:nowrap">${d ? `<button class="btn small" data-wedit="${esc(s.key)}">Xem / Sửa JSON</button> <button class="btn small" data-wdel="${esc(s.key)}">Xoá</button>` : ''}</td></tr>`; });
     $('#wrTable').innerHTML = '<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Bài Writing</th><th>Điểm thô</th><th>Thang</th><th></th></tr></thead><tbody>' + rows.join('') + '</tbody>';
+    $('#wrTable').querySelectorAll('[data-wedit]').forEach(b => b.onclick = () => {   // mở lại JSON đã lưu để xem / sửa, không cần file gốc
+      const s = stuByKey(b.dataset.wedit), d = s && writingOf(s); if (!d) return;
+      $('#wrText').value = JSON.stringify(d, null, 2);
+      $('#wrMsg').innerHTML = wrBox('info', `Đang mở JSON đã lưu của <b>${esc(s.name)}</b> (${esc(s.code)}). Sửa trong ô bên trên rồi bấm nút lưu; app sẽ kiểm tra lại và hỏi ghi đè. Giữ nguyên <b>student.id</b> để lưu đúng bạn này.`);
+      wrPending = null; $('#wrText').scrollIntoView({ block: 'center', behavior: 'smooth' }); $('#wrText').focus();
+    });
     $('#wrTable').querySelectorAll('[data-wdel]').forEach(b => b.onclick = () => {
       const s = stuByKey(b.dataset.wdel); if (s && confirm(`Xoá bài Writing của ${s.name}?`)) { delete S.writing[s.key]; tomb(s.key, 'writing'); save(); renderWritingTable(); }
     });
