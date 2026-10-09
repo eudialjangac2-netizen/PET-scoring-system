@@ -6,7 +6,7 @@
 <title>Chấm phiếu Cambridge — Ruby School</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="cham-bai.css?v=20261008d">
+<link rel="stylesheet" href="cham-bai.css?v=20261009a">
 <link rel="stylesheet" href="viet/phieu-font.css">
 <link rel="stylesheet" href="viet/phieu-trang.css?v=20261007">
 <link rel="stylesheet" href="viet/writing-report.css?v=20261001">
@@ -115,6 +115,8 @@
       <p class="hint">Xem lại phiếu của từng học sinh như app đã chấm: <b>xanh lá</b> đúng, <b>đỏ</b> sai, <b>vòng xanh lá</b> là đáp án đúng, <b>vàng</b> là tô chưa chuẩn hoặc tô mờ. Thấy app đọc sai thì <b>chạm vào ô học sinh đã tô</b> để sửa; chạm lại ô đó để hoàn tác (vòng xanh dương = giáo viên đã sửa).</p>
       <div class="row" style="margin-bottom:10px"><select id="rvStu" style="flex:1;min-width:180px"></select><select id="rvPage"></select></div>
       <div id="rvBox"></div>
+      <div class="row noview" style="margin-top:10px;align-items:center"><select id="rvMoveTo" style="flex:1;min-width:180px"></select><button class="btn small" id="rvMove">Đổi học sinh</button></div>
+      <p class="hint noview" style="margin:4px 0 0">Dùng khi chọn nhầm tên học sinh cho phiếu này. Nếu bạn kia đã có phiếu cùng trang, app sẽ hỏi hoán đổi.</p>
       <div class="row" style="margin-top:10px;align-items:center"><button class="btn small" id="rvReset">Bỏ các chỗ đã sửa (phiếu này)</button><span class="hint" id="rvInfo" style="margin:0"></span></div>
     </div>
   </section>
@@ -268,7 +270,7 @@
 <script src="viet/phieu-trang.js?v=20261007b"></script>
 <script src="viet/writing-report.js?v=20261007"></script>
 <script src="omr-engine.js?v=20261008"></script>
-<script src="cham-bai.js?v=20261008d"></script>
+<script src="cham-bai.js?v=20261009a"></script>
 <script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/dist/opencv.js"></script>
 </body>
 </html>
