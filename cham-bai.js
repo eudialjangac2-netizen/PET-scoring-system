@@ -101,7 +101,7 @@
     document.querySelectorAll('#rvTabs button').forEach(b => b.onclick = () => setRvTab(b.dataset.t));
     $('#rvStu').onchange = e => { rv.stu = e.target.value; rv.page = ''; renderRvAll(); };
     $('#rvPage').onchange = e => { rv.page = e.target.value; renderRvAll(); };
-    $('#rvReset').onclick = rvReset; $('#btnCsv').onclick = exportCsv;
+    $('#rvReset').onclick = rvReset; $('#rvMove').onclick = rvMove; $('#btnCsv').onclick = exportCsv;
     $('#btnClear').onclick = clearSession;
     $('#btnMergeOut').onclick = exportData;
     $('#btnSessions').onclick = listCloud; $('#viewExit').onclick = closeView;
@@ -381,6 +381,13 @@
       add(key, 'writing', +((S.writing || {})[key] || {}).at || 1); add(key, 'speaking', +((S.speaking || {})[key] || {}).at || 1);
       add(key, 'online', 1, true); add(key, 'cm', +(S.cmAt || {})[key] || 0, true);
     }
+    for (const [k, ts] of Object.entries(S.cloudGone || {})) {   // phiếu đã chuyển sang học sinh khác: gửi dấu "đã chuyển" để máy khác không giữ bản cũ
+      const [key, part] = [k.slice(0, k.indexOf('|')), k.slice(k.indexOf('|') + 1)];
+      if (((S.sheets || {})[key] || {})[part.slice(6)]) { delete S.cloudGone[k]; continue; }
+      const j = '{"gone":1}', c = cache[k];
+      if (!c || c.j !== j || c.at !== ts) cache[k] = { j, at: ts, sent: false };
+      out.push({ k, key, part, at: ts, json: j, sent: cache[k].sent });
+    }
     return out;
   }
   function cloudMeta() {
@@ -422,6 +429,13 @@
         if (td && it.at <= td) continue;   // đã xoá trên máy này sau lần lưu đó
         if (l && !(it.at > l.at)) continue;
         let d; try { d = JSON.parse(it.json); } catch { continue; }
+        if (d && d.gone) {   // phiếu này đã được chuyển sang học sinh khác ở máy khác
+          if (it.part.startsWith('sheet:') && !S.view) {
+            const pk = it.part.slice(6), old = (S.sheets[it.key] || {})[pk];
+            if (old) { if (old.pgk) idb.del(old.pgk).catch(() => {}); delete S.sheets[it.key][pk]; if (!Object.keys(S.sheets[it.key]).length) delete S.sheets[it.key]; (S.cloud ||= {})[k] = { j: it.json, at: it.at, sent: true }; n++; }
+          }
+          continue;
+        }
         if (it.part.startsWith('sheet:')) {
           const pk = it.part.slice(6), old = (S.sheets[it.key] ||= {})[pk];
           if (old && +old.at === +d.at) {   // cùng một lần quét: giữ ảnh đang có trên máy này (mục đồng bộ không kèm ảnh)
@@ -995,6 +1009,7 @@
     if (!stus.some(s => s.key === rv.stu)) rv.stu = stus[0].key;
     selS.innerHTML = stus.map(s => `<option value="${s.key}">${esc(s.name)} (${esc(s.code)})${Object.keys(S.sheets[s.key]).some(pk => Object.values(S.sheets[s.key][pk].over || {}).some(o => o.manual)) ? ' ✎' : ''}</option>`).join('');
     selS.value = rv.stu;
+    $('#rvMoveTo').innerHTML = '<option value="">Chuyển phiếu này sang học sinh…</option>' + students().filter(s => s.key !== rv.stu).map(s => `<option value="${s.key}">${esc(s.name)} (${esc(s.code)})</option>`).join('');
     const pks = pagesOf(S.level).filter(pk => S.sheets[rv.stu]?.[pk] && TPL.pages[pk].skill !== 'speaking');
     if (!pks.includes(rv.page)) rv.page = pks[0] || '';
     selP.innerHTML = pks.map(pk => `<option value="${pk}">${esc(pageName(pk))}</option>`).join(''); selP.value = rv.page;
@@ -1035,6 +1050,28 @@
     if (!n || !confirm(`Bỏ ${n} chỗ giáo viên đã sửa trên phiếu này và trả về cách đọc của app?`)) return;
     for (const [q, o] of Object.entries(sh.over)) if (o.manual) delete sh.over[q];
     save(); updateBadges(); renderRvAll();
+  }
+  // Đổi học sinh của một phiếu đã quét (chọn nhầm tên): chuyển hoặc hoán đổi, không cần quét lại
+  function rvMove() {
+    if (S.view) return;
+    const from = rv.stu, page = rv.page, sh = S.sheets[from]?.[page], to = $('#rvMoveTo').value;
+    if (!sh) return;
+    if (!to) { alert('Hãy chọn học sinh đúng trong danh sách trước.'); return; }
+    if (to === from) { alert('Phiếu này đang là của bạn đó rồi.'); return; }
+    const A = stuByKey(from), B = stuByKey(to), ex = S.sheets[to]?.[page];
+    if (!A || !B) return;
+    if (ex) { if (!confirm(`${B.name} đã có phiếu ${pageName(page)}.\n\nBấm OK để HOÁN ĐỔI: phiếu này sang ${B.name}, phiếu của ${B.name} sang ${A.name}.\nBấm Huỷ để giữ nguyên.`)) return; }
+    else if (!confirm(`Chuyển phiếu ${pageName(page)} từ ${A.name} sang ${B.name}?`)) return;
+    const now = Date.now(), key = 'sheet:' + page;
+    (S.sheets[to] ||= {})[page] = sh; sh.at = now;
+    if (S.cloudDel) delete S.cloudDel[to + '|' + key];
+    if (ex) { S.sheets[from][page] = ex; ex.at = now + 1; if (S.cloudDel) delete S.cloudDel[from + '|' + key]; }
+    else {
+      delete S.sheets[from][page]; if (!Object.keys(S.sheets[from]).length) delete S.sheets[from];
+      tomb(from, key); if (cloudOn()) (S.cloudGone ||= {})[from + '|' + key] = now;
+    }
+    rv.stu = to; save(); updateBadges(); renderRoster();
+    renderRvAll().then(() => { $('#rvInfo').textContent = ex ? `Đã hoán đổi phiếu ${pageName(page)} giữa ${A.name} và ${B.name}.` : `Đã chuyển phiếu ${pageName(page)} từ ${A.name} sang ${B.name}.`; });
   }
   function setRvTab(t) {
     rv.tab = t;
@@ -1275,12 +1312,29 @@
     renderWritingTable();
   }
 
+  // ---------- Speaking: nhận xét do giáo viên sửa (sp.edit = {strength, areas, next, fp}) ----------
+  // Bọc SpeakingDiagnosis.pick một lần: nếu bài Speaking có sp.edit thì phiếu phụ huynh, Excel và Google Sheet dùng bản đã sửa.
+  const SP_LIM = { strength: 160, areas: 260, next: 180 };
+  (function spPatchPick() {
+    const D = window.SpeakingDiagnosis; if (!D || D.__edit) return;
+    const orig = D.pick; D.__edit = true;
+    const CODE = { GV: 'G-S', DM: 'DM-C', P: 'P-I', IC: 'Support', GA: 'GA-L' };
+    D.pick = function (level, sp) {
+      const out = orig.call(this, level, sp), e = sp && sp.edit;
+      if (!e || !out) return out;
+      let code = out.areas[0] && out.areas[0].code;
+      if (!code) { const b = sp.bands || {}, lo = Object.keys(CODE).filter(c => b[c] != null).sort((x, y) => b[x] - b[y])[0]; code = CODE[lo || 'IC']; }
+      const areas = String(e.areas || '').trim();
+      return Object.assign({}, out, { title: out.title || 'Speaking: nhận xét của giáo viên', strength: String(e.strength || '').trim(), areas: areas ? [{ code, text: areas, tier: 1 }] : [], next: String(e.next || '').trim() });
+    };
+  })();
+
   // ---------- Speaking (band, mã chẩn đoán, part yếu nhất; viet/speaking-nhap.js) ----------
   function renderSpeaking() {
     S.speaking = S.speaking || {};
     const root = $('#spBox');
     window.SpeakingEntry.mount({ root, level: S.level, students: students(), data: S.speaking,
-      onSave: (key, v) => { if (v) S.speaking[key] = v; else { delete S.speaking[key]; tomb(key, 'speaking'); } save(); } });
+      onSave: (key, v) => { if (v) { const o = S.speaking[key]; if (o && o.edit) v.edit = o.edit; S.speaking[key] = v; } else { delete S.speaking[key]; tomb(key, 'speaking'); } save(); } });
     // nút Nhập / Sửa mở phiếu tick trên màn hình (cách cũ bằng danh sách chọn vẫn dùng được trong phiếu: "Nhập bằng danh sách chọn")
     if (!root.__tick) {
       root.__tick = true;
@@ -1313,6 +1367,11 @@
 .spk-foot{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #D5DAE3;padding:10px 14px calc(10px + env(safe-area-inset-bottom));z-index:3}
 .spk-sum{max-width:760px;margin:0 auto 8px;font-size:13px;color:#4A5468}.spk-sum b{color:#1B2437}.spk-sum .miss{color:#B42318;font-weight:700}
 .spk-acts{max-width:760px;margin:0 auto;display:flex;gap:8px;flex-wrap:wrap}.spk-acts .btn.primary{flex:1;min-width:140px}
+.spk-cm p{margin:6px 0;font-size:14px;line-height:1.5}.spk-cm .spk-lab{margin-top:8px}
+.spk-cm textarea{width:100%;box-sizing:border-box;min-height:64px;padding:8px 10px;border:1.5px solid #C7CDD8;border-radius:10px;font:inherit;font-size:14px;line-height:1.45;resize:vertical}
+.spk-cm .cnt{float:right;font-weight:500;color:#6B7487}.spk-cm .cnt.over{color:#B42318;font-weight:700}
+.spk-cm .warn{margin:8px 0;padding:8px 10px;border-radius:10px;background:#FFF4E5;border:1px solid #F5C07A;font-size:13px}
+.spk-cm .cm-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .spk-old{max-width:760px;margin:6px auto 0;font-size:12.5px;text-align:center}.spk-old a{color:#6B7487;text-decoration:underline;cursor:pointer}`;
     document.head.appendChild(st);
   }
@@ -1330,6 +1389,7 @@
     spInjectCss();
     const { secs, weak } = spLayout(), B = (window.SPEAKING_BANK || {})[S.level] || {}, W = window.SpeakingScore.WEIGHT[S.level], MAX = window.SpeakingScore.MAX[S.level];
     const old = (S.speaking || {})[key], tick = {};
+    let ed = old && old.edit ? { strength: old.edit.strength || '', areas: old.edit.areas || '', next: old.edit.next || '', fp: old.edit.fp || '' } : null;
     const set = (q, l) => { (tick[q] = tick[q] || new Set()).add(l); };
     if (old) {   // điền sẵn từ kết quả đã có (quét phiếu hoặc nhập trước đó)
       secs.forEach(sec => {
@@ -1351,14 +1411,40 @@
         ${sec.rows.map(q => `<div class="spk-row"><span class="spk-lab">${esc(q.row || q.code)}${q.multi ? '<em>✱ tick nhiều ô</em>' : ''}</span><div class="spk-opts">${q.options.map(o => optBtn(q, o, q.multi)).join('')}</div></div>`).join('')}
       </fieldset>`).join('')}
       ${weak ? `<fieldset class="spk-sec"><legend>Notably weak part</legend><div class="spk-row"><div class="spk-opts">${weak.options.map(o => optBtn(weak, o, true)).join('')}</div></div></fieldset>` : ''}
+      <fieldset class="spk-sec spk-cm" id="spkCm"><legend>Nhận xét trên phiếu<i>xem trước và sửa</i></legend><div id="spkCmBody"></div></fieldset>
       </div><div class="spk-foot"><div class="spk-sum" id="spkSum"></div><div class="spk-acts"><button class="btn primary" data-save>Lưu Speaking</button><button class="btn" data-clear>Xoá hết tick</button><button class="btn ghost" data-x>Huỷ</button></div>
       <div class="spk-old"><a data-old>Nhập bằng danh sách chọn (cách cũ)</a></div></div>`;
     document.body.appendChild(ov); document.body.style.overflow = 'hidden';
     const bandsNow = () => { const b = {}; secs.forEach(sec => { const s = tick[sec.band.q]; if (s && s.size === 1) b[sec.crit] = +[...s][0]; }); return b; };
+    const build = () => {
+      const res = { page: S.level + '-speaking', mcq: {} };
+      TPL.pages[res.page].questions.forEach(q => { res.mcq[q.q] = { opts: q.options.map(op => ({ label: op.label, cov: tick[q.q] && tick[q.q].has(op.label) ? 1 : 0 })) }; });
+      return window.SpeakingScan.fromResult(S.level, res, TPL);
+    };
+    const fpOf = d => JSON.stringify([d.bands, [...d.evidence].sort(), d.weakPart || '']);
+    const autoCm = () => { const d = build(); let a = null; try { a = window.SpeakingDiagnosis.pick(S.level, { bands: d.bands, evidence: d.evidence, weakPart: d.weakPart }); } catch (e) { } return { d, a: a && (a.strength || a.areas.length || a.next) ? { strength: a.strength || '', areas: a.areas.map(x => x.text + (x.part ? ` (rõ nhất ở ${x.part})` : '')).join(' '), next: a.next || '' } : null }; };
+    const LAB = { strength: 'Điểm mạnh', areas: 'Cần cải thiện', next: 'Cách sửa' };
+    const cmHtml = () => {
+      const { d, a } = autoCm(), box = $('#spkCmBody');
+      if (!ed) {
+        box.innerHTML = a ? `<p class="hint" style="margin:6px 0">Nhận xét tự động theo các ô đã tick. Có thể sửa trước khi lưu.</p>${['strength', 'areas', 'next'].map(k => a[k] ? `<p><b>${LAB[k]}:</b> ${esc(a[k])}</p>` : '').join('')}<div class="cm-acts"><button type="button" class="btn small" data-cm-edit>Sửa nhận xét</button></div>`
+          : '<p class="hint" style="margin:6px 0">Tick band và các ô bằng chứng ở trên để xem nhận xét sẽ hiện trên phiếu.</p>';
+        const b = box.querySelector('[data-cm-edit]'); if (b) b.onclick = () => { ed = { strength: a.strength, areas: a.areas, next: a.next, fp: fpOf(d) }; cmHtml(); };
+        return;
+      }
+      box.innerHTML = `<div class="warn" id="spkWarn" hidden>Band hoặc ô tick đã đổi sau khi bạn sửa nhận xét, nhận xét có thể không còn khớp. Kiểm tra lại hoặc bấm "Về nhận xét tự động".</div>
+        ${['strength', 'areas', 'next'].map(k => `<span class="spk-lab">${LAB[k]}<span class="cnt" data-cnt="${k}"></span></span><textarea data-ed="${k}" maxlength="${SP_LIM[k]}" rows="3">${esc(ed[k])}</textarea>`).join('')}
+        <div class="cm-acts"><button type="button" class="btn small" data-cm-auto>Về nhận xét tự động</button></div>`;
+      box.querySelectorAll('textarea[data-ed]').forEach(t => { const cnt = () => { const c = box.querySelector(`[data-cnt="${t.dataset.ed}"]`); c.textContent = `${t.value.length}/${SP_LIM[t.dataset.ed]}`; c.classList.toggle('over', t.value.length >= SP_LIM[t.dataset.ed]); }; t.oninput = () => { ed[t.dataset.ed] = t.value; cnt(); }; cnt(); });
+      box.querySelector('[data-cm-auto]').onclick = () => { if (!confirm('Bỏ phần đã sửa và dùng nhận xét tự động?')) return; ed = null; cmHtml(); };
+      cmWarn();
+    };
+    const cmWarn = () => { const w = $('#spkWarn'); if (w && ed) w.hidden = !ed.fp || ed.fp === fpOf(build()); };
     const paint = () => {
       ov.querySelectorAll('.spk-o').forEach(b => b.setAttribute('aria-pressed', tick[b.dataset.q] && tick[b.dataset.q].has(b.dataset.l) ? 'true' : 'false'));
       const b = bandsNow(), miss = Object.keys(W).filter(c => !b[c]), tot = miss.length ? null : window.SpeakingScore.total(S.level, b);
       $('#spkSum').innerHTML = Object.keys(W).map(c => `${c} <b>${b[c] || '–'}</b>`).join(' · ') + (miss.length ? ` · <span class="miss">còn thiếu band ${miss.join(', ')}</span>` : ` · điểm <b>${tot}/${MAX}</b>`);
+      if (ed) cmWarn(); else cmHtml();
     };
     const close = () => { ov.remove(); document.body.style.overflow = ''; };
     ov.addEventListener('click', e => {
@@ -1378,19 +1464,19 @@
       if (e.target.closest('[data-clear]')) { if (confirm('Xoá hết tick của phiếu này?')) { Object.keys(tick).forEach(k => delete tick[k]); paint(); } return; }
       if (e.target.closest('[data-old]')) { close(); const root = $('#spBox'), btn = root.querySelector(`[data-sp="${key}"]`); if (btn) { root.__old = true; btn.click(); root.__old = false; } return; }
       if (e.target.closest('[data-save]')) {
-        const res = { page: S.level + '-speaking', mcq: {} };
-        TPL.pages[res.page].questions.forEach(q => { res.mcq[q.q] = { opts: q.options.map(op => ({ label: op.label, cov: tick[q.q] && tick[q.q].has(op.label) ? 1 : 0 })) }; });
-        const d = window.SpeakingScan.fromResult(S.level, res, TPL), miss = Object.keys(W).filter(c => !d.bands[c]);
+        const d = build(), miss = Object.keys(W).filter(c => !d.bands[c]);
         if (!Object.keys(d.bands).length && !d.evidence.length && !d.weakPart) { alert('Chưa tick gì. Hãy tick ít nhất band của các tiêu chí.'); return; }
         if (miss.length && !confirm(`Còn thiếu band: ${miss.join(', ')}. Vẫn lưu (chưa tính được điểm Speaking)?`)) return;
+        if (ed && !String(ed.areas).trim()) { alert('Ô "Cần cải thiện" đang trống. Hãy nhập nội dung hoặc bấm "Về nhận xét tự động".'); return; }
         S.speaking = S.speaking || {};
         S.speaking[key] = { bands: d.bands, evidence: d.evidence, weakPart: d.weakPart, rows: d.rows || {}, at: Date.now(), scan: false, tick: true, flags: d.flags.map(f => f.text) };
+        if (ed) S.speaking[key].edit = { strength: ed.strength.trim(), areas: ed.areas.trim(), next: ed.next.trim(), fp: ed.fp || fpOf(d) };
         save(); close(); renderSpeaking();
         const note = document.createElement('div'); note.className = 'notice info'; note.innerHTML = `Đã lưu Speaking cho <b>${esc(stu.name)}</b>.`;
         $('#spBox').prepend(note); setTimeout(() => note.remove(), 4000);
       }
     });
-    paint(); ov.scrollTop = 0;
+    paint(); if (ed) cmHtml(); ov.scrollTop = 0;
   }
 
   // ---------- Speaking: nhập bằng JSON (cùng cách với Writing); quét phiếu hoặc nhập tay vẫn dùng được ----------
