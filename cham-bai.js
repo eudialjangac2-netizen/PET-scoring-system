@@ -101,7 +101,7 @@
     document.querySelectorAll('#rvTabs button').forEach(b => b.onclick = () => setRvTab(b.dataset.t));
     $('#rvStu').onchange = e => { rv.stu = e.target.value; rv.page = ''; renderRvAll(); };
     $('#rvPage').onchange = e => { rv.page = e.target.value; renderRvAll(); };
-    $('#rvReset').onclick = rvReset; $('#rvMove').onclick = rvMove; $('#btnCsv').onclick = exportCsv; $('#btnZipPhieu').onclick = zipReports;
+    $('#rvReset').onclick = rvReset; $('#rvMove').onclick = rvMove; $('#btnCsv').onclick = exportCsv; { const z = $('#btnZipPhieu'); if (z) z.onclick = zipReports; }
     $('#btnClear').onclick = clearSession;
     $('#btnMergeOut').onclick = exportData;
     $('#btnSessions').onclick = listCloud; $('#viewExit').onclick = closeView;
@@ -1629,7 +1629,7 @@
     $('#exportWarn').innerHTML = (w.length ? `<div class="notice warn">${w.map(esc).join('<br>')}</div>` : '')
       + (HIST_ERR && !daily ? `<div class="notice info">Chưa đọc được điểm các đợt Mock trước (${esc(HIST_ERR)}). Phiếu báo điểm hiện như đợt đầu, chưa có mũi tên tăng giảm.</div>` : '');
     const hint = $('#rpHint'); hint.dataset.def = hint.dataset.def || hint.innerHTML;   // câu hướng dẫn mặc định (Mock)
-    $('#btnZipPhieu').hidden = daily;
+    { const z = $('#btnZipPhieu'); if (z) z.hidden = daily; }
     hint.innerHTML = daily ? 'Bài hàng ngày chỉ có điểm thô và %, <b>không có phiếu báo điểm</b>. Muốn xuất phiếu, quay lại bước 1 và chọn <b>Mock test</b>.' : hint.dataset.def;   // bài hàng ngày: không có phiếu báo điểm
     const rs = results();
     $('#resTable').innerHTML = `<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Lớp</th>${L.phan.map(s => daily
