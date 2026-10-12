@@ -101,7 +101,7 @@
     document.querySelectorAll('#rvTabs button').forEach(b => b.onclick = () => setRvTab(b.dataset.t));
     $('#rvStu').onchange = e => { rv.stu = e.target.value; rv.page = ''; renderRvAll(); };
     $('#rvPage').onchange = e => { rv.page = e.target.value; renderRvAll(); };
-    $('#rvReset').onclick = rvReset; $('#rvMove').onclick = rvMove; $('#btnCsv').onclick = exportCsv;
+    $('#rvReset').onclick = rvReset; $('#rvMove').onclick = rvMove; $('#btnCsv').onclick = exportCsv; $('#btnZipPhieu').onclick = zipReports;
     $('#btnClear').onclick = clearSession;
     $('#btnMergeOut').onclick = exportData;
     $('#btnSessions').onclick = listCloud; $('#viewExit').onclick = closeView;
@@ -255,7 +255,7 @@
     const L = lvl(), header = ['Loại', ...(isDaily() ? [] : ['Đợt Mock']), 'Đề', 'Lớp Cambridge', 'Mã HS', 'Họ tên', 'Lớp'];
     for (const sec of L.phan) header.push(`${sec.ten} /${secMax(S.level, sec)}`, ...(isDaily() ? [`${sec.ten} %`] : [`${sec.ten} thang`, `${sec.ten} CEFR`]),
       ...partsOf(S.level, sec).map(([p, n]) => `${sec.viet} Part ${p} (/${n})`));
-    header.push(...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), 'Số câu tô không chuẩn', 'Ghi chú', ...CM_COLS, ...PAPERS.map(p => `Chi tiết ${p === 'reading' ? 'Reading' : 'Listening'}`), ...detCols());   // cột chi tiết Writing / Speaking đặt CUỐI: mọi tab có cùng thứ tự
+    header.push(...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), ...(isDaily() ? [] : OV_COLS), 'Số câu tô không chuẩn', 'Ghi chú', ...CM_COLS, ...PAPERS.map(p => `Chi tiết ${p === 'reading' ? 'Reading' : 'Listening'}`), ...detCols());   // cột chi tiết Writing / Speaking đặt CUỐI: mọi tab có cùng thứ tự
     const rows = results().filter(r => r.any).map(r => {
       const o = { 'Khoá': `${S.test}|${S.cls}|${r.s.code}${isDaily() ? '|' + S.label : ''}`, 'Loại': isDaily() ? 'Hằng ngày' + (S.label ? ' · ' + S.label : '') : 'Mock', ...(isDaily() ? {} : { 'Đợt Mock': S.dot }), 'Đề': S.testTitle, 'Lớp Cambridge': S.cls, 'Mã HS': r.s.code, 'Họ tên': r.s.name, 'Lớp': r.s.vh };
       for (const sec of L.phan) {
@@ -267,6 +267,7 @@
       for (const p of PAPERS) o[`Chi tiết ${p === 'reading' ? 'Reading' : 'Listening'}`] = r.items[p].filter(Boolean).map(i => `${i.q}${i.type === 'write' ? '' : (i.chosen || '-')}${i.marks === i.maxMarks ? '✓' : i.marks > 0 ? '½' : '✗'}`).join(' ');
       if (hasWriting()) WR_COLS.forEach((c, k) => { o[c] = wrVals(r)[k]; });
       if (hasSpeaking()) spColsOf().forEach((c, k) => { o[c] = spVals(r)[k]; });
+      if (!isDaily()) OV_COLS.forEach((c, k) => { o[c] = ovVals(r)[k]; });
       { const dc = detCols(), dv = detVals(r); dc.forEach((c, k) => { o[c] = dv[k]; }); }
       o['Số câu tô không chuẩn'] = r.nonstd; o['Ghi chú'] = note(r); cmtVals(r).forEach((v, k) => { o[CM_COLS[k]] = v; });
       return o;
@@ -1230,6 +1231,18 @@
     if (t == null) return ['', '', ''];
     const mx = window.SpeakingScore.MAX[S.level];
     return [t, mx, isDaily() ? pctTxt(t, mx) : (window.SpeakingScore.scale(S.level, t) ?? '')]; }
+  // Overall = trung bình thang Cambridge của các kỹ năng đã có điểm (cùng cách tính với phiếu báo điểm); chưa đủ kỹ năng thì có dấu ~
+  const OV_COLS = ['Overall thang', 'Overall CEFR'];
+  function overallOf(r) {
+    const sc = [];
+    for (const sec of lvl().phan) { const g = r.secs[sec.id]; if (g && !g.incomplete && g.scale != null) sc.push(g.scale); }
+    const w = writingOf(r.s); if (w && w.total.cambridge_scale != null) sc.push(w.total.cambridge_scale);
+    if (spokenOk(r.s)) { const x = window.SpeakingScore.scale(S.level, window.SpeakingScore.total(S.level, S.speaking[r.s.key].bands)); if (x != null) sc.push(x); }
+    if (!sc.length) return null;
+    const scale = Math.round(sc.reduce((a, b) => a + b, 0) / sc.length);
+    return { scale, cefr: cefrOf(scale), n: sc.length, partial: sc.length < lvl().phan.length + 2 };
+  }
+  const ovVals = r => { const o = overallOf(r); return o ? [(o.partial ? '~' : '') + o.scale, o.cefr] : ['', '']; };
   function spCells(r) { const v = spVals(r); return v[0] === '' ? '<td>—</td><td>—</td>' : `<td class="num">${v[0]}/${v[1]}</td><td class="num">${v[2]}</td>`; }
   const wrScaleText = d => d.total.cambridge_scale == null ? '—' : d.total.cambridge_scale + (d.total.is_estimate ? ' (ước lượng)' : '');
   function wrVals(r) { const d = writingOf(r.s); return d ? [d.total.raw, d.total.raw_max, d.total.cambridge_scale ?? ''] : ['', '', '']; }
@@ -1340,6 +1353,7 @@
     S.speaking = S.speaking || {};
     const root = $('#spBox');
     window.SpeakingEntry.mount({ root, level: S.level, students: students(), data: S.speaking,
+      extra: { head: ['Điểm thô', isDaily() ? '%' : 'Thang'], cells: s => { const v = spVals({ s }); return v[0] === '' ? ['—', '—'] : [v[0] + '/' + v[1], String(v[2] === '' ? '—' : v[2])]; } },
       onSave: (key, v) => { if (v) { const o = S.speaking[key]; if (o && o.edit) v.edit = o.edit; S.speaking[key] = v; } else { delete S.speaking[key]; tomb(key, 'speaking'); } save(); } });
     // nút Nhập / Sửa mở phiếu tick trên màn hình (cách cũ bằng danh sách chọn vẫn dùng được trong phiếu: "Nhập bằng danh sách chọn")
     if (!root.__tick) {
@@ -1615,22 +1629,24 @@
     $('#exportWarn').innerHTML = (w.length ? `<div class="notice warn">${w.map(esc).join('<br>')}</div>` : '')
       + (HIST_ERR && !daily ? `<div class="notice info">Chưa đọc được điểm các đợt Mock trước (${esc(HIST_ERR)}). Phiếu báo điểm hiện như đợt đầu, chưa có mũi tên tăng giảm.</div>` : '');
     const hint = $('#rpHint'); hint.dataset.def = hint.dataset.def || hint.innerHTML;   // câu hướng dẫn mặc định (Mock)
+    $('#btnZipPhieu').hidden = daily;
     hint.innerHTML = daily ? 'Bài hàng ngày chỉ có điểm thô và %, <b>không có phiếu báo điểm</b>. Muốn xuất phiếu, quay lại bước 1 và chọn <b>Mock test</b>.' : hint.dataset.def;   // bài hàng ngày: không có phiếu báo điểm
     const rs = results();
     $('#resTable').innerHTML = `<thead><tr><th>STT</th><th>Mã</th><th>Họ tên</th><th>Lớp</th>${L.phan.map(s => daily
-      ? `<th>${s.ten} /${secMax(S.level, s)}</th><th>%</th>` : `<th>${s.ten} /${secMax(S.level, s)}</th><th>Thang</th><th>CEFR</th>`).join('')}${hasWriting() ? '<th>Writing</th><th>Writing thang</th>' : ''}${sp ? (daily ? '<th>Speaking</th><th>%</th>' : '<th>Speaking</th><th>Speaking thang</th>') : ''}<th>Tô không chuẩn</th></tr></thead><tbody>` +
+      ? `<th>${s.ten} /${secMax(S.level, s)}</th><th>%</th>` : `<th>${s.ten} /${secMax(S.level, s)}</th><th>Thang</th><th>CEFR</th>`).join('')}${hasWriting() ? '<th>Writing</th><th>Writing thang</th>' : ''}${sp ? (daily ? '<th>Speaking</th><th>%</th>' : '<th>Speaking</th><th>Speaking thang</th>') : ''}${daily ? '' : '<th title="Trung bình thang Cambridge của các kỹ năng đã có điểm. Dấu ~ nghĩa là chưa đủ 4 kỹ năng.">Overall</th><th>Overall CEFR</th>'}<th>Tô không chuẩn</th></tr></thead><tbody>` +
       rs.map(r => `<tr class="${r.any ? '' : 'missing'}"><td class="num">${r.stt}</td><td>${esc(r.s.code)}</td>
         <td class="nm-cell"><div class="nm-in"><span>${esc(r.s.name)}</span>${canReport(r) ? `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>` : (!daily && r.any ? '<small class="hint">chưa có kỹ năng nào đủ trang để tính điểm</small>' : '')}</div></td>
         <td>${esc(r.s.vh)}</td>${L.phan.map(s => { const g = r.secs[s.id], t = secCell(g);
           if (t) return `<td colspan="${daily ? 2 : 3}">${t}</td>`;
           return daily ? `<td class="num">${g.raw}</td><td class="num">${pctTxt(g.raw, g.max)}</td>` : `<td class="num">${g.raw}</td><td class="num">${scaleText(g.scale)}</td><td>${g.cefr}</td>`; }).join('')}
-        ${hasWriting() ? wrCells(r) : ''}${sp ? spCells(r) : ''}<td class="num">${r.nonstd || ''}</td></tr>`).join('') + '</tbody>';
+        ${hasWriting() ? wrCells(r) : ''}${sp ? spCells(r) : ''}${daily ? '' : (v => v[0] === '' ? '<td>—</td><td>—</td>' : `<td class="num"><b>${esc(v[0])}</b></td><td><b>${esc(v[1])}</b></td>`)(ovVals(r))}<td class="num">${r.nonstd || ''}</td></tr>`).join('') + '</tbody>';
     $('#resCards').innerHTML = rs.map(r => {   // điện thoại: mỗi học sinh một thẻ (bảng quá rộng để xem điểm)
       const row = [];
       for (const sec of L.phan) { const g = r.secs[sec.id], t = secCell(g); row.push([sec.ten, t || (daily ? `${g.raw}/${g.max} · ${pctTxt(g.raw, g.max)}` : `${g.raw}/${g.max} · ${scaleText(g.scale)} · ${g.cefr}`)]); }
       const fmt = v => v[0] === '' ? '—' : `${v[0]}/${v[1]}${v[2] === '' ? '' : ' · ' + v[2]}`;
       if (hasWriting()) row.push(['Writing', fmt(wrVals(r))]);
       if (sp) row.push(['Speaking', fmt(spVals(r))]);
+      if (!daily) { const v = ovVals(r); if (v[0] !== '') row.push(['Overall', `${v[0]} · ${v[1]}`]); }
       if (r.nonstd) row.push(['Tô không chuẩn', r.nonstd + ' câu']);
       return `<div class="rcard${r.any ? '' : ' missing'}"><div class="rc-h"><div><div class="rc-n">${esc(r.s.name)}</div><small>${esc(r.s.code)} · ${esc(r.s.vh)}</small></div>${canReport(r) ? `<button class="btn small" data-rp="${r.s.key}">Phiếu</button>` : ''}</div>
         ${r.any ? `<dl>${row.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : '<p class="hint" style="margin:8px 0 0">Chưa có bài</p>'}</div>`;
@@ -1826,12 +1842,12 @@
   function exportHeader() {
     const L = lvl(), qCols = p => Object.keys(QMAP[S.level][p]).map(Number).sort((a, b) => a - b).map(q => PAPER_SHORT[p] + q);
     const secCols = sec => [`${sec.ten} /${secMax(S.level, sec)}`, ...(isDaily() ? [`${sec.ten} %`] : [`${sec.ten} thang`, `${sec.ten} CEFR`]), ...partsOf(S.level, sec).map(([p, n]) => `${sec.viet} Part ${p} (/${n})`)];
-    return { qCols, cols: ['STT', 'Mã HS', 'Họ tên', 'Lớp', ...qCols('reading'), ...qCols('listening'), ...L.phan.flatMap(secCols), ...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), 'Số câu tô không chuẩn', 'Ghi chú', ...CM_COLS, ...detCols()] };
+    return { qCols, cols: ['STT', 'Mã HS', 'Họ tên', 'Lớp', ...qCols('reading'), ...qCols('listening'), ...L.phan.flatMap(secCols), ...(hasWriting() ? WR_COLS : []), ...(hasSpeaking() ? spColsOf() : []), ...(isDaily() ? [] : OV_COLS), 'Số câu tô không chuẩn', 'Ghi chú', ...CM_COLS, ...detCols()] };
   }
   function secVals(r) {
     return [...lvl().phan.flatMap(sec => { const g = r.secs[sec.id], ok = g && !g.incomplete, t = !g ? '' : g.incomplete ? 'thiếu trang' : '';
       return [ok ? g.raw : t, ...(isDaily() ? [ok ? pctTxt(g.raw, g.max) : ''] : [ok ? scaleText(g.scale) : '', ok ? g.cefr : '']), ...partsOf(S.level, sec).map(([p]) => ok ? g.parts[p] : '')]; }),
-      ...(hasWriting() ? wrVals(r) : []), ...(hasSpeaking() ? spVals(r) : [])];
+      ...(hasWriting() ? wrVals(r) : []), ...(hasSpeaking() ? spVals(r) : []), ...(isDaily() ? [] : ovVals(r))];
   }
   async function exportXlsx() {
     if (!confirmWarn()) return false;
@@ -1924,23 +1940,27 @@
       for (const [pt, n] of partsOf(S.level, sec)) {
         const v = g.parts[pt], f = n ? v / n : 1, o = { skill: sec.ten, part: pt, score: `${v}/${n}` };
         if (f >= NX.nguong.manh) strong.push({ f, t: fillT(NX.muc, o) });
-        else if (f < NX.nguong.yeu) weak.push(fillT(NX.mucCaiThien, { ...o, advice: NX.loiKhuyen?.[S.level]?.[sec.id]?.[pt] || '' }).replace(/, $/, ''));
+        else if (f < NX.nguong.yeu) weak.push({ f, t: fillT(NX.mucCaiThien, { ...o, advice: NX.loiKhuyen?.[S.level]?.[sec.id]?.[pt] || '' }).replace(/, $/, '') });
       }
     }
     for (const l of ['C1', 'B2', 'B1', 'A2', 'A1', 'Dưới']) if (lv[l]) out.push(fillT(NX.moDau[l], { skills: lv[l].join(NX.noiKyNang || ' và '), level: L.duoiThang.replace('Dưới ', '') }));
     if (below.length && NX.chuaDat) out.push(fillT(NX.chuaDat, { target, skills: joinList(below) }));
     const best = strong.sort((a, b) => b.f - a.f).slice(0, NX.toiDaDiemManh || 3).map(x => x.t);
     if (best.length) out.push(fillT(NX.diemManh, { list: joinList(best) }));
-    out.push(weak.length ? fillT(NX.canCaiThien, { list: weak.join('; ') }) : NX.khongYeu);
+    weak.sort((a, b) => a.f - b.f);   // phần yếu nhất đứng trước: nếu phải rút gọn cho vừa khung thì bỏ các phần đỡ yếu hơn
+    const tail = [];
     const items = (sel ? papersOf(sel) : PAPERS).flatMap(p => r.items[p]).filter(Boolean);
-    if (items.some(i => i.bad)) out.push(NX.toBai);
-    if (items.some(i => !i.bad && i.marks === 0 && (i.type === 'write' ? i.shown === '' : !i.chosen))) out.push(NX.boTrong);
-    return out.filter(Boolean).join(' ').replace(/^./, c => c.toUpperCase());
+    if (items.some(i => i.bad)) tail.push(NX.toBai);
+    if (items.some(i => !i.bad && i.marks === 0 && (i.type === 'write' ? i.shown === '' : !i.chosen))) tail.push(NX.boTrong);
+    const build = n => [...out, n || !weak.length ? fillT(NX.canCaiThien, { list: weak.slice(0, n).map(x => x.t).join('; ') }) : NX.khongYeu, ...tail].filter(Boolean).join(' ').replace(/^./, c => c.toUpperCase());
+    let n = weak.length, txt = build(n);
+    while (n > 1 && txt.length > LIMIT_CM) txt = build(--n);   // quá dài: giữ ít phần cần cải thiện hơn thay vì cắt giữa câu
+    return txt;
   }
   const S_comment = (r, sel) => { if (isDaily()) return ''; const c = S.comments?.[r.s.key]; return c === undefined ? suggestComment(r, sel) : c; };   // bài hàng ngày: không có nhận xét tổng thể
 
   // ---------- phiếu 4 trang cho phụ huynh (viet/phieu-trang.js + viet/writing-report.js) ----------
-  const LIMIT_CM = 700, LIMIT_PR = 140;   // số ký tự tối đa: nhận xét tổng thể, mỗi ý ưu tiên
+  const LIMIT_CM = 500, LIMIT_PR = 140;   // số ký tự tối đa: nhận xét tổng thể, mỗi ý ưu tiên
   const GROUP_VI = { grammar: ['Grammar errors', '#FAD9D3'], vocabulary: ['Vocabulary errors', '#E6DCF5'], content: ['Content issues', '#FCEEB0'], organisation: ['Organisation issues', '#CFEEFB'], style: ['Style issues', '#F8D9E4'] };
   const CRIT_VI = { content: 'Nội dung', communicative_achievement: 'Giao tiếp', organisation: 'Bố cục', language: 'Ngôn ngữ' };
   const clip = (t, n) => {
@@ -2251,6 +2271,60 @@
       $('#reportModal').hidden = false;
     } catch (e) { alert(e.message || e); }
     finally { busy(''); $('#reportStage').innerHTML = ''; }
+  }
+  // ---------- tải tất cả phiếu báo điểm: một file ZIP, mỗi học sinh một file PDF riêng (không gộp) ----------
+  let crcT = null;
+  function crc32(u8) {
+    if (!crcT) { crcT = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; crcT[n] = c >>> 0; } }
+    let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = crcT[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  function makeZip(files) {   // ZIP không nén (PDF đã nén sẵn), tên tệp UTF-8
+    const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+    const d = new Date(), dt = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), dd = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    for (const f of files) {
+      const nm = enc.encode(f.name), crc = crc32(f.data), sz = f.data.length;
+      const lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true); lh.setUint16(10, dt, true); lh.setUint16(12, dd, true);
+      lh.setUint32(14, crc, true); lh.setUint32(18, sz, true); lh.setUint32(22, sz, true); lh.setUint16(26, nm.length, true); lh.setUint16(28, 0, true);
+      parts.push(lh.buffer, nm, f.data);
+      const ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true); ch.setUint16(12, dt, true); ch.setUint16(14, dd, true);
+      ch.setUint32(16, crc, true); ch.setUint32(20, sz, true); ch.setUint32(24, sz, true); ch.setUint16(28, nm.length, true); ch.setUint32(42, off, true);
+      cen.push(ch.buffer, nm);
+      off += 30 + nm.length + sz;
+    }
+    const csz = cen.reduce((a, b) => a + (b.byteLength !== undefined ? b.byteLength : b.length), 0);
+    const end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true); end.setUint32(12, csz, true); end.setUint32(16, off, true);
+    return new Blob([...parts, ...cen, end.buffer], { type: 'application/zip' });
+  }
+  let zipping = false;
+  async function zipReports() {
+    if (zipping || isDaily() || !S) return;
+    const list = results().filter(canReport);
+    if (!list.length) { alert('Chưa có học sinh nào đủ điểm để xuất phiếu.'); return; }
+    if (!confirmWarn()) return;
+    if (!confirm(`Tạo ${list.length} phiếu PDF (mỗi học sinh một file) và nén thành một file ZIP?\nViệc này mất khoảng ${Math.max(1, Math.round(list.length * 2.5 / 60))} phút, đừng đóng trang.`)) return;
+    zipping = true;
+    const files = [], fail = [];
+    try {
+      busy('Đang chuẩn bị…'); await ensureLibs(); if (histP) await histP;
+      for (let i = 0; i < list.length; i++) {
+        const r = list[i];
+        busy(`Đang tạo phiếu ${i + 1}/${list.length}: ${r.s.name}`);
+        await new Promise(res => setTimeout(res, 30));
+        try {
+          const canv = await renderReportCanvases(r), pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+          canv.forEach((c, k) => addPage(pdf, c, k === 0));
+          files.push({ name: `phieu-ket-qua_${r.s.code}_${slug(r.s.name)}.pdf`, data: new Uint8Array(pdf.output('arraybuffer')) });
+        } catch (e) { console.error(e); fail.push(r.s.name); }
+      }
+      if (!files.length) { alert('Không tạo được phiếu nào. Kiểm tra kết nối mạng rồi thử lại.'); return; }
+      busy('Đang nén thành file ZIP…'); await new Promise(res => setTimeout(res, 30));
+      download(makeZip(files), fname('zip').replace(/^ket-qua_/, 'phieu-ket-qua_'));
+      if (fail.length) alert(`Đã tải ${files.length} phiếu. Chưa tạo được phiếu của: ${fail.join(', ')}. Bấm "Phiếu" ở từng bạn để thử lại.`);
+    } catch (e) { alert(e.message || e); }
+    finally { zipping = false; busy(''); $('#reportStage').innerHTML = ''; }
   }
   async function clearSession() {
     if (!confirm(`Xoá toàn bộ phiếu đã chụp của ${S.testTitle} – ${S.cls}? Không thể hoàn tác.`)) return;
