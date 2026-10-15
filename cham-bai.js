@@ -2111,6 +2111,7 @@
       stage.innerHTML = html;
       const el = stage.firstElementChild;
       if (window.WritingReport && el.classList.contains('wr-page')) window.WritingReport.fit(el);
+      if (window.PhieuTrang && el.classList.contains('pt-page')) window.PhieuTrang.fit(el);   // trang 1-2: tự co cho vừa một trang
       out.push(await window.html2canvas(el, { scale: 2, backgroundColor: '#ffffff', logging: false }));
     }
     return out;
