@@ -1964,7 +1964,8 @@
   const GROUP_VI = { grammar: ['Grammar errors', '#FAD9D3'], vocabulary: ['Vocabulary errors', '#E6DCF5'], content: ['Content issues', '#FCEEB0'], organisation: ['Organisation issues', '#CFEEFB'], style: ['Style issues', '#F8D9E4'] };
   const CRIT_VI = { content: 'Nội dung', communicative_achievement: 'Giao tiếp', organisation: 'Bố cục', language: 'Ngôn ngữ' };
   const clip = (t, n) => {
-    t = String(t || '').replace(/\s+/g, ' ').trim(); if (t.length <= n) return t;
+    t = String(t || '').replace(/\r\n?/g, '\n').split('\n').map(l => l.replace(/[^\S\n]+/g, ' ').trim()).join('\n').replace(/\n{3,}/g, '\n\n').trim();   // giữ xuống dòng giáo viên nhập
+    if (t.length <= n) return t;
     const c = t.slice(0, n - 1), k = c.lastIndexOf(' ');
     return c.slice(0, k > n * 0.6 ? k : n - 1).replace(/[,;:\s]+$/, '') + '…';
   };
