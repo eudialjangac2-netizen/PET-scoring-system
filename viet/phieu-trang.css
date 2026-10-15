@@ -93,3 +93,13 @@
 
 .pt-wq h5 small { font-weight: 400; color: #5B6576; }
 .pt-wn { margin: 0 0 4px; font-size: 11px; line-height: 1.5; color: #172033; overflow-wrap: anywhere; }
+
+/* Mức thu gọn thứ 2 (do PhieuTrang.fit thêm khi trang 2 vẫn tràn) */
+.pt-tighter { gap: 6px; }
+.pt-tighter .pt-ca { padding: 6px 10px; border-radius: 10px; }
+.pt-tighter .pt-ca h4 { font-size: 12px; margin: 0 0 1px; }
+.pt-tighter .pt-ca p, .pt-tighter .pt-ca .fx { font-size: 10.5px; line-height: 1.4; margin: 0 0 2px; }
+.pt-tighter .pt-ca .pt-req { display: none; }
+.pt-tighter .pt-sec h3 { margin-bottom: 3px; }
+.pt-tighter .pt-hb li, .pt-tighter .pt-wg { font-size: 11px; line-height: 1.35; }
+.pt-tighter .pt-wn { font-size: 10.5px; line-height: 1.4; margin: 0 0 2px; }

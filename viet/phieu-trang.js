@@ -175,5 +175,17 @@
       + '<div class="pt-sec"><h3>' + ttl('Questions to Review', 'Số câu cần xem lại') + '</h3><div class="pt-wrs" style="grid-template-columns:repeat(' + Math.max(2, D.wrong.length) + ',1fr)">' + wrong + '</div></div>'
       + '</div>' + foot(m, 2) + '</div>';
   }
-  return { THEME: THEME, GRADES: GRADES, gradeOf: gradeOf, nextGrade: nextGrade, overview: overview, diagnosis: diagnosis };
+  // Tự co cho vừa một trang: gọi sau khi trang đã nằm trong DOM. Thu gọn dần: pt-tight -> pt-tighter -> thu nhỏ nhẹ (tối thiểu 80%).
+  function fit(pageEl) {
+    var main = pageEl.querySelector('.pt-main'); if (!main) return 1;
+    var over = function () { return main.scrollHeight > main.clientHeight + 1; };
+    if (over() && !main.classList.contains('pt-tight')) main.classList.add('pt-tight');
+    if (over()) main.classList.add('pt-tighter');
+    if (over()) {
+      var r = Math.max(0.8, main.clientHeight / main.scrollHeight);
+      main.style.overflow = 'visible'; main.style.transformOrigin = 'top left'; main.style.transform = 'scale(' + r + ')'; main.style.width = (100 / r) + '%'; return r;
+    }
+    return 1;
+  }
+  return { THEME: THEME, GRADES: GRADES, gradeOf: gradeOf, nextGrade: nextGrade, overview: overview, diagnosis: diagnosis, fit: fit };
 });
