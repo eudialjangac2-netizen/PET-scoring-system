@@ -103,3 +103,5 @@
 .pt-tighter .pt-sec h3 { margin-bottom: 3px; }
 .pt-tighter .pt-hb li, .pt-tighter .pt-wg { font-size: 11px; line-height: 1.35; }
 .pt-tighter .pt-wn { font-size: 10.5px; line-height: 1.4; margin: 0 0 2px; }
+
+.pt-cm p, .pt-pr3 li { white-space: pre-line; }   /* giữ xuống dòng trong nhận xét tổng thể */
