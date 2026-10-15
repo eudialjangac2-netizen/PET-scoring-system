@@ -1993,6 +1993,36 @@
   }
   const S_prior = (r, sel) => { const p = S.priorities?.[r.s.key]; return p === undefined ? suggestPriorities(r, sel) : p; };
 
+  // Thói quen làm bài. Bài làm máy (mock báo điểm): tính từ đáp án. Bài giấy (OMR): giữ cách cũ (câu bỏ trống, tô sai).
+  const lev = (a, b) => { const d = Array.from({ length: b.length + 1 }, (_, j) => j); for (let i = 1; i <= a.length; i++) { let prev = d[0]; d[0] = i; for (let j = 1; j <= b.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = t; } } return d[b.length]; };
+  const normA = x => String(x ?? '').toLowerCase().replace(/[^a-z0-9' -]/g, '').replace(/\s+/g, ' ').trim();
+  function habitsOf(r, papersSel) {
+    const habits = [], pre = p => (p === 'listening' ? 'L' : 'R'), list = a => a.slice(0, 6).join(', ') + (a.length > 6 ? ', ...' : '');
+    const on = (S.online || {})[r.s.key], isOnline = !!on && papersSel.some(p => on[p]);
+    const isBlank = i => i && !i.bad && i.marks === 0 && (i.type === 'write' ? i.shown === '' : !i.chosen);
+    for (const p of papersSel) {
+      const blanks = r.items[p].filter(isBlank).map(i => pre(p) + i.q);
+      if (blanks.length) habits.push(`Có ${blanks.length} câu ${cap1(p)} bỏ trống (${list(blanks)}).`);
+    }
+    if (!isOnline) {
+      const badQ = papersSel.flatMap(p => r.items[p].filter(i => i && i.bad).map(i => pre(p) + i.q));
+      habits.push(badQ.length ? `Có ${badQ.length} câu tô chưa đúng cách (${list(badQ)}). Hãy tô kín một ô tròn.` : 'Tô đáp án rõ ràng, không có câu tô sai cách.');
+      return habits;
+    }
+    // Quản lý thời gian: các câu bỏ trống dồn vào Part cuối của bài
+    for (const p of papersSel) {
+      const its = r.items[p].filter(Boolean); if (its.length < 2) continue;
+      const last = Math.max(...its.map(i => +i.part || 0)), blanks = its.filter(isBlank), inLast = blanks.filter(i => +i.part === last);
+      if (blanks.length >= 2 && inLast.length >= blanks.length * 2 / 3) habits.push(`Các câu bỏ trống của ${cap1(p)} tập trung ở Part cuối (${list(inLast.map(i => pre(p) + i.q))}): có thể chưa đủ thời gian. Luyện làm nhanh các Part cuối và chia thời gian theo từng Part.`);
+    }
+    // Chính tả: câu điền từ đáp án gần đúng (lệch 1-2 ký tự)
+    const sp = papersSel.flatMap(p => r.items[p].filter(i => i && i.type === 'write' && !i.ok && i.given && i.key).filter(i => {
+      const g = normA(i.given); return g.length >= 4 && String(i.key).split(/\s*[/;|]\s*/).some(k => { k = normA(k); return k && k !== g && lev(g, k) <= (k.length >= 8 ? 2 : 1); });
+    }).map(i => pre(p) + i.q));
+    if (sp.length) habits.push(`Có ${sp.length} câu điền từ đúng ý nhưng sai chính tả hoặc dạng từ (${list(sp)}). Kiểm tra lại cách viết và dạng từ (số ít/số nhiều) trước khi nộp bài.`);
+    if (!habits.length) habits.push('Em làm bài đầy đủ, không bỏ trống câu nào.');
+    return habits;
+  }
   function reportModel(r) {
     const L = lvl(), T = window.PhieuTrang.THEME[S.level], sel = new Set(pickOf(r)), wr = sel.has('writing') ? writingOf(r.s) : null, wrAny = writingOf(r.s);
     const dates = Object.values(S.sheets[r.s.key] || {}).map(x => x.at);
@@ -2061,13 +2091,7 @@
     const gc = {}; (wr ? wr.parts : []).forEach(p => (p.errors || []).forEach(e => { gc[e.group] = (gc[e.group] || 0) + 1; }));
     const writingGroups = Object.keys(gc).length ? Object.entries(gc).sort((a, b) => b[1] - a[1]).map(([g, n]) => ({ ten: (GROUP_VI[g] || [g])[0], n, mau: (GROUP_VI[g] || [0, '#E3E7ED'])[1], note: '' }))
       : [{ ten: wr ? 'No errors listed' : (wrAny ? 'Not included' : 'No Writing result yet'), n: '', mau: '#E3E7ED', note: wr ? 'Không có lỗi được liệt kê' : (wrAny ? 'Không đưa vào phiếu này' : 'Chưa có bài Writing') }];
-    const habits = [];
-    for (const p of papersSel) {
-      const blanks = r.items[p].filter(i => i && !i.bad && i.marks === 0 && (i.type === 'write' ? i.shown === '' : !i.chosen)).map(i => (p === 'listening' ? 'L' : 'R') + i.q);
-      if (blanks.length) habits.push(`Có ${blanks.length} câu ${cap1(p)} bỏ trống (${blanks.slice(0, 6).join(', ')}${blanks.length > 6 ? ', ...' : ''}).`);
-    }
-    const badQ = papersSel.flatMap(p => r.items[p].filter(i => i && i.bad).map(i => (p === 'listening' ? 'L' : 'R') + i.q));
-    if (badQ.length) habits.push(`Có ${badQ.length} câu tô chưa đúng cách (${badQ.slice(0, 6).join(', ')}${badQ.length > 6 ? ', ...' : ''}). Hãy tô kín một ô tròn.`); else habits.push('Tô đáp án rõ ràng, không có câu tô sai cách.');
+    const habits = habitsOf(r, papersSel);
     const wrong = [];
     for (const sec of L.phan) {
       const g = r.secs[sec.id]; if (!g || g.incomplete || !sel.has(sec.id)) continue;
