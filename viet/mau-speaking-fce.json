@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "level": "FCE",
+  "student": {
+    "id": "C260230BM",
+    "name": "Tên học sinh (mẫu)"
+  },
+  "bands": {
+    "GV": 3,
+    "DM": 3,
+    "P": 4,
+    "IC": 3,
+    "GA": 3
+  },
+  "evidence": [
+    "G-S • developing/priority",
+    "G-C • some successful",
+    "DM-E • extended but uneven",
+    "P-I • clear overall",
+    "GA-WH • generally successful"
+  ],
+  "weak_part": "P3"
+}

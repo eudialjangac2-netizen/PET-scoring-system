@@ -13,6 +13,9 @@
   const TH = {
     ink: 170,          // pixel tối hơn giá trị này = có mực
     marked: 0.28,      // độ phủ >= ngưỡng này = ô có đánh dấu
+    soft: 205,         // ngưỡng mực "nhạt" (bút chì mờ) — chỉ dùng để phát hiện ô tô mờ
+    faintCov: 0.10,    // không ô nào đạt 'marked' nhưng có ô phủ >= mức này → báo "tô mờ" cho giáo viên duyệt
+    faintSoft: 0.30,   // hoặc độ phủ mực nhạt >= mức này và vượt hẳn các ô còn lại
     fullCov: 0.50,     // tô chuẩn: độ phủ tổng
     fullSector: 0.30,  // tô chuẩn: 7/8 cung tròn đều phải có mực
     codeMarked: 0.40,  // ô mã học sinh
@@ -330,13 +333,14 @@
   }
 
   // Đặc trưng của 1 ô: độ phủ mực + độ phủ 8 cung (để biết tô kín hay tick/X)
-  function bubbleFeat(px, x, y, k1) {
+  function bubbleFeat(px, x, y, k1, th) {
+    th = th || TH.ink;
     const cx = x * S, cy = y * S, r1 = (k1 || 0.74) * RB * S, r2 = 0.83 * RB * S, rin = 0.22 * RB * S;
     let ink = 0, n = 0; const sI = new Array(8).fill(0), sN = new Array(8).fill(0);
     for (let yy = Math.floor(cy - r2); yy <= cy + r2; yy++)
       for (let xx = Math.floor(cx - r2); xx <= cx + r2; xx++) {
         const dx = xx - cx, dy = yy - cy, d = Math.hypot(dx, dy);
-        const dark = px[yy * PW + xx] < TH.ink;
+        const dark = px[yy * PW + xx] < th;
         if (d < r1) { n++; if (dark) ink++; }
         if (d < r2 && d > rin) {
           const k = Math.min(7, Math.floor((Math.atan2(dy, dx) + Math.PI) / (2 * Math.PI) * 8));
@@ -349,11 +353,11 @@
 
   // Đo độ phủ có dung sai: thử 9 vị trí lệch ≤ tol mm quanh tâm ô, lấy vị trí phủ nhiều nhất
   // (giấy cong / chụp nghiêng làm hàng dài bị lệch ~1 mm ở đầu xa; ô nhỏ 3 mm nên 1 mm đã đủ làm hụt mực)
-  function bubbleFeatTol(px, x, y, tol) {
+  function bubbleFeatTol(px, x, y, tol, th) {
     // đo trong lõi 0.5R (vòng in sẵn nằm ở R nên không lọt vào lõi khi lệch ≤ tol) tại lưới 5×5 vị trí lệch ≤ tol; lấy vị trí phủ nhiều nhất
     let best = null; const st = tol / 2;
     for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) {
-      const f = bubbleFeat(px, x + i * st, y + j * st, 0.5);
+      const f = bubbleFeat(px, x + i * st, y + j * st, 0.5, th);
       if (!best || f.cov > best.cov) best = f;
     }
     return best;
@@ -516,7 +520,16 @@
         const marked = opts.filter(o => o.cov >= tMark);
         let status, answer = '';
         if (q.mode === 'multi' || q.multi) { status = 'ok'; answer = marked.map(o => o.label).join('|'); }   // dòng chọn nhiều: mọi tổ hợp hợp lệ
-        else if (marked.length === 0) status = 'blank';
+        else if (marked.length === 0) {
+          status = 'blank';
+          // tô mờ: nét chì nhạt hoặc tô dở dang không đủ để tính là "đã tô" → không tự tính sai mà báo giáo viên duyệt
+          const soft = opts.map((o, i) => (tol ? bubbleFeatTol(px, pts[i][0], pts[i][1], tol, TH.soft) : bubbleFeat(px, pts[i][0], pts[i][1], undefined, TH.soft)).cov);
+          opts.forEach((o, i) => { o.soft = soft[i]; });
+          const ord = opts.map((o, i) => i).sort((a, b) => Math.max(opts[b].cov, 0) - Math.max(opts[a].cov, 0));
+          const bi = [...opts.keys()].sort((a, b) => soft[b] - soft[a])[0], si = [...soft].sort((a, b) => b - a)[1] || 0;
+          const byCov = opts[ord[0]].cov >= TH.faintCov, bySoft = soft[bi] >= TH.faintSoft && soft[bi] - si >= 0.2;
+          if (byCov || bySoft) { const w = byCov ? opts[ord[0]] : opts[bi]; status = 'faint'; answer = w.label; }
+        }
         else if (marked.length > 1) { status = 'multi'; answer = marked.map(o => o.label).join(''); }
         else {
           answer = marked[0].label;

@@ -35,12 +35,13 @@
 
   function fromResult(level, res, tpl) {
     var T = tpl.pages[res.page], B = bankOf(level), TH = { marked: T.marked_cov || (window.OMR && window.OMR.TH && window.OMR.TH.marked) || 0.28 };
-    var out = { bands: {}, evidence: [], weakPart: '', flags: [] }, ev = {};
+    var out = { bands: {}, evidence: [], weakPart: '', flags: [], rows: {} }, ev = {};
     var add = function (k) { if (k && B[k]) ev[k] = 1; };
     T.questions.forEach(function (q) {
       var m = res.mcq[q.q]; if (!m) return;
       var on = q.options.map(function (o, i) { return { label: o.label, cov: (m.opts[i] || {}).cov || 0 }; }).filter(function (o) { return o.cov >= TH.marked; }).map(function (o) { return o.label; });
       var name = q.row || q.code;
+      if (!/^BAND-/.test(q.code) && q.code !== 'Notably weak part') out.rows[q.code] = on.slice();   // nhãn ô giám khảo đã tô ở từng dòng (để xuất Excel / Sheet đủ chi tiết)
       if (/^BAND-/.test(q.code)) {
         var c = q.code.slice(5);
         if (on.length === 1) out.bands[c] = +on[0]; else out.flags.push({ code: q.code, text: 'Band ' + c + (on.length ? ': tô nhiều hơn 1 ô' : ': chưa tô') });
