@@ -23,7 +23,8 @@
   // CEFR gần đúng theo bảng đối chiếu chung của Cambridge/IELTS
   function cefr(b) { if (b == null) return ''; return b >= 8.5 ? 'C2' : b >= 7 ? 'C1' : b >= 5.5 ? 'B2' : b >= 4 ? 'B1' : 'A2'; }
   function head(m, title) {
-    return '<div class="pt-head"><div><small>RUBY SCHOOL · IELTS</small><h1>' + ttl(title[0], title[1]) + '</h1></div><div class="pt-ex">' + esc(m.exam) + '<span>Graded ' + esc(m.date) + '</span></div></div>'
+    var right = m.monthYear ? '<div class="pt-ex">' + esc(m.exam) + '<span>' + esc(m.monthYear) + '</span></div>' : '<div class="pt-ex">' + esc(m.exam) + '<span>Graded ' + esc(m.date) + '</span></div>';
+    return '<div class="pt-head"><div><small>RUBY SCHOOL · IELTS</small><h1>' + ttl(title[0], title[1]) + '</h1></div>' + right + '</div>'
       + '<div class="pt-who"><div><span>Student</span><b>' + esc(m.student.name) + '</b></div><div><span>Student ID</span><b>' + esc(m.student.id) + '</b></div><div><span>Class</span><b>' + esc(m.student.cls) + '</b></div></div>';
   }
   function foot(n) { return '<div class="pt-foot"><span>Band scores come from the IELTS test provider. Overall = average of 4 skills, rounded to 0.5. CEFR is approximate. Page ' + n + '/2</span><span style="white-space:nowrap">Ruby School</span></div>'; }
@@ -33,7 +34,7 @@
   }
   // biểu đồ: cột band từng kỹ năng (trục 4 - 9), đường Overall, đường mục tiêu; bên phải Overall qua các Mock
   function chart(m) {
-    var lo = 4, hi = 9, W = 318, H = 300, T = 16, B = 46, L = 28, Y = function (v) { return T + (hi - v) / (hi - lo) * (H - T - B); }, s = '';
+    var lo = 4, hi = 9, W = 318, H = 360, T = 16, B = 46, L = 28, Y = function (v) { return T + (hi - v) / (hi - lo) * (H - T - B); }, s = '';
     for (var v = lo; v <= hi; v += 1) s += '<line x1="' + L + '" x2="' + (W - 4) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="#EDF0F4"/><text x="' + (L - 5) + '" y="' + (Y(v) + 3) + '" font-size="9" fill="#7a8494" text-anchor="end">' + v + '</text>';
     var bw = 38, gap = (W - L - 8 - bw * 4) / 4;
     ORDER.forEach(function (k, i) {
@@ -54,8 +55,41 @@
     pts.forEach(function (p, i) { var last = i === n - 1; r += '<circle cx="' + X(i) + '" cy="' + Y(p.overall) + '" r="' + (last ? 5 : 4) + '" fill="' + (last ? THEME.a : '#fff') + '" stroke="' + THEME.d + '" stroke-width="2"/><text x="' + X(i) + '" y="' + (Y(p.overall) - 9) + '" font-size="11" font-weight="700" fill="' + THEME.d + '" text-anchor="middle">' + fmt(p.overall) + '</text><text x="' + X(i) + '" y="' + (Y(lo) + 13) + '" font-size="9.5" fill="#3a4457" text-anchor="middle">' + esc(p.label) + '</text>'; });
     return '<div class="pt-cc" style="display:grid;grid-template-columns:318fr 250fr;gap:6px"><div><div class="pt-ct">This mock: band by skill</div>' + left + '</div><div><div class="pt-ct">Overall across mocks</div><svg viewBox="0 0 ' + W2 + ' ' + H + '">' + r + '</svg></div></div>';
   }
+
+  // Thống kê theo dạng câu do đơn vị ngoài cung cấp. Mỗi dòng: "Gap Filling - Total 20, Correct 12, Wrong 6, Skipped 2"
+  function parseStats(text) {
+    var out = []; String(text || '').split(/\r?\n/).forEach(function (ln) {
+      var m = ln.match(/^\s*(.+?)\s*[—–-]+\s*Total\s+(\d+)\s*,\s*Correct\s+(\d+)\s*,\s*Wrong\s+(\d+)\s*,\s*Skipped\s+(\d+)/i);
+      if (m) out.push({ type: m[1].trim(), total: +m[2], correct: +m[3], wrong: +m[4], skipped: +m[5] });
+    }); return out;
+  }
+  function shortType(s) {
+    var m = { 'Multiple Choice (One Answer)': 'Multiple Choice', 'Multiple Choice (Multiple Answers)': 'Multi-answer MC' };
+    if (m[s]) return m[s]; if (/not given/i.test(s)) return s.replace(/\s*-\s*/g, '/'); return s;
+  }
+  function statSum(st) { return st.reduce(function (s, x) { s.t += x.total; s.c += x.correct; s.w += x.wrong; s.k += x.skipped; return s; }, { t: 0, c: 0, w: 0, k: 0 }); }
+  function statNote(st) {
+    var big = st.filter(function (x) { return x.total >= 3; }), acc = function (x) { return x.correct / x.total; }, lines = [];
+    if (big.length > 1) {
+      var s = big.slice().sort(function (a, b) { return acc(b) - acc(a) || b.total - a.total; }), best = s[0], low = s[s.length - 1];
+      if (acc(best) > acc(low)) { lines.push(['Strongest', 'Mạnh nhất', shortType(best.type) + ' (' + best.correct + '/' + best.total + ')']); lines.push(['Needs work', 'Cần cải thiện', shortType(low.type) + ' (' + low.correct + '/' + low.total + ')']); }
+    }
+    var sk = st.filter(function (x) { return x.skipped >= 3 && x.skipped / x.total >= 0.25; });
+    if (sk.length) lines.push(['Skipped', 'Bỏ trống nhiều', sk.map(function (x) { return shortType(x.type) + ' (' + x.skipped + '/' + x.total + ')'; }).join(', ')]);
+    return lines;
+  }
+  function statBlock(k, st) {
+    var t = SKILL[k], sum = statSum(st), maxT = Math.max.apply(null, st.map(function (x) { return x.total; }));
+    var rows = st.map(function (x) {
+      var w = function (n) { return (n / x.total * 100).toFixed(1) + '%'; };
+      return '<div class="pi-st"><span class="pi-sl">' + esc(shortType(x.type)) + '</span><div class="pi-sb" style="width:' + (x.total / maxT * 100).toFixed(1) + '%"><i class="c" style="width:' + w(x.correct) + ';background:' + t.ink + '"></i><i class="w" style="width:' + w(x.wrong) + '"></i><i class="k" style="width:' + w(x.skipped) + '"></i></div><b>' + x.correct + '/' + x.total + '</b></div>';
+    }).join('');
+    var notes = statNote(st).map(function (n) { return '<div class="pi-sn"><b>' + n[0] + '<small>' + n[1] + '</small></b> ' + esc(n[2]) + '</div>'; }).join('');
+    return '<div class="pi-stats"><div class="pi-sh"><span>' + ttl('Results by question type', 'Theo dạng câu') + '</span><em>' + sum.c + '/' + sum.t + ' correct</em></div>' + rows
+      + '<div class="pi-lg"><i class="c" style="background:' + t.ink + '"></i>Correct<i class="w"></i>Wrong<i class="k"></i>Skipped</div>' + notes + '</div>';
+  }
   function skillCard(m, k) {
-    var t = SKILL[k], b = m.bands[k], d = m.deltas && m.deltas[k], raw = m.raw && m.raw[k];
+    var t = SKILL[k], b = m.bands[k], d = m.deltas && m.deltas[k], raw = m.raw && m.raw[k]; if (!raw && m.stats && m.stats[k] && m.stats[k].length) { var sm = statSum(m.stats[k]); raw = sm.c + ' / ' + sm.t + ' correct'; }
     return '<div class="pt-sk" style="background:' + t.bg + ';--ink:' + t.ink + '"><h2>' + esc(t.en) + '</h2><div style="font-size:10.5px;color:' + t.ink + '">' + esc(t.vi) + '</div>'
       + '<span class="pt-gr">&asymp; CEFR ' + cefr(b) + '</span><div class="pt-sc"><b>' + fmt(b) + '</b><span>Band</span>' + (d != null ? delta(d) : '') + '</div>'
       + (raw ? '<div class="pt-raw">' + esc(raw) + '</div>' : '<div class="pt-raw">&nbsp;</div>') + '</div>';
@@ -76,7 +110,7 @@
       + '<div class="pt-ch"><h3>' + ttl('Skills & Progress', 'Kỹ năng và tiến bộ') + '<span>IELTS Band</span></h3>' + chart(m) + '</div></div>'
       + '<div class="pt-skills">' + ORDER.map(function (k) { return skillCard(m, k); }).join('') + '</div>' + trend(m)
       + '<div class="pt-r3"><div class="pt-cm"><h3>' + ttl("Teacher's Overall Comment", 'Nhận xét tổng thể của giáo viên') + '</h3><p style="font-size:' + (cmt.length > 520 ? '12px;line-height:1.55' : '13px;line-height:1.7') + '">' + esc(cmt) + '</p></div>'
-      + '<div class="pt-pr3"><h3>' + ttl('Top 3 Priorities', '3 ưu tiên tiếp theo') + '</h3><ol>' + (m.priorities || []).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol></div></div>'
+      + '<div class="pt-pr3"><h3>' + ttl('Top 3 Priorities', '3 ưu tiên tiếp theo') + '</h3><ol>' + (m.priorities || []).filter(Boolean).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol></div></div>'
       + '</div>' + foot(1) + '</div>';
   }
   // ô feedback: giáo viên ghi điểm mạnh, điểm yếu, action plan cho từng bạn
@@ -93,11 +127,11 @@
   function card(m, k) {
     var t = SKILL[k], b = m.bands[k], raw = m.raw && m.raw[k];
     return '<div class="pi-card" style="background:' + t.bg + ';--ink:' + t.ink + '"><div class="pi-h"><h2 style="color:' + t.ink + '">' + esc(t.en) + ' <small>' + esc(t.vi) + '</small></h2><div class="pi-band"><b>' + fmt(b) + '</b><span>Band</span></div></div>'
-      + (CRIT[k] ? critBlock(m, k) : '<div class="pi-raw">' + (raw ? esc(raw) : '&nbsp;') + '</div>') + '<div class="pi-ft">' + ttl("Teacher's Feedback", 'Nhận xét của giáo viên') + '</div>' + fb(k, (m.feedback || {})[k]) + '</div>';
+      + (CRIT[k] ? critBlock(m, k) : (m.stats && m.stats[k] && m.stats[k].length ? statBlock(k, m.stats[k]) : '<div class="pi-raw">' + (raw ? esc(raw) : '&nbsp;') + '</div>')) + '<div class="pi-ft">' + ttl("Teacher's Feedback", 'Nhận xét của giáo viên') + '</div>' + fb(k, (m.feedback || {})[k]) + '</div>';
   }
   function page2(m) {
     return '<div class="pt-page" style="--a:' + THEME.a + ';--d:' + THEME.d + ';--soft:' + THEME.soft + '">' + head(m, ['Skill Breakdown & Feedback', 'Điểm thành phần và nhận xét từng kỹ năng']) + '<div class="pt-main">'
       + '<div class="pi-grid">' + ['writing', 'speaking', 'listening', 'reading'].map(function (k) { return card(m, k); }).join('') + '</div></div>' + foot(2) + '</div>';
   }
-  return { THEME: THEME, SKILL: SKILL, CRIT: CRIT, overallOf: overallOf, cefr: cefr, page1: page1, page2: page2 };
+  return { parseStats: parseStats, THEME: THEME, SKILL: SKILL, CRIT: CRIT, overallOf: overallOf, cefr: cefr, page1: page1, page2: page2 };
 });
