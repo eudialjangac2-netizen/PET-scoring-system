@@ -17,6 +17,7 @@ header.top { background: var(--ruby); color: #fff; }
 header.top .wrap { display: flex; align-items: baseline; gap: 12px; padding: 14px 16px 12px; flex-wrap: wrap; }
 header.top h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
 header.top .ctx { font-size: 13px; opacity: .85; }
+header.top .ielts-link { margin-left: auto; font-size: 13px; font-weight: 600; color: #fff; text-decoration: none; border: 1px solid #ffffff88; border-radius: 99px; padding: 4px 12px; } header.top .ielts-link:hover { background: #ffffff22; }
 
 nav.steps { display: flex; gap: 4px; overflow-x: auto; background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
 nav.steps .wrap { display: flex; gap: 4px; padding: 0 16px; }

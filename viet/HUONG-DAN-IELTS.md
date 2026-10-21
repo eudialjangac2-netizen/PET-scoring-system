@@ -47,8 +47,8 @@ Gợi ý nội dung theo kỹ năng: Writing và Speaking nhìn 4 tiêu chí đ�
 
 ## 5. Tạo phiếu trong app
 
-1. Mở trang **ielts.html** của app.
-2. Dán link Google Sheet và bấm **Tải dữ liệu**. Sheet phải chia sẻ "Bất kỳ ai có đường liên kết đều xem được".
+1. Mở trang **ielts.html** (hoặc bấm nút **Phiếu IELTS** ở góc trên trang chấm phiếu). Đăng nhập bằng mã giáo viên như ở trang chấm phiếu. Giáo viên chỉ thấy học sinh của nhóm IELTS mình dạy, quản lý thấy tất cả. Quản lý đổi phân quyền trong file `ielts-quyen.json`.
+2. Link Google Sheet đã có sẵn trong `cau-hinh.json` (khóa `ieltsSheet`). Sheet phải chia sẻ "Bất kỳ ai có đường liên kết đều xem được".
 3. Chọn **Mock Test** và **Lớp**. Bảng liệt kê từng học sinh với trạng thái: đủ điểm, thiếu điểm, hoặc thiếu bao nhiêu ô nhận xét.
 4. Bấm **Xem** để xem phiếu 2 trang của từng bạn.
 5. Bấm **Tải PDF bạn này**, hoặc **Tải PDF cả danh sách** để có một file PDF nhiều trang của lớp đang chọn.

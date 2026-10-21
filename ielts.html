@@ -12,8 +12,14 @@
 <body>
 <header class="ih"><h1>Phiếu IELTS</h1><span>Ruby School · đọc điểm và nhận xét từ Google Sheet</span></header>
 <main class="iw">
-  <section class="ic">
-    <h2>1. Dán link Google Sheet</h2>
+  <section class="ic" id="sec0">
+    <h2>Đăng nhập</h2>
+    <p class="hint">Dùng mã giáo viên như ở trang chấm phiếu. Giáo viên chỉ thấy lớp của mình, quản lý thấy tất cả.</p>
+    <div class="row"><input id="code" type="password" placeholder="Mã giáo viên" autocomplete="off" autocapitalize="off" spellcheck="false"><button id="login" class="pri">Đăng nhập</button><a class="back" href="cham-bai.html">Về trang chấm phiếu</a></div>
+    <p id="who0" class="msg"></p>
+  </section>
+  <section class="ic" id="sec1" hidden>
+    <h2>1. Link Google Sheet</h2>
     <p class="hint">Dán link file "KẾT QUẢ MOCK TESTS" (có tab tên <b>IELTS</b>). Sheet cần chia sẻ "Bất kỳ ai có đường liên kết đều xem được".</p>
     <div class="row"><input id="link" type="text" placeholder="https://docs.google.com/spreadsheets/d/..." autocomplete="off"><button id="load" class="pri">Tải dữ liệu</button></div>
     <p id="msg" class="msg"></p>
