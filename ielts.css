@@ -27,3 +27,5 @@ tr.sel td { background: #eef3ff; } tr:hover td { background: #f7f9fe; }
 #stage { position: fixed; left: -10000px; top: 0; }
 .tt small.vi { display: block; font-weight: 400; font-size: 11px; color: #6b7686; }
 @media (max-width: 900px) { .pvp { transform: scale(var(--sc, .5)); } }
+
+.back { font-size: 13px; color: #3E63B8; align-self: center; margin-left: 6px; }

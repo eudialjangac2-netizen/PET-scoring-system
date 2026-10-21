@@ -1,0 +1,8 @@
+{
+  "_ghi_chu": "Phân quyền trang ielts.html. quanLy: thấy mọi nhóm. giaoVien: khóa là Nhóm mục tiêu (cột 'Nhóm mục tiêu' trong tab IELTS), giá trị là danh sách tên hiển thị hoặc tài khoản của giáo viên. So khớp không phân biệt hoa thường, không dấu, bỏ Mr./Ms. Đổi người: sửa file này rồi lưu.",
+  "quanLy": ["MS. UYÊN", "uyen.tn", "MR. NHÂN", "nhan.nt"],
+  "giaoVien": {
+    "6.5": ["MR. KHOA", "khoa.ntd"],
+    "7.0": ["MS. PHI", "phi.tty"]
+  }
+}

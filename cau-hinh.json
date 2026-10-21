@@ -1,4 +1,5 @@
 {
   "_ghi_chu": "Dán link Web App của Apps Script chấm phiếu vào sheetUrl (dạng https://script.google.com/macros/s/.../exec). Để trống nếu chưa dùng Google Sheet.",
-  "sheetUrl": "https://script.google.com/macros/s/AKfycbzmgKAcIdn62gGKrHXSpATsJxQpNuSGXLlL60aGwE5bxCWATj43Nhr8pUmxDjt7DbeY/exec"
+  "sheetUrl": "https://script.google.com/macros/s/AKfycbzmgKAcIdn62gGKrHXSpATsJxQpNuSGXLlL60aGwE5bxCWATj43Nhr8pUmxDjt7DbeY/exec",
+  "ieltsSheet": "https://docs.google.com/spreadsheets/d/165Cvqk26hXN7MZtSRljecT_EFuH6WgzmxV9fSzXToAY/edit"
 }

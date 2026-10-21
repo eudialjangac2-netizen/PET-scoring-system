@@ -10,10 +10,43 @@
   var slug = function (s) { return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
   var mockNo = function () { return +$('#mock').value; };
 
+  // ---------- đăng nhập và phân quyền theo lớp ----------
+  var CFG = {}, Q = { quanLy: [], giaoVien: {} }, ME = null;     // ME = { name, all, groups[] }
+  var lsGet = function (k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  var lsSet = function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  var plain = function (s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/\b(mr|ms|mrs|thay|co)\b\.?/g, ' ').replace(/[^a-z0-9.]+/g, ' ').trim(); };
+  var same = function (name, alias) { var a = plain(alias), n = plain(name); if (!a || !n) return false; if (a === n) return true; var nt = n.split(' '); return a.split(' ').every(function (t) { return nt.indexOf(t) >= 0; }); };
+  var any = function (name, list) { return (list || []).some(function (a) { return same(name, a); }); };
+  function permission(name, admin) {
+    if (admin || any(name, Q.quanLy)) return { name: name, all: true, groups: [] };
+    var g = Object.keys(Q.giaoVien).filter(function (k) { return any(name, Q.giaoVien[k]); }).map(Number);
+    return { name: name, all: false, groups: g };
+  }
+  var allowed = function (r) { return !ME ? false : ME.all || ME.groups.indexOf(r.target) >= 0; };
+  function signIn(code) {
+    if (!code) { $('#who0').className = 'msg err'; $('#who0').textContent = 'Nhập mã giáo viên.'; return Promise.resolve(); }
+    if (!CFG.sheetUrl) { $('#who0').className = 'msg err'; $('#who0').textContent = 'Chưa cấu hình kết nối đăng nhập (cau-hinh.json).'; return Promise.resolve(); }
+    $('#who0').className = 'msg'; $('#who0').textContent = 'Đang kiểm tra mã…';
+    return fetch(CFG.sheetUrl + '?action=classes&code=' + encodeURIComponent(code)).then(function (x) { return x.json(); }).then(function (r) {
+      if (!r.ok) { $('#who0').className = 'msg err'; $('#who0').textContent = r.error || 'Mã giáo viên không đúng.'; return; }
+      lsSet('omr-tcode', code); lsSet('omr-teacher', { name: r.teacher, admin: r.admin });
+      enter(r.teacher, r.admin);
+    }).catch(function () { $('#who0').className = 'msg err'; $('#who0').textContent = 'Không kết nối được máy chủ đăng nhập. Kiểm tra mạng rồi thử lại.'; });
+  }
+  function enter(name, admin) {
+    ME = permission(name, admin);
+    if (!ME.all && !ME.groups.length) { ME = null; $('#who0').className = 'msg err'; $('#who0').textContent = 'Tài khoản "' + name + '" chưa được gán lớp IELTS nào. Nhờ quản lý thêm vào file ielts-quyen.json.'; $('#sec1').hidden = true; return; }
+    $('#who0').className = 'msg ok'; $('#who0').textContent = 'Xin chào ' + name + ' · ' + (ME.all ? 'quản lý, xem tất cả các lớp' : 'giáo viên nhóm IELTS ' + ME.groups.map(function (g) { return g.toFixed(1); }).join(', '));
+    $('#sec1').hidden = false; $('#sec1').querySelector('.row').hidden = !ME.all && !!CFG.ieltsSheet; $('#sec1').querySelector('.hint').hidden = !ME.all && !!CFG.ieltsSheet;
+    if (!ME.all && CFG.ieltsSheet) $('#link').value = CFG.ieltsSheet; else if (!$('#link').value && CFG.ieltsSheet) $('#link').value = CFG.ieltsSheet;
+    if ($('#link').value) load();
+  }
+  function logout() { ME = null; P = null; ['#sec1', '#sec2', '#sec3'].forEach(function (x) { $(x).hidden = true; }); }
+
   function load() {
-    var link = $('#link').value.trim(); if (!link) { msg('Dán link Google Sheet trước.', 'err'); return; }
+    if (!ME) { msg('Đăng nhập trước.', 'err'); return; } var link = $('#link').value.trim(); if (!link) { msg('Dán link Google Sheet trước.', 'err'); return; }
     store.set(KEY, link); msg('Đang đọc sheet…'); busy('Đang đọc Google Sheet…');
-    window.IeltsData.fetchTab(link, 'IELTS').then(function (rows) { P = window.IeltsData.parse(rows); fill(); msg('Đã tải dữ liệu.', 'ok'); })
+    window.IeltsData.fetchTab(link, 'IELTS').then(function (rows) { P = window.IeltsData.parse(rows); Object.keys(P.mocks).forEach(function (k) { P.mocks[k] = P.mocks[k].filter(allowed); }); if (!Object.keys(P.mocks).some(function (k) { return P.mocks[k].length; })) throw new Error('Không có học sinh nào thuộc lớp của thầy cô trong sheet.'); fill(); msg('Đã tải dữ liệu.', 'ok'); })
       .catch(function (e) { msg(e.message || String(e), 'err'); }).then(function () { busy(''); });
   }
   function fill() {
@@ -74,5 +107,12 @@
   $('#tb').onclick = function (e) { var b = e.target.closest('button[data-v]'); if (b) view(+b.dataset.v); };
   $('#pdfAll').onclick = function () { var rs = okRows(list()); if (rs.length) makePdf(rs, 'phieu-ielts_mock' + mockNo() + ($('#cls').value ? '_' + slug($('#cls').value) : '') + '.pdf'); };
   $('#pdfOne').onclick = function () { var r = list().filter(function (x) { return x.id === sel; })[0]; if (r) makePdf([r], 'phieu-ielts_mock' + mockNo() + '_' + r.id + '_' + slug(r.name) + '.pdf'); };
+  $('#login').onclick = function () { logout(); signIn($('#code').value.trim()); };
+  $('#code').onkeydown = function (e) { if (e.key === 'Enter') $('#login').click(); };
   $('#link').value = store.get(KEY);
+  Promise.all([fetch('cau-hinh.json').then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }), fetch('ielts-quyen.json').then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; })]).then(function (a) {
+    CFG = a[0] || {}; Q = { quanLy: (a[1] || {}).quanLy || [], giaoVien: (a[1] || {}).giaoVien || {} };
+    var t = lsGet('omr-teacher'), c = lsGet('omr-tcode'); if (c) $('#code').value = c;
+    if (t && t.name && c) enter(t.name, !!t.admin);
+  });
 })();
