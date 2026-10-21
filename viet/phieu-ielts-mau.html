@@ -1,0 +1,16 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Phiếu IELTS mẫu</title>
+<link rel="stylesheet" href="phieu-font.css"><link rel="stylesheet" href="phieu-trang.css"><link rel="stylesheet" href="phieu-ielts.css">
+<style>@page{size:A4;margin:0}body{margin:0}.pt-page{page-break-after:always;border-top:8px solid var(--a)}.tt small.vi{display:block;font-weight:400;font-size:11px;color:#6b7686}</style>
+<script src="phieu-ielts.js"></script></head><body><div id="r"></div><script>
+var m={student:{name:'Nguyễn Văn A (mẫu)',id:'C260321AT',cls:'9/1'},exam:'IELTS Mock Test 2',date:'30/09/2026',mockLabel:'Mock 2',
+ bands:{listening:6.5,reading:7.0,writing:6.0,speaking:6.5},raw:{listening:'27 / 40 correct',reading:'30 / 40 correct'},deltas:{listening:0.5,reading:0.5,writing:0,speaking:0.5},
+ criteria:{writing:{TA:6.0,CC:6.0,LR:6.5,GRA:5.5},speaking:{FC:6.5,LR:6.5,GRA:6.0,P:6.5}},target:7.0,history:[{label:'Mock 1',overall:6.0,bands:{listening:6.0,reading:6.5,writing:6.0,speaking:6.0}}],overallDelta:0.5,
+ comment:'Mock 2 là bước tiến rõ so với Mock 1: Overall tăng từ 6.0 lên 6.5, trong đó Reading đạt 7.0. Writing là kỹ năng thấp nhất (6.0), chủ yếu do ngữ pháp (GRA 5.5) và phần triển khai ý trong Task 2. Speaking ổn định ở 6.5. Để chạm mục tiêu 7.0 ở Mock 3, em cần ưu tiên Writing và giữ nhịp luyện Listening.',
+ priorities:['Writing: tăng độ chính xác ngữ pháp, tránh lỗi mạo từ và thì động từ trong Task 2.','Writing Task 2: mỗi đoạn thân bài có luận điểm, giải thích và ví dụ cụ thể.','Listening: luyện Section 3 và 4, chú ý từ khóa và bẫy đổi ý.'],
+ feedback:{writing:{s:'Bố cục bài rõ ràng, có mở bài và kết luận đúng yêu cầu. Từ vựng chủ đề (education, technology) khá phù hợp.',w:'Lỗi mạo từ và chia thì lặp lại. Task 1 chưa nêu rõ overview; ý trong Task 2 còn ngắn, thiếu ví dụ.',a:'Mỗi tuần viết 1 Task 2 và tự soát lỗi theo danh sách (mạo từ, thì, chủ vị). Viết overview 2 câu cho mọi bài Task 1.'},
+  speaking:{s:'Nói trôi chảy ở Part 1 và Part 2, phát âm rõ, ngữ điệu tự nhiên.',w:'Part 3 trả lời còn ngắn, ít lý do; dùng lặp lại các cụm "I think", "very good".',a:'Luyện trả lời Part 3 theo mẫu: ý chính, lý do, ví dụ. Học 10 cụm diễn đạt ý kiến thay thế mỗi tuần.'},
+  listening:{s:'Làm tốt Section 1 và 2 (điền thông tin, chọn đáp án).',w:'Mất điểm ở Section 3 và 4: bỏ lỡ từ khóa khi người nói đổi ý.',a:'Nghe lại bài sai, gạch từ khóa và đoạn đổi ý; làm 2 Section 3 hoặc 4 mỗi tuần.'},
+  reading:{s:'Đọc nhanh, làm tốt dạng True/False/Not Given và nối tiêu đề.',w:'Còn sai ở dạng điền từ vì chính tả và giới hạn số từ.',a:'Làm dạng điền từ có bấm giờ, kiểm tra số từ và chính tả trước khi chuyển câu.'}}};
+m.overall=PhieuIelts.overallOf(m.bands);
+document.getElementById('r').innerHTML=PhieuIelts.page1(m)+PhieuIelts.page2(m);
+</script></body></html>
