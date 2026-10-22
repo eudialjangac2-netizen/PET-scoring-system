@@ -82,9 +82,9 @@
   }
   function table() {
     var rs = list(), f = function (v) { return v == null ? '' : Number(v).toFixed(1); }, ok = 0;
-    $('#tb').innerHTML = '<tr><th class="n">STT</th><th>Mã HS</th><th>Họ tên</th><th>Lớp</th><th class="n">L</th><th class="n">R</th><th class="n">W</th><th class="n">S</th><th class="n">Overall</th><th>Trạng thái</th><th></th></tr>'
+    $('#tb').innerHTML = '<tr><th class="n">STT</th><th>Mã HS</th><th>Họ tên</th><th>Lớp IELTS</th><th>Lớp chính khoá</th><th class="n">L</th><th class="n">R</th><th class="n">W</th><th class="n">S</th><th class="n">Overall</th><th>Trạng thái</th><th></th></tr>'
       + rs.map(function (r, i) { var s = status(r), o = window.IeltsData.hasBands(r) ? window.IeltsData.model(P, mockNo(), r).overall : null; if (s[0] === 'ok') ok++;
-        return '<tr data-i="' + i + '"' + (sel === r.id ? ' class="sel"' : '') + '><td class="n">' + (i + 1) + '</td><td>' + esc(r.id) + '</td><td>' + esc(r.name) + '</td><td>' + esc(grp(r)) + '</td><td class="n">' + f(r.bands.listening) + '</td><td class="n">' + f(r.bands.reading) + '</td><td class="n">' + f(r.bands.writing) + '</td><td class="n">' + f(r.bands.speaking) + '</td><td class="n"><b>' + f(o) + '</b></td><td><span class="tag ' + s[0] + '">' + esc(s[1]) + '</span></td><td><button data-v="' + i + '">Xem</button></td></tr>'; }).join('');
+        return '<tr data-i="' + i + '"' + (sel === r.id ? ' class="sel"' : '') + '><td class="n">' + (i + 1) + '</td><td>' + esc(r.id) + '</td><td>' + esc(r.name) + '</td><td>' + esc(grp(r)) + '</td><td>' + esc(r.cls) + '</td><td class="n">' + f(r.bands.listening) + '</td><td class="n">' + f(r.bands.reading) + '</td><td class="n">' + f(r.bands.writing) + '</td><td class="n">' + f(r.bands.speaking) + '</td><td class="n"><b>' + f(o) + '</b></td><td><span class="tag ' + s[0] + '">' + esc(s[1]) + '</span></td><td><button data-v="' + i + '">Xem</button></td></tr>'; }).join('');
     $('#sum').textContent = rs.length + ' học sinh. ' + ok + ' phiếu đủ điểm và nhận xét. Ô nhận xét còn trống vẫn tạo phiếu, ô đó để trống.';
     $('#pdfAll').disabled = !rs.some(function (r) { return window.IeltsData.hasBands(r); });
   }
