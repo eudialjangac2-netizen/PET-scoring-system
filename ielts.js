@@ -34,8 +34,9 @@
       (c.students || []).forEach(function (st) { var id = String(st.code || '').toUpperCase().replace(/\s/g, ''); if (id) BM[id] = b; });
     });
   }
-  var byBatch = function () { return BN > 0; };
-  var grp = function (r) { return byBatch() ? (BM[r.id] || NOBATCH) : r.cls; };
+  // Nhóm IELTS lấy từ cột "Nhóm mục tiêu" trong sheet (6.0 / 6.5 / 7.0 / 7.5), không dùng batch của danh sách lớp vì batch chung "IELTS-2627" cho mọi học sinh.
+  var byBatch = function () { return false; };
+  var grp = function (r) { return r.target ? 'IELTS ' + Number(r.target).toFixed(1) : (r.cls || NOBATCH); };
   var allowed = function (r) { if (!ME) return false; if (ME.all) return true; return byBatch() ? !!BM[r.id] : ME.groups.indexOf(r.target) >= 0; };
   function signIn(code) {
     if (!code) { $('#who0').className = 'msg err'; $('#who0').textContent = 'Nhập mã giáo viên.'; return Promise.resolve(); }
