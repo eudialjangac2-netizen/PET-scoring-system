@@ -94,6 +94,7 @@
     if (!window.IeltsData.hasBands(r)) { $('#pv').innerHTML = '<p class="hint">Chưa đủ điểm 4 kỹ năng, chưa tạo được phiếu.</p>'; $('#pdfOne').disabled = true; table(); return; }
     $('#pdfOne').disabled = false; var w = Math.min(1, ($('#pv').clientWidth - 8) / 794);
     $('#pv').innerHTML = pagesOf(r).map(function (h) { return '<div class="pvp" style="zoom:' + w + '">' + h + '</div>'; }).join('');
+    Array.prototype.forEach.call($('#pv').querySelectorAll('.pvp'), function (e) { window.PhieuIelts.fitCards(e); });
     $('#pv').querySelectorAll('.pt-page').forEach(function (el) { window.PhieuTrang.fit(el); });
     table(); $('#sec3').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -101,7 +102,7 @@
   function addPage(pdf, c, first) { if (!first) pdf.addPage(); var W = 210, H = 297, ratio = c.height / c.width, w = W, h = W * ratio; if (h > H) { h = H; w = H / ratio; } pdf.addImage(c.toDataURL('image/jpeg', 0.9), 'JPEG', (W - w) / 2, 0, w, h); }
   function canvases(r) {
     var st = $('#stage'), out = Promise.resolve([]);
-    pagesOf(r).forEach(function (h) { out = out.then(function (arr) { st.innerHTML = h; var el = st.firstElementChild; window.PhieuTrang.fit(el); return window.html2canvas(el, { scale: 2, backgroundColor: '#ffffff', logging: false }).then(function (c) { arr.push(c); return arr; }); }); });
+    pagesOf(r).forEach(function (h) { out = out.then(function (arr) { st.innerHTML = h; var el = st.firstElementChild; window.PhieuTrang.fit(el); window.PhieuIelts.fitCards(el); return window.html2canvas(el, { scale: 2, backgroundColor: '#ffffff', logging: false }).then(function (c) { arr.push(c); return arr; }); }); });
     return out;
   }
   function savePdf(pdf, name) { var a = document.createElement('a'); a.href = URL.createObjectURL(pdf.output('blob')); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000); }
