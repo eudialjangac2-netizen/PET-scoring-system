@@ -5,7 +5,8 @@ Phiếu IELTS đọc dữ liệu từ tab **IELTS** trong file Google Sheet "K�
 ## 1. Cấu trúc tab IELTS
 
 - Cột A là **MOCK TEST 1 đến 5**. Mỗi mock là một khối 98 dòng, cùng thứ tự lớp và tên. Nhập đúng dòng của mock đang làm.
-- Dùng bộ lọc (hàng tiêu đề) để lọc theo cột A và theo Lớp cho dễ nhập.
+- Muốn lọc hoặc sắp xếp, chỉ dùng Chế độ xem bộ lọc (Dữ liệu > Bộ lọc > Tạo chế độ xem bộ lọc mới). KHÔNG dùng bộ lọc thường và KHÔNG sắp xếp trực tiếp trên sheet, vì khi đó trang tạo phiếu chỉ đọc được những dòng đang hiện (thiếu học sinh).
+- Trang tạo phiếu nhóm học sinh theo cột "Nhóm mục tiêu" (6.0, 6.5, 7.0, 7.5), nên cột này phải đúng.
 - Các cột **xám** là công thức, không gõ đè. Cột nhập có màu đầu cột.
 - Không đổi tên cột, không chèn hoặc xoá cột. App tìm cột theo tên tiêu đề.
 
