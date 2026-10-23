@@ -32,9 +32,10 @@
     if (v == null) return '';
     if (v > 0) return '<span class="pt-d u">&#9650; ' + fmt(v) + '</span>'; if (v < 0) return '<span class="pt-d dn">&#9660; ' + fmt(Math.abs(v)) + '</span>'; return '<span class="pt-d n">= 0</span>';
   }
-  // biểu đồ: cột band từng kỹ năng (trục 4 - 9), đường Overall, đường mục tiêu; bên phải Overall qua các Mock
+  // biểu đồ: cột band từng kỹ năng (trục thấp nhất 4, hạ xuống khi có band thấp hơn, tới 9), đường Overall, đường mục tiêu; bên phải Overall qua các Mock
   function chart(m) {
-    var lo = 4, hi = 9, W = 318, H = 360, T = 16, B = 46, L = 28, Y = function (v) { return T + (hi - v) / (hi - lo) * (H - T - B); }, s = '';
+    var vals = ['listening', 'reading', 'writing', 'speaking'].map(function (k) { return m.bands[k]; }).concat([m.overall], (m.history || []).map(function (h) { return h.overall; })).filter(function (x) { return x != null; }),
+      lo = Math.max(0, Math.min(4, Math.floor(Math.min.apply(null, vals) - 0.5))), hi = 9, W = 318, H = 360, T = 16, B = 46, L = 28, Y = function (v) { return T + (hi - v) / (hi - lo) * (H - T - B); }, s = '';
     for (var v = lo; v <= hi; v += 1) s += '<line x1="' + L + '" x2="' + (W - 4) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="#EDF0F4"/><text x="' + (L - 5) + '" y="' + (Y(v) + 3) + '" font-size="9" fill="#7a8494" text-anchor="end">' + v + '</text>';
     var bw = 38, gap = (W - L - 8 - bw * 4) / 4;
     ORDER.forEach(function (k, i) {
