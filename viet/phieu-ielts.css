@@ -32,3 +32,7 @@
 .pt-ch svg { min-height: 330px; }
 .pt-skills .pt-sk { padding-top: 14px; padding-bottom: 14px; }
 .pt-r3 { flex: 1; }
+
+/* Ba mục Strengths / Weaknesses / Action plan co theo độ dài chữ, không chia đều chiều cao (mục ngắn không chừa khoảng trống, mục dài không bị tràn) */
+.pi-fb { overflow: hidden; justify-content: flex-start; }
+.pi-fr { flex: 0 0 auto; }
