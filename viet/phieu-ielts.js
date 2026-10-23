@@ -138,7 +138,8 @@
     var cards = root ? root.querySelectorAll('.pi-card') : [];
     Array.prototype.forEach.call(cards, function (c) {
       var ps = c.querySelectorAll('.pi-fr p'), sz = 10.5, lh = 1.35;
-      while (c.scrollHeight > c.clientHeight + 1 && sz > 7.5) {
+      var fb = c.querySelector('.pi-fb'), over = function () { return c.scrollHeight > c.clientHeight + 1 || (fb && fb.scrollHeight > fb.clientHeight + 1); };
+      while (over() && sz > 7.5) {
         sz -= 0.25; if (sz < 9.5) lh = 1.25;
         Array.prototype.forEach.call(ps, function (p) { p.style.fontSize = sz + 'px'; p.style.lineHeight = lh; });
       }
