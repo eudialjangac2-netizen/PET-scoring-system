@@ -133,5 +133,17 @@
     return '<div class="pt-page" style="--a:' + THEME.a + ';--d:' + THEME.d + ';--soft:' + THEME.soft + '">' + head(m, ['Skill Breakdown & Feedback', 'Điểm thành phần và nhận xét từng kỹ năng']) + '<div class="pt-main">'
       + '<div class="pi-grid">' + ['writing', 'speaking', 'listening', 'reading'].map(function (k) { return card(m, k); }).join('') + '</div></div>' + foot(2) + '</div>';
   }
-  return { parseStats: parseStats, THEME: THEME, SKILL: SKILL, CRIT: CRIT, overallOf: overallOf, cefr: cefr, page1: page1, page2: page2 };
+  // Nhận xét dài làm tràn thẻ kỹ năng: thu nhỏ chữ nhận xét từng thẻ (tối thiểu 7.5px) cho đến khi vừa. Gọi sau khi trang đã nằm trong DOM.
+  function fitCards(root) {
+    var cards = root ? root.querySelectorAll('.pi-card') : [];
+    Array.prototype.forEach.call(cards, function (c) {
+      var ps = c.querySelectorAll('.pi-fr p'), sz = 10.5, lh = 1.35;
+      var fb = c.querySelector('.pi-fb'), over = function () { return c.scrollHeight > c.clientHeight + 1 || (fb && fb.scrollHeight > fb.clientHeight + 1); };
+      while (over() && sz > 7.5) {
+        sz -= 0.25; if (sz < 9.5) lh = 1.25;
+        Array.prototype.forEach.call(ps, function (p) { p.style.fontSize = sz + 'px'; p.style.lineHeight = lh; });
+      }
+    });
+  }
+  return { fitCards: fitCards, parseStats: parseStats, THEME: THEME, SKILL: SKILL, CRIT: CRIT, overallOf: overallOf, cefr: cefr, page1: page1, page2: page2 };
 });
