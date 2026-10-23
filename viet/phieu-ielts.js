@@ -27,7 +27,7 @@
     return '<div class="pt-head"><div><small>RUBY SCHOOL · IELTS</small><h1>' + ttl(title[0], title[1]) + '</h1></div>' + right + '</div>'
       + '<div class="pt-who"><div><span>Student</span><b>' + esc(m.student.name) + '</b></div><div><span>Student ID</span><b>' + esc(m.student.id) + '</b></div><div><span>Class</span><b>' + esc(m.student.cls) + '</b></div></div>';
   }
-  function foot(n) { return '<div class="pt-foot"><span>Band scores come from the IELTS test provider. Overall = average of 4 skills, rounded to 0.5. CEFR is approximate. Page ' + n + '/2</span><span style="white-space:nowrap">Ruby School</span></div>'; }
+  function foot(n) { return '<div class="pt-foot"><span>Page ' + n + '/2</span><span style="white-space:nowrap">Ruby School</span></div>'; }
   function delta(v) {
     if (v == null) return '';
     if (v > 0) return '<span class="pt-d u">&#9650; ' + fmt(v) + '</span>'; if (v < 0) return '<span class="pt-d dn">&#9660; ' + fmt(Math.abs(v)) + '</span>'; return '<span class="pt-d n">= 0</span>';
