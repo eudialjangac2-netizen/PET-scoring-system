@@ -118,6 +118,22 @@
       return new Promise(function (res) { setTimeout(res, 30); }).then(function () { return canvases(rs[i]); }).then(function (cs) { cs.forEach(function (c) { addPage(pdf, c, first); first = false; }); i++; return next(); });
     }).catch(function (e) { busy(''); alert('Lỗi tạo PDF: ' + (e.message || e)); });
   }
+  // Tải hàng loạt: mỗi học sinh một PDF riêng (tên ID_HỌ TÊN_lớp_Mock Test X report.pdf), gom thành một file ZIP.
+  // Chọn một lớp IELTS (6.0 / 6.5 / 7.0 / 7.5) thì ZIP chứa cả lớp đó; chọn "Tất cả lớp" thì mỗi lớp IELTS là một thư mục.
+  function makeZip(rs, zipName) {
+    if (!window.html2canvas || !window.jspdf || !window.JSZip) { alert('Chưa tải được thư viện tạo PDF/ZIP. Kiểm tra mạng rồi thử lại.'); return; }
+    var zip = new window.JSZip(), i = 0, one = !!$('#cls').value, used = {};
+    $('#pdfAll').disabled = true;
+    fonts().then(function next() {
+      if (i >= rs.length) { busy('Đang nén file ZIP...'); return zip.generateAsync({ type: 'blob' }).then(function (blob) { $('#stage').innerHTML = ''; busy(''); table(); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = zipName; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000); }); }
+      var r = rs[i]; busy('Đang tạo phiếu ' + (i + 1) + '/' + rs.length + ': ' + r.name);
+      return new Promise(function (res) { setTimeout(res, 30); }).then(function () { return canvases(r); }).then(function (cs) {
+        var pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' }); cs.forEach(function (c, k) { addPage(pdf, c, k === 0); });
+        var path = (one ? '' : grp(r).replace(/[\\/:*?"<>|]+/g, '-') + '/') + fname(r); if (used[path]) path = path.replace(/\.pdf$/, '_' + (++used[path]) + '.pdf'); else used[path] = 1;
+        zip.file(path, pdf.output('arraybuffer')); i++; return next();
+      });
+    }).catch(function (e) { busy(''); table(); alert('Lỗi tạo ZIP: ' + (e.message || e)); });
+  }
   var okRows = function (rs) { return rs.filter(window.IeltsData.hasBands); };
   $('#load').onclick = $('#reload').onclick = load;
   $('#mock').onchange = function () { classes(); table(); };
@@ -126,7 +142,7 @@
     var b = e.target.closest('button[data-v]'); if (b) { view(+b.dataset.v); return; }
     var d = e.target.closest('button[data-p]'); if (d && !d.disabled) { var r = list()[+d.dataset.p]; if (r) makePdf([r], fname(r)); }
   };
-  $('#pdfAll').onclick = function () { var rs = okRows(list()); if (rs.length) makePdf(rs, 'phieu-ielts_mock' + mockNo() + ($('#cls').value ? '_' + slug($('#cls').value) : '') + '.pdf'); };
+  $('#pdfAll').onclick = function () { var rs = okRows(list()); if (rs.length) makeZip(rs, 'Mock Test ' + mockNo() + ' report' + ($('#cls').value ? '_' + $('#cls').value.replace(/[\\/:*?"<>|]+/g, '-') : '') + '.zip'); };
   $('#pdfOne').onclick = function () { var r = list().filter(function (x) { return x.id === sel; })[0]; if (r) makePdf([r], fname(r)); };
   $('#login').onclick = function () { logout(); signIn($('#code').value.trim()); };
   $('#code').onkeydown = function (e) { if (e.key === 'Enter') $('#login').click(); };
