@@ -7,6 +7,8 @@
   var store = { get: function (k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
   var msg = function (t, c) { var m = $('#msg'); m.textContent = t || ''; m.className = 'msg ' + (c || ''); };
   var busy = function (t) { $('#busy').hidden = !t; if (t) $('#busyMsg').textContent = t; };
+  // Tên file phiếu: ID_HỌ TÊN_lớp chính khoá_Mock Test X report.pdf (giữ dấu tiếng Việt, bỏ ký tự không hợp lệ trong tên file)
+  var fname = function (r) { var c = function (x) { return String(x || '').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim(); }; return [c(r.id), c(r.name), c(r.cls), 'Mock Test ' + mockNo() + ' report'].join('_') + '.pdf'; };
   var slug = function (s) { return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
   var mockNo = function () { return +$('#mock').value; };
 
@@ -85,7 +87,7 @@
     var rs = list(), f = function (v) { return v == null ? '' : Number(v).toFixed(1); }, ok = 0;
     $('#tb').innerHTML = '<tr><th class="n">STT</th><th>Mã HS</th><th>Họ tên</th><th>Lớp IELTS</th><th>Lớp chính khoá</th><th class="n">L</th><th class="n">R</th><th class="n">W</th><th class="n">S</th><th class="n">Overall</th><th>Trạng thái</th><th></th></tr>'
       + rs.map(function (r, i) { var s = status(r), o = window.IeltsData.hasBands(r) ? window.IeltsData.model(P, mockNo(), r).overall : null; if (s[0] === 'ok') ok++;
-        return '<tr data-i="' + i + '"' + (sel === r.id ? ' class="sel"' : '') + '><td class="n">' + (i + 1) + '</td><td>' + esc(r.id) + '</td><td>' + esc(r.name) + '</td><td>' + esc(grp(r)) + '</td><td>' + esc(r.cls) + '</td><td class="n">' + f(r.bands.listening) + '</td><td class="n">' + f(r.bands.reading) + '</td><td class="n">' + f(r.bands.writing) + '</td><td class="n">' + f(r.bands.speaking) + '</td><td class="n"><b>' + f(o) + '</b></td><td><span class="tag ' + s[0] + '">' + esc(s[1]) + '</span></td><td><button data-v="' + i + '">Xem</button></td></tr>'; }).join('');
+        return '<tr data-i="' + i + '"' + (sel === r.id ? ' class="sel"' : '') + '><td class="n">' + (i + 1) + '</td><td>' + esc(r.id) + '</td><td>' + esc(r.name) + '</td><td>' + esc(grp(r)) + '</td><td>' + esc(r.cls) + '</td><td class="n">' + f(r.bands.listening) + '</td><td class="n">' + f(r.bands.reading) + '</td><td class="n">' + f(r.bands.writing) + '</td><td class="n">' + f(r.bands.speaking) + '</td><td class="n"><b>' + f(o) + '</b></td><td><span class="tag ' + s[0] + '">' + esc(s[1]) + '</span></td><td class="act"><button data-v="' + i + '">Xem</button> <button class="pri" data-p="' + i + '"' + (window.IeltsData.hasBands(r) ? '' : ' disabled') + '>Tải PDF</button></td></tr>'; }).join('');
     $('#sum').textContent = rs.length + ' học sinh. ' + ok + ' phiếu đủ điểm và nhận xét. Ô nhận xét còn trống vẫn tạo phiếu, ô đó để trống.';
     $('#pdfAll').disabled = !rs.some(function (r) { return window.IeltsData.hasBands(r); });
   }
@@ -116,13 +118,32 @@
       return new Promise(function (res) { setTimeout(res, 30); }).then(function () { return canvases(rs[i]); }).then(function (cs) { cs.forEach(function (c) { addPage(pdf, c, first); first = false; }); i++; return next(); });
     }).catch(function (e) { busy(''); alert('Lỗi tạo PDF: ' + (e.message || e)); });
   }
+  // Tải hàng loạt: mỗi học sinh một PDF riêng (tên ID_HỌ TÊN_lớp_Mock Test X report.pdf), gom thành một file ZIP.
+  // Chọn một lớp IELTS (6.0 / 6.5 / 7.0 / 7.5) thì ZIP chứa cả lớp đó; chọn "Tất cả lớp" thì mỗi lớp IELTS là một thư mục.
+  function makeZip(rs, zipName) {
+    if (!window.html2canvas || !window.jspdf || !window.JSZip) { alert('Chưa tải được thư viện tạo PDF/ZIP. Kiểm tra mạng rồi thử lại.'); return; }
+    var zip = new window.JSZip(), i = 0, one = !!$('#cls').value, used = {};
+    $('#pdfAll').disabled = true;
+    fonts().then(function next() {
+      if (i >= rs.length) { busy('Đang nén file ZIP...'); return zip.generateAsync({ type: 'blob' }).then(function (blob) { $('#stage').innerHTML = ''; busy(''); table(); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = zipName; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000); }); }
+      var r = rs[i]; busy('Đang tạo phiếu ' + (i + 1) + '/' + rs.length + ': ' + r.name);
+      return new Promise(function (res) { setTimeout(res, 30); }).then(function () { return canvases(r); }).then(function (cs) {
+        var pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' }); cs.forEach(function (c, k) { addPage(pdf, c, k === 0); });
+        var path = (one ? '' : grp(r).replace(/[\\/:*?"<>|]+/g, '-') + '/') + fname(r); if (used[path]) path = path.replace(/\.pdf$/, '_' + (++used[path]) + '.pdf'); else used[path] = 1;
+        zip.file(path, pdf.output('arraybuffer')); i++; return next();
+      });
+    }).catch(function (e) { busy(''); table(); alert('Lỗi tạo ZIP: ' + (e.message || e)); });
+  }
   var okRows = function (rs) { return rs.filter(window.IeltsData.hasBands); };
   $('#load').onclick = $('#reload').onclick = load;
   $('#mock').onchange = function () { classes(); table(); };
   $('#cls').onchange = table;
-  $('#tb').onclick = function (e) { var b = e.target.closest('button[data-v]'); if (b) view(+b.dataset.v); };
-  $('#pdfAll').onclick = function () { var rs = okRows(list()); if (rs.length) makePdf(rs, 'phieu-ielts_mock' + mockNo() + ($('#cls').value ? '_' + slug($('#cls').value) : '') + '.pdf'); };
-  $('#pdfOne').onclick = function () { var r = list().filter(function (x) { return x.id === sel; })[0]; if (r) makePdf([r], 'phieu-ielts_mock' + mockNo() + '_' + r.id + '_' + slug(r.name) + '.pdf'); };
+  $('#tb').onclick = function (e) {
+    var b = e.target.closest('button[data-v]'); if (b) { view(+b.dataset.v); return; }
+    var d = e.target.closest('button[data-p]'); if (d && !d.disabled) { var r = list()[+d.dataset.p]; if (r) makePdf([r], fname(r)); }
+  };
+  $('#pdfAll').onclick = function () { var rs = okRows(list()); if (rs.length) makeZip(rs, 'Mock Test ' + mockNo() + ' report' + ($('#cls').value ? '_' + $('#cls').value.replace(/[\\/:*?"<>|]+/g, '-') : '') + '.zip'); };
+  $('#pdfOne').onclick = function () { var r = list().filter(function (x) { return x.id === sel; })[0]; if (r) makePdf([r], fname(r)); };
   $('#login').onclick = function () { logout(); signIn($('#code').value.trim()); };
   $('#code').onkeydown = function (e) { if (e.key === 'Enter') $('#login').click(); };
   $('#link').value = store.get(KEY);

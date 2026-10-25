@@ -6,8 +6,8 @@
 <title>Phiếu IELTS - Ruby School</title>
 <link rel="stylesheet" href="viet/phieu-font.css">
 <link rel="stylesheet" href="viet/phieu-trang.css?v=20261015b">
-<link rel="stylesheet" href="viet/phieu-ielts.css?v=20261023">
-<link rel="stylesheet" href="ielts.css?v=20261021">
+<link rel="stylesheet" href="viet/phieu-ielts.css?v=20261025">
+<link rel="stylesheet" href="ielts.css?v=20261025">
 </head>
 <body>
 <header class="ih"><h1>Phiếu IELTS</h1><span>Ruby School · đọc điểm và nhận xét từ Google Sheet</span></header>
@@ -30,7 +30,7 @@
       <label>Mock Test <select id="mock"></select></label>
       <label>Lớp <select id="cls"></select></label>
       <button id="reload">Tải lại từ sheet</button>
-      <button id="pdfAll" class="pri">Tải PDF cả danh sách</button>
+      <button id="pdfAll" class="pri">Tải hàng loạt theo lớp (ZIP, mỗi em một PDF)</button>
     </div>
     <p id="sum" class="hint"></p>
     <div class="tw"><table id="tb"></table></div>
@@ -45,9 +45,10 @@
 <div id="stage" aria-hidden="true"></div>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="viet/phieu-trang.js?v=20261015"></script>
-<script src="viet/phieu-ielts.js?v=20261023e"></script>
+<script src="viet/phieu-ielts.js?v=20261025b"></script>
 <script src="viet/ielts-du-lieu.js?v=20261021"></script>
-<script src="ielts.js?v=20261023d"></script>
+<script src="ielts.js?v=20261025b"></script>
 </body>
 </html>
