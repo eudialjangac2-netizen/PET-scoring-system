@@ -399,13 +399,19 @@
 
   function writeInk(px, b, cells) {
     const n0 = cells || 1, cw = b.w / n0;
-    let ink = 0, n = 0;
+    // Chữ bút chì nhạt thường chỉ đạt ~120-170 trên nền ~235 nên ngưỡng cố định 120 coi là "bỏ trống".
+    // Lấy nền giấy của chính ô viết (phân vị 85) rồi đặt ngưỡng nét chữ = nền - 45 (trong khoảng 110-190).
+    const vals = [];
     for (let c = 0; c < n0; c++) {
       const xa = b.x + c * cw + (cells ? 1.0 : 1.3), xb = b.x + (c + 1) * cw - (cells ? 1.0 : 1.3);
       for (let yy = Math.round((b.y + 1.3) * S); yy < (b.y + b.h - 1.3) * S; yy++)
-        for (let xx = Math.round(xa * S); xx < xb * S; xx++) { n++; if (px[yy * PW + xx] < 120) ink++; }
+        for (let xx = Math.round(xa * S); xx < xb * S; xx++) vals.push(px[yy * PW + xx]);
     }
-    return n ? ink / n : 0;
+    if (!vals.length) return 0;
+    const sorted = Float32Array.from(vals).sort(), bg = sorted[Math.floor(sorted.length * 0.85)];
+    const thr = Math.max(110, Math.min(190, bg - 45));
+    let ink = 0; for (const v of vals) if (v < thr) ink++;
+    return ink / vals.length;
   }
 
   function process(cv, rgba, tpl) {
