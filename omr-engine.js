@@ -52,7 +52,7 @@
     return { corners: fid, areaFrac: area / (rgba.width * rgba.height), rotated };
   }
 
-  function findFiducials(cv, gray, work = 1600) {
+  function findFiducials(cv, gray, work = 1600, all = false) {
     const scale = work / Math.max(gray.rows, gray.cols), k = work / 1600;
     const blk = (Math.round(51 * k) | 1), amin = 150 * k * k, amax = 5000 * k * k;
     const g = new cv.Mat(), th = new cv.Mat();
@@ -93,7 +93,7 @@
     contours.delete(); hier.delete(); g.delete(); th.delete();
     cands.sort((p, q) => q[2] - p[2]); cands.length = Math.min(cands.length, 24);
     const target = 184 / 271, dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
-    let best = null, bestScore = 0;
+    let best = null, bestScore = 0; const found = [];
     const n = cands.length;
     for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) for (let k = j + 1; k < n; k++) for (let l = k + 1; l < n; l++) {
       const quad = [cands[i], cands[j], cands[k], cands[l]];
@@ -105,8 +105,11 @@
       if (new Set([tl, tr, bl, br]).size < 4) continue;
       const wid = (dist(tr, tl) + dist(br, bl)) / 2, hei = (dist(bl, tl) + dist(br, tr)) / 2;
       if (Math.abs(wid / hei - target) > 0.12) continue;
-      if (wid * hei > bestScore) { bestScore = wid * hei; best = [tl, tr, bl, br].map(p => [p[0] / scale, p[1] / scale]); }
+      const cand = [tl, tr, bl, br].map(p => [p[0] / scale, p[1] / scale]);
+      if (all) found.push([wid * hei, cand]);
+      if (wid * hei > bestScore) { bestScore = wid * hei; best = cand; }
     }
+    if (all) return found.sort((a, b) => b[0] - a[0]).slice(0, 6).map(f => f[1]);   // nhiều bộ góc: phiếu chụp trên chồng giấy lộ góc đen của tờ dưới
     return best;
   }
 
@@ -425,12 +428,12 @@
     for (const rot of rots) {
       let g = gray0;
       if (rot !== null) { g = new cv.Mat(); cv.rotate(gray0, g, rot); }
-      const fid = findFiducials(cv, g);
-      if (fid) {
+      const fids = findFiducials(cv, g, 1600, true);
+      for (const fid of fids) {
         sawCorners = true;
         const wn = warpAndNormalize(cv, g, fid, tpl), p = wn.px; quality = wn.quality;
         const id = readPageId(cv, p, tpl);
-        if (id) { px = p; page = id; }
+        if (id) { px = p; page = id; break; }
       }
       if (g !== gray0) g.delete();
       if (px) break;
